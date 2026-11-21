@@ -8,18 +8,74 @@
     <title>Strike a Pose, Old Masters</title>
   </head>
   <body>
-    <!-- Screen 1: the gallery. main.ts fills #painting-list with cards. -->
+    <!-- Settings button, visible on every screen -->
+    <button id="settings-button" class="settings-button" title="Settings" aria-label="Settings">⚙️</button>
+
+    <!-- Settings window (a <dialog> pops up over the page) -->
+    <dialog id="settings-dialog">
+      <h2>Settings</h2>
+      <label class="field">
+        Camera
+        <select class="camera-select"></select>
+      </label>
+      <p class="help-note">
+        Using your phone? On a Mac, iPhones appear automatically via Continuity Camera.
+        Otherwise use a webcam app like Camo or DroidCam.
+      </p>
+      <form method="dialog"><button class="brass">Done</button></form>
+    </dialog>
+
+    <!-- Short messages that appear for a few seconds ("Camera disconnected…") -->
+    <div id="notice" class="notice" hidden></div>
+
+    <!-- Screen 1: the start screen. main.ts fills #painting-list with cards. -->
     <section id="screen-gallery">
       <header class="museum-header">
         <p class="eyebrow">The Gallery of</p>
         <h1>Strike a Pose, Old Masters</h1>
         <p class="tagline">Choose a masterpiece. Copy the pose. Become the art.</p>
       </header>
+
+      <div class="start-panel">
+        <fieldset class="choice">
+          <legend>Mode</legend>
+          <label><input type="radio" name="mode" value="single" checked /> Single Painting</label>
+          <label><input type="radio" name="mode" value="tour" /> Gallery Tour (5 paintings)</label>
+        </fieldset>
+
+        <fieldset class="choice">
+          <legend>Players</legend>
+          <label><input type="radio" name="players" value="1" checked /> 1</label>
+          <label><input type="radio" name="players" value="2" /> 2</label>
+          <span id="player-names" hidden>
+            <input id="name-1" class="name-input" placeholder="Player 1" maxlength="16" />
+            <input id="name-2" class="name-input" placeholder="Player 2" maxlength="16" />
+          </span>
+        </fieldset>
+
+        <div class="camera-row">
+          <label class="field">
+            Camera
+            <select class="camera-select"></select>
+          </label>
+          <p class="help-note">
+            Using your phone? On a Mac, iPhones appear automatically via Continuity Camera.
+            Otherwise use a webcam app like Camo or DroidCam.
+          </p>
+          <p id="camera-status" class="status"></p>
+          <button id="retry-button" class="plain" hidden>Try again</button>
+        </div>
+      </div>
+
+      <div id="tour-start" hidden>
+        <button id="tour-button" class="brass big">Start the Gallery Tour</button>
+      </div>
       <div id="painting-list" class="gallery"></div>
     </section>
 
-    <!-- Screen 2 + 3: copy the pose, then the 3-2-1 countdown -->
+    <!-- Screen 2: copy the pose (one round) -->
     <section id="screen-challenge" hidden>
+      <p id="round-label" class="round-label" hidden></p>
       <div class="side-by-side">
         <figure class="exhibit">
           <div class="gilt"><img id="painting-image" alt="" /></div>
@@ -28,29 +84,52 @@
         <figure class="exhibit">
           <div class="gilt camera">
             <canvas id="camera-canvas"></canvas>
+            <div id="waiting" class="waiting" hidden></div>
             <div id="countdown" hidden></div>
           </div>
           <figcaption class="label">You, live</figcaption>
         </figure>
       </div>
       <div class="score-box">
-        <span id="score">–</span><span class="score-out-of">/ 100</span>
+        <div id="score-one"><span id="score">–</span><span class="score-out-of">/ 100</span></div>
+        <div id="score-two" class="score-two" hidden></div>
+        <div id="timer" class="timer" hidden></div>
       </div>
       <p id="status" class="status"></p>
       <div class="buttons">
         <button id="ready-button" class="brass">Take my portrait</button>
-        <button id="back-button" class="plain">Back to gallery</button>
+        <button id="back-button" class="plain">Back to start</button>
       </div>
     </section>
 
-    <!-- Screen 4: the framed photo -->
+    <!-- Screen 3: short break between Gallery Tour rounds -->
+    <section id="screen-break" class="break-screen" hidden>
+      <p class="eyebrow" id="break-round"></p>
+      <p id="break-score" class="break-score"></p>
+      <p class="tagline">Next painting…</p>
+    </section>
+
+    <!-- Screen 4: the framed photo (Single Painting mode) -->
     <section id="screen-result" hidden>
       <h2 class="screen-title">Your masterpiece</h2>
+      <p id="result-winner" class="winner" hidden></p>
       <p id="result-status" class="status"></p>
       <div id="result-holder"></div>
       <div class="buttons">
         <button id="download-button" class="brass">Download</button>
         <button id="again-button" class="plain">Try another</button>
+      </div>
+    </section>
+
+    <!-- Screen 5: Gallery Tour summary -->
+    <section id="screen-summary" hidden>
+      <h2 class="screen-title">Your Gallery Tour</h2>
+      <p id="summary-winner" class="winner" hidden></p>
+      <div id="summary-list" class="summary-list"></div>
+      <p id="summary-totals" class="summary-totals"></p>
+      <div class="buttons">
+        <button id="play-again-button" class="brass">Play again</button>
+        <button id="to-start-button" class="plain">Back to start</button>
       </div>
     </section>
 

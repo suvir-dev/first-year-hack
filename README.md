@@ -36,7 +36,13 @@ Other commands:
 
 ## What works so far
 
-- [x] Museum-style gallery of 6 public-domain paintings with full-body poses
+- [x] Museum-style gallery of 10 public-domain paintings with full-body poses
+- [x] Two modes: **Single Painting**, and **Gallery Tour** (5 random one-person
+      paintings, 15 seconds each, then a summary with every photo and the totals)
+- [x] **2-player mode** on one camera: left person = Player 1, each with their own
+      colour, name and live score; the winner is announced (a draw if within 2 points)
+- [x] **Camera picker** on the start screen and behind the ⚙️ button: built-in,
+      USB, iPhone (Continuity Camera), Camo/DroidCam; remembered between visits
 - [x] Webcam starts, PoseLandmarker runs on every frame, skeleton drawn on the video
 - [x] Pose scoring by joint angles: big live score, limbs coloured green / amber / red
 - [x] A target pose for every painting (made with the pose picker, see below)
@@ -49,8 +55,11 @@ Other commands:
 ```
 index.html            The game page: one <section> per screen
 src/
-  main.ts             App shell: switches screens, runs the camera loop, draws the skeleton
-  camera.ts           startCamera(video) / stopCamera(video)
+  main.ts             App shell: screens, playRound(), camera loop, drawing
+  camera.ts           Start/stop/switch/list cameras, friendly camera errors
+  rounds.ts           Gallery Tour: pick 5 paintings, play rounds, add up scores
+  players.ts          2-player mode: who is Player 1/2, who won
+  players.test.ts     Sanity checks for players.ts (npm test)
   pose.ts             loadPoseModel(), detect(videoFrame), poseFromKeyJoints()
   scoring.ts          scorePose(player, target) → overall + per-joint scores
   scoring.test.ts     Sanity checks for scoring (npm test)
@@ -64,6 +73,15 @@ tools/
   pose-picker.html    Developer tool for making target poses (not part of the game)
   pose-picker.ts
 ```
+
+## Camera tips
+
+- Pick the camera from the dropdown on the start screen, or press ⚙️ on any
+  screen. Your choice is remembered next time (if that camera is plugged in).
+- **iPhone + Mac:** with Continuity Camera, the iPhone simply appears in the
+  list. **Other phones:** install a webcam app such as Camo or DroidCam.
+- Stand back so your whole body is in the picture. In 2-player mode, Player 1
+  stands on the left.
 
 ## Making a target pose (the pose picker)
 
@@ -107,8 +125,8 @@ worse of the two joints at its ends. The details are in the comments in
 
 To avoid merge conflicts, each person only edits their own files:
 
-- **Person A: camera, pose, scoring** (`camera.ts`, `pose.ts`, `scoring.ts`)
-- **Person B: paintings, composite, UI screens** (`paintings.ts`, `composite.ts`, `main.ts`, `index.html`, `style.css`, `public/paintings/`)
+- **Person A: camera, pose, scoring, players** (`camera.ts`, `pose.ts`, `scoring.ts`, `players.ts`)
+- **Person B: paintings, composite, rounds, UI screens** (`paintings.ts`, `composite.ts`, `rounds.ts`, `main.ts`, `index.html`, `style.css`, `public/paintings/`)
 
 The modules only talk to each other through these functions and types, so if
 you keep the signatures the same, the other person's code keeps working:

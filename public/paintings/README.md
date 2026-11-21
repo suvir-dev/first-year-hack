@@ -25,7 +25,7 @@ in the demo.
 
 ## Images the app uses
 
-All six were downloaded from Wikimedia Commons, where each file is marked
+All ten were downloaded from Wikimedia Commons, where each file is marked
 "Public domain", at 1280 px wide.
 
 | File name | Painting | Source |
@@ -36,6 +36,10 @@ All six were downloaded from Wikimedia Commons, where each file is marked
 | `washington-crossing-the-delaware.jpg` | Washington Crossing the Delaware, Emanuel Leutze | https://commons.wikimedia.org/wiki/File:Washington_Crossing_the_Delaware_by_Emanuel_Leutze,_MMA-NYC,_1851.jpg |
 | `oath-of-the-horatii.jpg` | Oath of the Horatii, Jacques-Louis David | https://commons.wikimedia.org/wiki/File:Jacques-Louis_David,_Le_Serment_des_Horaces.jpg |
 | `wanderer-above-the-sea-of-fog.jpg` | Wanderer above the Sea of Fog, Caspar David Friedrich | https://commons.wikimedia.org/wiki/File:Caspar_David_Friedrich_-_Wanderer_above_the_sea_of_fog.jpg |
+| `the-fifer.jpg` | The Fifer, Édouard Manet | https://commons.wikimedia.org/wiki/File:Manet,_Edouard_-_Young_Flautist,_or_The_Fifer,_1866_(2).jpg |
+| `the-blue-boy.jpg` | The Blue Boy, Thomas Gainsborough | https://commons.wikimedia.org/wiki/File:Thomas_Gainsborough_-_The_Blue_Boy_(c._1770).jpg |
+| `louis-xiv.jpg` | Louis XIV, Hyacinthe Rigaud | https://commons.wikimedia.org/wiki/File:Rigaud_Louis_XIV_1701.jpg |
+| `napoleon-in-his-study.jpg` | Napoleon in His Study, Jacques-Louis David | https://commons.wikimedia.org/wiki/File:Jacques-Louis_David_-_The_Emperor_Napoleon_in_His_Study_at_the_Tuileries_-_Google_Art_Project.jpg |
 
 After adding an image, give it a target pose with the pose picker (see the
 main README, "Making a target pose").

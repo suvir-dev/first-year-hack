@@ -21,6 +21,11 @@ export interface Painting {
   /** Path to the image. "/paintings/x.jpg" means the file public/paintings/x.jpg. */
   imageUrl: string;
   /**
+   * true if the painting shows exactly one person with a clear pose.
+   * Only these are used in Gallery Tour mode (crowd scenes are confusing).
+   */
+  onePerson: boolean;
+  /**
    * The pose to copy: positions of the key joints (0..1 across and down the
    * image) plus the image's width ÷ height. null = not recorded yet, so the
    * painting can't be scored.
@@ -35,6 +40,7 @@ export const paintings: Painting[] = [
     artist: "Jacques-Louis David",
     year: 1801,
     imageUrl: "/paintings/napoleon-crossing-the-alps.jpg",
+    onePerson: true,
     // Placed by hand. The left leg is hidden behind the horse.
     targetPose: poseFromKeyJoints(0.821, {
       leftShoulder: [0.726, 0.24],
@@ -55,6 +61,7 @@ export const paintings: Painting[] = [
     artist: "Eugène Delacroix",
     year: 1830,
     imageUrl: "/paintings/liberty-leading-the-people.jpg",
+    onePerson: false,
     // Placed by hand. The left leg is hidden under her dress.
     targetPose: poseFromKeyJoints(1.246, {
       leftShoulder: [0.651, 0.223],
@@ -75,6 +82,7 @@ export const paintings: Painting[] = [
     artist: "Michelangelo",
     year: 1512,
     imageUrl: "/paintings/the-creation-of-adam.jpg",
+    onePerson: false,
     // Placed by hand (automatic detection mixed up Adam's legs).
     targetPose: poseFromKeyJoints(2.203, {
       leftShoulder: [0.158, 0.488],
@@ -97,6 +105,7 @@ export const paintings: Painting[] = [
     artist: "Emanuel Leutze",
     year: 1851,
     imageUrl: "/paintings/washington-crossing-the-delaware.jpg",
+    onePerson: false,
     // Placed by hand. His left arm and leg are hidden by the cloak and sword.
     targetPose: poseFromKeyJoints(1.561, {
       leftShoulder: [0.358, 0.382],
@@ -115,6 +124,7 @@ export const paintings: Painting[] = [
     artist: "Jacques-Louis David",
     year: 1784,
     imageUrl: "/paintings/oath-of-the-horatii.jpg",
+    onePerson: false,
     // Placed by hand: the father raising the swords, on the right.
     targetPose: poseFromKeyJoints(1.298, {
       leftShoulder: [0.548, 0.494],
@@ -137,6 +147,7 @@ export const paintings: Painting[] = [
     artist: "Caspar David Friedrich",
     year: 1818,
     imageUrl: "/paintings/wanderer-above-the-sea-of-fog.jpg",
+    onePerson: true,
     // Found automatically. Seen from behind, so his left side is on the left.
     // His arms are mostly hidden under the coat.
     targetPose: poseFromKeyJoints(0.781, {
@@ -149,6 +160,98 @@ export const paintings: Painting[] = [
       rightKnee: [0.517, 0.653],
       leftAnkle: [0.445, 0.714],
       rightAnkle: [0.511, 0.738],
+    }),
+  },
+  {
+    id: "the-fifer",
+    title: "The Fifer",
+    artist: "Édouard Manet",
+    year: 1866,
+    imageUrl: "/paintings/the-fifer.jpg",
+    onePerson: true,
+    // Found automatically by the pose picker.
+    targetPose: poseFromKeyJoints(0.586, {
+      leftShoulder: [0.6, 0.301],
+      rightShoulder: [0.342, 0.291],
+      leftElbow: [0.558, 0.4],
+      rightElbow: [0.183, 0.371],
+      leftWrist: [0.428, 0.309],
+      rightWrist: [0.261, 0.3],
+      leftHip: [0.518, 0.533],
+      rightHip: [0.367, 0.532],
+      leftKnee: [0.59, 0.708],
+      rightKnee: [0.394, 0.707],
+      leftAnkle: [0.667, 0.866],
+      rightAnkle: [0.438, 0.855],
+    }),
+  },
+  {
+    id: "the-blue-boy",
+    title: "The Blue Boy",
+    artist: "Thomas Gainsborough",
+    year: 1770,
+    imageUrl: "/paintings/the-blue-boy.jpg",
+    onePerson: true,
+    // Found automatically by the pose picker.
+    targetPose: poseFromKeyJoints(0.687, {
+      leftShoulder: [0.573, 0.255],
+      rightShoulder: [0.364, 0.271],
+      leftElbow: [0.684, 0.347],
+      rightElbow: [0.325, 0.4],
+      leftWrist: [0.601, 0.41],
+      rightWrist: [0.324, 0.507],
+      leftHip: [0.524, 0.51],
+      rightHip: [0.406, 0.511],
+      leftKnee: [0.527, 0.709],
+      rightKnee: [0.423, 0.704],
+      leftAnkle: [0.534, 0.863],
+      rightAnkle: [0.485, 0.87],
+    }),
+  },
+  {
+    id: "louis-xiv",
+    title: "Louis XIV",
+    artist: "Hyacinthe Rigaud",
+    year: 1701,
+    imageUrl: "/paintings/louis-xiv.jpg",
+    onePerson: true,
+    // Found automatically by the pose picker.
+    targetPose: poseFromKeyJoints(0.688, {
+      leftShoulder: [0.561, 0.311],
+      rightShoulder: [0.376, 0.319],
+      leftElbow: [0.675, 0.394],
+      rightElbow: [0.248, 0.385],
+      leftWrist: [0.661, 0.514],
+      rightWrist: [0.147, 0.377],
+      leftHip: [0.545, 0.539],
+      rightHip: [0.431, 0.541],
+      leftKnee: [0.47, 0.696],
+      rightKnee: [0.38, 0.679],
+      leftAnkle: [0.515, 0.868],
+      rightAnkle: [0.456, 0.854],
+    }),
+  },
+  {
+    id: "napoleon-in-his-study",
+    title: "Napoleon in His Study",
+    artist: "Jacques-Louis David",
+    year: 1812,
+    imageUrl: "/paintings/napoleon-in-his-study.jpg",
+    onePerson: true,
+    // Found automatically by the pose picker.
+    targetPose: poseFromKeyJoints(0.6, {
+      leftShoulder: [0.64, 0.255],
+      rightShoulder: [0.443, 0.253],
+      leftElbow: [0.662, 0.394],
+      rightElbow: [0.417, 0.382],
+      leftWrist: [0.615, 0.507],
+      rightWrist: [0.362, 0.375],
+      leftHip: [0.561, 0.498],
+      rightHip: [0.457, 0.489],
+      leftKnee: [0.484, 0.685],
+      rightKnee: [0.482, 0.68],
+      leftAnkle: [0.511, 0.862],
+      rightAnkle: [0.528, 0.849],
     }),
   },
 ];

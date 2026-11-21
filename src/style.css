@@ -298,3 +298,225 @@ button:disabled {
     max-width: 100%;
   }
 }
+
+/* ---------- Settings button + window (every screen) ---------- */
+
+.settings-button {
+  position: fixed;
+  top: 12px;
+  right: 12px;
+  z-index: 10;
+  width: 44px;
+  height: 44px;
+  border: 1px solid var(--gold);
+  border-radius: 50%;
+  background: rgba(20, 14, 10, 0.85);
+  font-size: 22px;
+  cursor: pointer;
+}
+
+dialog {
+  max-width: min(480px, calc(100vw - 32px));
+  border: 3px solid var(--gold);
+  background: #2b211a;
+  color: var(--text);
+  font-family: var(--serif);
+  text-align: left;
+}
+
+dialog::backdrop {
+  background: rgba(0, 0, 0, 0.6);
+}
+
+dialog h2 {
+  margin-top: 0;
+  font-weight: normal;
+  font-style: italic;
+  color: var(--gold-light);
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  text-align: left;
+}
+
+select,
+.name-input {
+  max-width: 100%;
+  padding: 6px 8px;
+  font: inherit;
+  font-size: 16px;
+}
+
+.help-note {
+  margin: 6px 0;
+  font-size: 13px;
+  font-style: italic;
+  color: var(--text-dim);
+}
+
+/* Short messages at the top ("Camera disconnected…") */
+.notice {
+  position: fixed;
+  top: 12px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 20;
+  max-width: calc(100vw - 120px);
+  padding: 10px 18px;
+  color: #2e1d05;
+  background: linear-gradient(#f8e8a6, #c99a3c);
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.6);
+}
+
+/* ---------- Start screen choices ---------- */
+
+.start-panel {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  align-items: flex-start;
+  gap: 16px 32px;
+  max-width: 1100px;
+  margin: 0 auto 32px;
+  padding: 16px;
+  border: 1px solid rgba(201, 154, 60, 0.4);
+  background: rgba(0, 0, 0, 0.25);
+}
+
+.choice {
+  border: none;
+  margin: 0;
+  padding: 0;
+  text-align: left;
+}
+
+.choice legend {
+  margin-bottom: 6px;
+  color: var(--gold-light);
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  font-size: 13px;
+}
+
+.choice label {
+  margin-right: 14px;
+  cursor: pointer;
+}
+
+#player-names {
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+#player-names[hidden] {
+  display: none;
+}
+
+.name-input {
+  width: 150px;
+}
+
+.camera-row {
+  max-width: 340px;
+  text-align: left;
+}
+
+#tour-start {
+  margin-bottom: 32px;
+}
+
+button.big {
+  padding: 16px 36px;
+  font-size: 22px;
+}
+
+/* ---------- Rounds ---------- */
+
+.round-label {
+  margin: 0 0 16px;
+  font-size: 24px;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--gold-light);
+}
+
+.timer {
+  margin-top: 6px;
+  font-size: 28px;
+  font-variant-numeric: tabular-nums;
+  color: var(--gold-light);
+}
+
+.score-two {
+  display: flex;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 8px 40px;
+  font-size: 48px;
+  font-weight: bold;
+}
+
+/* "Waiting for Player 2…" across the bottom of the camera picture */
+.waiting {
+  position: absolute;
+  left: 10px;
+  right: 10px;
+  bottom: 10px;
+  padding: 10px;
+  font-size: 24px;
+  color: var(--gold-light);
+  background: rgba(0, 0, 0, 0.6);
+}
+
+.break-screen {
+  padding-top: 25vh;
+}
+
+.break-score {
+  font-size: 40px;
+  color: var(--gold-light);
+}
+
+.winner {
+  font-size: 40px;
+  font-style: italic;
+  color: var(--gold-light);
+}
+
+/* ---------- Gallery Tour summary ---------- */
+
+.summary-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 24px;
+  max-width: 1100px;
+  margin: 0 auto;
+}
+
+.summary-item {
+  margin: 0;
+}
+
+.summary-item img {
+  width: 100%;
+  border: 6px solid var(--gold);
+  box-shadow: 0 10px 20px rgba(0, 0, 0, 0.6);
+}
+
+.summary-item figcaption {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  margin-top: 6px;
+}
+
+.summary-totals {
+  margin-top: 24px;
+  font-size: 22px;
+  color: var(--gold-light);
+}

@@ -123,25 +123,41 @@ function createLandmarker(
   });
 }
 
+/** How many people the model looks for right now. */
+let maxPeople = 1;
+
 /**
- * Find the pose in one video frame.
- * Returns the person's 33 landmarks plus the frame's aspect ratio, or null if
- * nobody was found (or the model hasn't finished loading).
+ * Look for 1 person (faster) or 2 people (2-player mode).
+ * Changing this rebuilds MediaPipe's pipeline, so only call it when the
+ * number actually changes.
  */
-export function detect(videoFrame: HTMLVideoElement): DetectedPose | null {
-  if (!landmarker) return null;
+export async function setMaxPeople(count: 1 | 2): Promise<void> {
+  if (!landmarker || count === maxPeople) return;
+  await landmarker.setOptions({ numPoses: count });
+  maxPeople = count;
+}
+
+/**
+ * Find everybody's pose in one video frame (at most setMaxPeople() people).
+ * Returns one DetectedPose per person found: an empty array if nobody was
+ * found, the model hasn't loaded yet, or the video has no picture yet.
+ */
+export function detectAll(videoFrame: HTMLVideoElement): DetectedPose[] {
+  // readyState < 2 means the video has no frame to look at (e.g. while
+  // switching cameras), and MediaPipe would throw an error.
+  if (!landmarker || videoFrame.readyState < 2 || videoFrame.videoWidth === 0) return [];
 
   // In VIDEO mode MediaPipe needs a timestamp (in ms) that always increases.
   const result = landmarker.detectForVideo(videoFrame, performance.now());
 
-  // result.landmarks has one entry per person. We asked for at most one.
-  const landmarks = result.landmarks[0];
-  if (!landmarks) return null;
+  // result.landmarks has one entry per person found.
+  const aspectRatio = videoFrame.videoWidth / videoFrame.videoHeight;
+  return result.landmarks.map((landmarks) => ({ landmarks, aspectRatio }));
+}
 
-  return {
-    landmarks,
-    aspectRatio: videoFrame.videoWidth / videoFrame.videoHeight,
-  };
+/** Find one person's pose (the first one found), or null. */
+export function detect(videoFrame: HTMLVideoElement): DetectedPose | null {
+  return detectAll(videoFrame)[0] ?? null;
 }
 
 /**

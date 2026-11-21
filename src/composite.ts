@@ -115,12 +115,15 @@ async function removeBackground(photo: HTMLCanvasElement): Promise<HTMLCanvasEle
  * @param photo    the webcam snapshot (already mirrored, as the player saw it)
  * @param painting the painting the player was copying
  * @param score    the final score 0..100, or null if there wasn't one
+ * @param scoreLine optional text for the plaque's last line instead of the
+ *                 score (used in 2-player mode: "Ana 81 · Ben 77 — Ana wins!")
  * @returns a new canvas with the finished picture, ready to show or download
  */
 export async function createFramedResult(
   photo: HTMLCanvasElement,
   painting: Painting,
   score: number | null,
+  scoreLine?: string,
 ): Promise<HTMLCanvasElement> {
   // If background removal fails (e.g. the model couldn't download), still
   // make a picture, just with the original background.
@@ -159,7 +162,7 @@ export async function createFramedResult(
   drawVarnish(ctx, pictureX, pictureY, pictureW, pictureH);
 
   drawGiltFrame(ctx, frameX, frameY, frameW, frameH, FRAME_THICKNESS);
-  drawPlaque(ctx, canvas.width / 2, frameY + frameH + PLAQUE_GAP, painting, score);
+  drawPlaque(ctx, canvas.width / 2, frameY + frameH + PLAQUE_GAP, painting, score, scoreLine);
 
   return canvas;
 }
@@ -346,6 +349,7 @@ function drawPlaque(
   top: number,
   painting: Painting,
   score: number | null,
+  customScoreLine?: string,
 ): void {
   const x = centreX - PLAQUE_WIDTH / 2;
   const w = PLAQUE_WIDTH;
@@ -377,7 +381,8 @@ function drawPlaque(
   ctx.textBaseline = "middle";
   engrave(ctx, `You, after ${painting.artist}`, centreX, top + 36, `bold 28px ${SERIF}`);
   engrave(ctx, `${painting.title}, ${painting.year}`, centreX, top + 70, `italic 20px ${SERIF}`);
-  const scoreLine = score === null ? "POSE MATCH: NOT SCORED" : `POSE MATCH: ${score} / 100`;
+  const scoreLine =
+    customScoreLine ?? (score === null ? "POSE MATCH: NOT SCORED" : `POSE MATCH: ${score} / 100`);
   engrave(ctx, scoreLine, centreX, top + 98, `bold 16px ${SERIF}`);
 }
 
