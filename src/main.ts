@@ -22,7 +22,7 @@ import { prepareTarget, scorePose, TOLERANCE_DEGREES } from "./scoring";
 import type { Difficulty, PoseScore, PreparedTarget } from "./scoring";
 import { BestHold, LandmarkSmoother, LiveScore } from "./smoothing";
 import { hintFor } from "./hints";
-import { formatScore, toScore } from "./format";
+import { formatScore, formatYear, toScore } from "./format";
 import { duckMusic, isMuted, playChime, playGuideChime, setMuted, startMusic } from "./audio";
 import {
   isNarrationOn,
@@ -315,6 +315,7 @@ function updateStartScreen(): void {
   const tour = selectedMode() === "tour";
   tourStart.hidden = !tour;
   paintingList.hidden = tour;
+  byId("single-start").hidden = tour;
   playerNamesBox.hidden = selectedPlayerCount() === 1;
 }
 
@@ -344,7 +345,7 @@ function showStart(): void {
     const title = document.createElement("strong");
     title.textContent = painting.title;
     const artist = document.createElement("span");
-    artist.textContent = `${painting.artist}, ${painting.year}`;
+    artist.textContent = `${painting.artist}, ${formatYear(painting.year)}`;
     label.append(title, artist);
 
     card.append(frame, label);
@@ -372,7 +373,7 @@ async function playGalleryTour(): Promise<void> {
     playRound: (painting, round, total) =>
       playRound(painting, { timeLimit: ROUND_SECONDS, label: `Round ${round} of ${total}` }),
     showBreak,
-  });
+  }, selectedDifficulty());
   if (results) showSummary(results);
 }
 
@@ -403,7 +404,7 @@ async function playRound(painting: Painting, options: RoundOptions): Promise<Rou
   // The museum placard beside the painting.
   placardTitle.textContent = painting.title;
   placardArtist.textContent = painting.artist;
-  placardYear.textContent = String(painting.year);
+  placardYear.textContent = formatYear(painting.year);
   placardFact.textContent = painting.funFact;
   roundLabel.textContent = options.label ?? "";
   roundLabel.hidden = !options.label;
@@ -1045,6 +1046,12 @@ backButton.addEventListener("click", () => {
 downloadButton.addEventListener("click", () => downloadResult());
 againButton.addEventListener("click", () => showStart());
 byId("tour-button").addEventListener("click", () => playGalleryTour());
+
+// "Surprise me": a random painting that has a target pose.
+byId("surprise-button").addEventListener("click", () => {
+  const playable = paintings.filter((painting) => painting.targetPose);
+  playSinglePainting(playable[Math.floor(Math.random() * playable.length)]);
+});
 byId("play-again-button").addEventListener("click", () => playGalleryTour());
 byId("to-start-button").addEventListener("click", () => showStart());
 

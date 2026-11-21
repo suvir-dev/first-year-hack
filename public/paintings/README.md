@@ -1,49 +1,57 @@
-# Painting images
+# Artwork images
 
-Put the painting images in this folder. A file here called `mona-lisa.jpg` is
+Put artwork images in this folder. A file here called `mona-lisa.jpg` is
 loaded by the app as `/paintings/mona-lisa.jpg`. The file names must match the
 `imageUrl` values in `src/paintings.ts`.
 
-## Where to get public-domain images
+**Where each image came from, and its licence, is listed in `CREDITS.md`**
+(section "Artworks"). Images are resized to at most 1200 px on the long side.
 
-Only use paintings that are in the **public domain**: usually the artist died
-more than 70 years ago, *and* the image is a straight photo of a 2D painting.
+## The rules for adding an artwork
 
-- **Wikimedia Commons**: https://commons.wikimedia.org. Search for the
-  painting and check that the file page has a "Public domain" licence box.
-  Click "Download" and choose a size around 1000–1500 px tall.
-- **The Met Open Access**: https://www.metmuseum.org/art/collection. Tick
-  "Open Access" in the filters.
-- **Rijksmuseum**: https://www.rijksmuseum.nl/en/rijksstudio. Free
-  downloads of their public-domain collection.
-- **National Gallery of Art (Washington) Open Access**: https://www.nga.gov/open-access-images.html
-- **Art Institute of Chicago**: https://www.artic.edu/collection. Filter by
-  "Public domain".
+- Exactly **one person** with a clear pose you can copy.
+- **Public domain**: the artist died more than 70 years ago.
+- The **image file** must be free to use too: public domain, CC0, or CC BY /
+  CC BY-SA (then credit the photographer in `CREDITS.md`).
+- Good sources: **Wikimedia Commons** (https://commons.wikimedia.org, check the
+  licence box on the file page), the **Cleveland Museum of Art Open Access**
+  (https://www.clevelandart.org/open-access, CC0), the **National Gallery of Art**
+  (https://www.nga.gov/open-access-images.html), the **Art Institute of Chicago**
+  (https://www.artic.edu/collection, "Public domain" filter).
 
-Write down where each image came from in the table below so you can credit it
-in the demo.
+Then make its target pose with the pose picker (main README, "Making a target
+pose"), and add it to `src/paintings.ts` and `CREDITS.md`.
 
-## Images the app uses
+## Famous works still to add
 
-All ten were downloaded from Wikimedia Commons, where each file is marked
-"Public domain", at 1280 px wide.
+While building the collection, Wikimedia Commons blocked our downloads
+("429 Too Many Requests"), so these famous works are **not in the app yet**.
+To add one: open https://commons.wikimedia.org, search for the file name below,
+download it, save it here under the suggested name, resize it
+(`sips -Z 1200 file.jpg` on a Mac), then make its target pose.
 
-| File name | Painting | Source |
-| --------- | -------- | ------ |
-| `napoleon-crossing-the-alps.jpg` | Napoleon Crossing the Alps, Jacques-Louis David | https://commons.wikimedia.org/wiki/File:David_-_Napoleon_crossing_the_Alps_-_Malmaison2.jpg |
-| `liberty-leading-the-people.jpg` | Liberty Leading the People, Eugène Delacroix | https://commons.wikimedia.org/wiki/File:Eug%C3%A8ne_Delacroix_-_Le_28_Juillet._La_Libert%C3%A9_guidant_le_peuple.jpg |
-| `the-creation-of-adam.jpg` | The Creation of Adam, Michelangelo | https://commons.wikimedia.org/wiki/File:Michelangelo_-_Creation_of_Adam_(cropped).jpg |
-| `washington-crossing-the-delaware.jpg` | Washington Crossing the Delaware, Emanuel Leutze | https://commons.wikimedia.org/wiki/File:Washington_Crossing_the_Delaware_by_Emanuel_Leutze,_MMA-NYC,_1851.jpg |
-| `oath-of-the-horatii.jpg` | Oath of the Horatii, Jacques-Louis David | https://commons.wikimedia.org/wiki/File:Jacques-Louis_David,_Le_Serment_des_Horaces.jpg |
-| `wanderer-above-the-sea-of-fog.jpg` | Wanderer above the Sea of Fog, Caspar David Friedrich | https://commons.wikimedia.org/wiki/File:Caspar_David_Friedrich_-_Wanderer_above_the_sea_of_fog.jpg |
-| `the-fifer.jpg` | The Fifer, Édouard Manet | https://commons.wikimedia.org/wiki/File:Manet,_Edouard_-_Young_Flautist,_or_The_Fifer,_1866_(2).jpg |
-| `the-blue-boy.jpg` | The Blue Boy, Thomas Gainsborough | https://commons.wikimedia.org/wiki/File:Thomas_Gainsborough_-_The_Blue_Boy_(c._1770).jpg |
-| `louis-xiv.jpg` | Louis XIV, Hyacinthe Rigaud | https://commons.wikimedia.org/wiki/File:Rigaud_Louis_XIV_1701.jpg |
-| `napoleon-in-his-study.jpg` | Napoleon in His Study, Jacques-Louis David | https://commons.wikimedia.org/wiki/File:Jacques-Louis_David_-_The_Emperor_Napoleon_in_His_Study_at_the_Tuileries_-_Google_Art_Project.jpg |
+| Artwork | Save as | Wikimedia Commons file name |
+| ------- | ------- | --------------------------- |
+| Discobolus (Roman copy of Myron) | `discobolus.jpg` | `Discobolus in National Roman Museum Palazzo Massimo alle Terme.JPG` |
+| David – Michelangelo | `david-michelangelo.jpg` | `Galleria dell'Accademia Michelangelo’s David, Florence 2019.jpg` |
+| David – Bernini | `david-bernini.jpg` | `David by Bernini, 1623-1624, Villa Borghese, Rome.jpg` |
+| David – Donatello | `david-donatello.jpg` | `David, Donatello, ca. 1440, Bargello Florenz-01-168.jpg` |
+| Apollo Belvedere | `apollo-belvedere.jpg` | `Belvedere Apollo Pio-Clementino Inv1015 n5.jpg` |
+| Vitruvian Man – Leonardo da Vinci | `vitruvian-man.jpg` | `Da Vinci Vitruve Luc Viatour.jpg` |
+| Mona Lisa – Leonardo da Vinci | `mona-lisa.jpg` | `Mona Lisa, by Leonardo da Vinci, from C2RMF retouched.jpg` |
+| Bacchus – Caravaggio | `bacchus.jpg` | `Bacchus by Caravaggio 1.jpg` |
+| The Sower – Millet | `the-sower.jpg` | `Jean-François Millet - The Sower - Google Art Project.jpg` |
+| The Desperate Man – Courbet | `the-desperate-man.jpg` | `Gustave Courbet - Le Désespéré (1843).jpg` |
+| Portrait of Henry VIII – after Holbein | `henry-viii.jpg` | `After Hans Holbein the Younger - Portrait of Henry VIII - Google Art Project.jpg` |
+| Madame X – Sargent | `madame-x.jpg` | `Sargent MadameX.jpeg` |
+| Whistler's Mother – Whistler | `whistlers-mother.jpg` | `Whistlers Mother high res.jpg` |
+| Self-Portrait at 28 – Dürer | `durer-self-portrait.jpg` | `Albrecht Dürer - 1500 self-portrait (High resolution and detail).jpg` |
+| Saint Sebastian – Mantegna | `saint-sebastian.jpg` | `Saint Sebastian by Mantegna (Louvre).jpg` |
+| Pope Innocent X – Velázquez | `innocent-x.jpg` | `Portrait of Pope Innocent X (by Diego Velázquez) - Doria Pamphilj Gallery, Rome.jpg` |
+| Adele Bloch-Bauer I – Klimt | `adele-bloch-bauer.jpg` | `Gustav Klimt, 1907, Adele Bloch-Bauer I, Neue Galerie New York.jpg` |
+| Little Dancer Aged Fourteen – Degas | `little-dancer.jpg` | `Edgar Degas, Little Dancer Aged Fourteen, 1878-1881, NGA 110292.jpg` |
+| George Washington (Lansdowne portrait) – Gilbert Stuart | `lansdowne-washington.jpg` | `Gilbert Stuart - George Washington - Google Art Project.jpg` |
+| Napoleon I on his Imperial Throne – Ingres | `napoleon-on-his-throne.jpg` | `Ingres, Napoleon on his Imperial throne.jpg` |
+| The Laughing Cavalier – Frans Hals | `laughing-cavalier.jpg` | `Frans Hals – The Laughing Cavalier.jpg` |
 
-After adding an image, give it a target pose with the pose picker (see the
-main README, "Making a target pose").
-
-Tips:
-- Keep images under about 1 MB so the gallery loads quickly.
-- Paintings with one clear, full-body figure work best for pose matching.
+The Thinker is already in the app (a Cleveland Museum of Art photo).

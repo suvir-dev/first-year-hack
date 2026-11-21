@@ -15,3 +15,8 @@ export function toScore(value: unknown): number {
 export function formatScore(value: unknown): string {
   return String(toScore(value));
 }
+
+/** A year for labels: 1801 -> "1801", -350 -> "c. 350 BCE". */
+export function formatYear(year: number): string {
+  return year < 0 ? `c. ${-year} BCE` : String(year);
+}

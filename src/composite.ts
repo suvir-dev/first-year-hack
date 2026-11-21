@@ -14,7 +14,7 @@
 
 import { FilesetResolver, ImageSegmenter } from "@mediapipe/tasks-vision";
 import { SELFIE_MODEL_URL, WASM_FOLDER_URL } from "./config";
-import { formatScore } from "./format";
+import { formatScore, formatYear } from "./format";
 import type { Painting } from "./paintings";
 
 // --- Sizes of the finished picture (in pixels) ---------------------------------
@@ -381,7 +381,7 @@ function drawPlaque(
   ctx.textAlign = "center";
   ctx.textBaseline = "middle";
   engrave(ctx, `You, after ${painting.artist}`, centreX, top + 36, `bold 28px ${SERIF}`);
-  engrave(ctx, `${painting.title}, ${painting.year}`, centreX, top + 70, `italic 20px ${SERIF}`);
+  engrave(ctx, `${painting.title}, ${formatYear(painting.year)}`, centreX, top + 70, `italic 20px ${SERIF}`);
   const scoreLine = customScoreLine ?? `POSE MATCH: ${formatScore(score)} / 100`;
   engrave(ctx, scoreLine, centreX, top + 98, `bold 16px ${SERIF}`);
 }

@@ -786,3 +786,21 @@ button.big {
 .label span {
   font-family: var(--sans);
 }
+
+/* "Pick a painting" + Surprise me */
+.single-start {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  align-items: center;
+  gap: 24px;
+  margin: 0 auto 28px;
+}
+
+.section-title {
+  margin: 0;
+  font-weight: normal;
+  font-style: italic;
+  font-size: 30px;
+  color: var(--gold-light);
+}

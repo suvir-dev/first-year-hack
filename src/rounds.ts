@@ -10,6 +10,7 @@
 
 import { paintings } from "./paintings";
 import type { Painting } from "./paintings";
+import type { Difficulty } from "./scoring";
 
 export const TOUR_LENGTH = 5;
 export const ROUND_SECONDS = 15;
@@ -32,29 +33,44 @@ export interface TourHooks {
   showBreak(result: RoundResult, roundNumber: number, totalRounds: number): Promise<void>;
 }
 
-/**
- * Choose the paintings for a tour: random order, no repeats, and only
- * paintings with exactly one person and a target pose.
- */
-export function pickTourPaintings(count = TOUR_LENGTH): Painting[] {
-  const suitable = paintings.filter((painting) => painting.onePerson && painting.targetPose);
-
-  // Shuffle (Fisher–Yates): walk backwards, swapping each painting with a
-  // random one at or before it. Every order is equally likely.
-  const shuffled = [...suitable];
-  for (let i = shuffled.length - 1; i > 0; i--) {
+/** Shuffle a list (Fisher–Yates): walk backwards, swapping each item with a
+ * random one at or before it. Every order is equally likely. */
+function shuffle<T>(items: T[]): T[] {
+  const list = [...items];
+  for (let i = list.length - 1; i > 0; i--) {
     const j = Math.floor(Math.random() * (i + 1));
-    [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+    [list[i], list[j]] = [list[j], list[i]];
   }
-  return shuffled.slice(0, count);
+  return list;
+}
+
+/** The paintings of the previous tour, so the next one can avoid them. */
+let previousTour = new Set<string>();
+
+/**
+ * Choose the paintings for a tour: random order, no repeats, only paintings
+ * with exactly one person and a target pose.
+ * - If at least `count` paintings match the chosen difficulty, use only those.
+ * - Paintings from the previous tour are used only if there aren't enough new ones.
+ */
+export function pickTourPaintings(difficulty?: Difficulty, count = TOUR_LENGTH): Painting[] {
+  let pool = paintings.filter((painting) => painting.onePerson && painting.targetPose);
+  const matching = pool.filter((painting) => painting.difficulty === difficulty);
+  if (matching.length >= count) pool = matching;
+
+  const fresh = shuffle(pool.filter((painting) => !previousTour.has(painting.id)));
+  const seenLastTime = shuffle(pool.filter((painting) => previousTour.has(painting.id)));
+  const chosen = [...fresh, ...seenLastTime].slice(0, count);
+  previousTour = new Set(chosen.map((painting) => painting.id));
+  return chosen;
 }
 
 /**
  * Play a whole Gallery Tour.
  * @returns every round's result, or null if the player quit part-way
  */
-export async function runGalleryTour(hooks: TourHooks): Promise<RoundResult[] | null> {
-  const chosen = pickTourPaintings();
+export async function runGalleryTour(hooks: TourHooks, difficulty?: Difficulty): Promise<RoundResult[] | null> {
+  const chosen = pickTourPaintings(difficulty);
   const results: RoundResult[] = [];
 
   for (let i = 0; i < chosen.length; i++) {
