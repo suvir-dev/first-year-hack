@@ -1,59 +1,67 @@
-# Strike a Pose, Old Masters
+# The Old Masters Arcade
 
-Pick a famous public-domain painting, copy the pose in front of your webcam,
-and get a live similarity score out of 100. At the end your photo is put in an
-ornate gold frame with the caption **"You, after <Artist>"**.
+Two art games on one website, in a dark museum-gallery theme:
+
+- **Strike a Pose, Old Masters** (`#/pose`): pick a famous public-domain
+  painting, copy the pose in front of your webcam and get a live similarity
+  score out of 100. At the end your photo is put in an ornate gold frame with
+  the caption **"You, after <Artist>"**.
+- **Art vs Music: Higher or Lower** (`#/higher-lower`, by Swarit): which has
+  more Wikipedia views, the masterpiece or the hit song?
 
 Everything runs in the browser: no backend, no API keys. Pose detection and
 background removal use Google's [MediaPipe](https://ai.google.dev/edge/mediapipe/solutions/vision/pose_landmarker)
-(`@mediapipe/tasks-vision`), and everything is drawn on an HTML `<canvas>`.
-
-
-## The site: two games in one
-
-Open the site and press "Enter the gallery" to reach the **hub**, then choose:
-
-- **Strike a Pose** (`#/pose`): copy famous artworks with your body (the
-  camera only runs while this game is open).
-- **Art vs Music: Higher or Lower** (`#/higher-lower`, by Swarit): which is
-  more famous on Wikipedia, the masterpiece or the hit song?
-
-The nav bar at the top works everywhere: the title goes home, "Switch game"
-jumps to the other game, 🎵 music, 🔊 sound effects, 🗣️ narration, ⚙️ settings.
-Both games share one theme (`src/shared/theme.css`) and one audio system
-(`src/audio.ts`); the music keeps playing when you switch.
-
-| Command | What it does |
-| ------- | ------------ |
-| `npm run test:all` | All tests: Vitest (pose game, router) + Higher or Lower's Node tests |
+(`@mediapipe/tasks-vision`), drawn on an HTML `<canvas>`. Higher or Lower is
+a small React app.
 
 ## Running it
 
-You need [Node.js](https://nodejs.org) version 20.19 or newer (the "LTS"
+You need [Node.js](https://nodejs.org) version 22.12 or newer (the "LTS"
 download is fine). Check with `node -v`.
 
 ```bash
-npm install      # once, downloads the libraries into node_modules/
+npm install      # once (and again after pulling: React was added)
 npm run dev      # starts the dev server
 ```
 
-Open the address it prints (http://localhost:5173) in Chrome, Edge or
-Firefox and allow camera access.
+Open the address it prints (http://localhost:5173) in Chrome, Edge, Safari or
+Firefox, press **Enter the gallery**, and choose a game on the hub. Allow
+camera access for Strike a Pose.
 
 > The camera only works on `http://localhost` or `https://`. Opening the page
 > through your computer's IP address (e.g. `http://192.168.1.5:5173`) will not
 > get camera access.
 
-Other commands:
+| Command                      | What it does                                            |
+| ---------------------------- | ------------------------------------------------------- |
+| `npm run test:all`           | All tests: Vitest (pose game, router) + Higher or Lower |
+| `npm test`                   | Just the Vitest checks in `tests/` (scoring, players, tour, router) |
+| `npm run test:higher-lower`  | Just Higher or Lower's Node tests                       |
+| `npm run typecheck`          | Checks the TypeScript for errors without building       |
+| `npm run build`              | Type-checks, then builds the final site into `dist/`    |
+| `npm run preview`            | Serves the built `dist/` folder locally                 |
+| `npm run narration`          | Re-makes the narration audio (see "Narration audio")    |
 
-| Command             | What it does                                         |
-| ------------------- | ---------------------------------------------------- |
-| `npm test`          | Runs the checks in `tests/` (scoring, 2-player logic) |
-| `npm run typecheck` | Checks the TypeScript for errors without building     |
-| `npm run build`     | Type-checks, then builds the final site into `dist/`  |
-| `npm run preview`   | Serves the built `dist/` folder locally               |
+## How the site fits together
 
-## What works so far
+- **Intro → hub → game.** "Enter the gallery" leads to the hub; each game has
+  its own address (`#/home`, `#/pose`, `#/higher-lower`), so links and the
+  browser's back button work (`src/router.ts`, `src/app.ts`).
+- **Nav bar** on every screen: the title goes home, **⇄ Switch game** jumps to
+  the other game, 🎵 music, 🔊 sound effects, 🗣️ narration, ⚙️ settings.
+- **The camera only runs in Strike a Pose.** Leaving it stops the camera, the
+  pose loop and the narration; coming back starts them again.
+- **One theme**: the design tokens (colours, spacing, fonts) are in
+  `src/shared/theme.css`. Every Higher or Lower style is scoped under
+  `#hl-root`, so the two games' CSS can't clash.
+- **One audio system** (`src/audio.ts`): one AudioContext, the same music
+  playing on without restarting when you switch games, and shared sound
+  effects (click, success, fail, celebration, whoosh). Music and effects
+  have separate on/off buttons, remembered in the browser.
+
+## What works
+
+**Strike a Pose**
 
 - [x] Museum-style gallery of public-domain artworks: **solo** paintings (one
       figure) and **duet** paintings (two figures)
@@ -65,50 +73,63 @@ Other commands:
       player = left figure, "Swap figures" to change), with name tags on the
       painting and per-figure results. 1 player never gets a duet.
 - [x] **Museum atmosphere**: animated intro, dark gallery wall, spotlight sweep
-      when a round starts, a placard with a fun fact beside each painting
-- [x] **Background music** (🎵 to mute): `public/audio/gallery.mp3` if you add one
+      (with a whoosh) when a round starts, a placard with a fun fact beside each painting
+- [x] **Background music** (🎵): `public/audio/gallery.mp3` if you add one
       (see `public/audio/README.md` for the licensing rules), otherwise soft
-      music generated in the browser. A chime plays when someone reaches 90+.
-- [x] **History narration** (🔊 to turn off): a museum-guide voice tells each
-      painting's story while you pose, with subtitles; the music dips meanwhile
+      music generated in the browser
+- [x] **History narration** (🗣️): a museum-guide voice tells each painting's
+      story while you pose, with subtitles; the music dips meanwhile
 - [x] **Camera picker** on the start screen and behind the ⚙️ button: built-in,
       USB, iPhone (Continuity Camera), Camo/DroidCam; remembered between visits
-- [x] Webcam starts, PoseLandmarker runs on every frame, skeleton drawn on the video
 - [x] Pose scoring by joint angles: big live score, limbs coloured green / amber / red
-- [x] A target pose for every painting (made with the pose picker, see below)
-- [x] 3-2-1 countdown, then a webcam snapshot
-- [x] Background removal, ornate gold frame, brass plaque with the score
+- [x] 3-2-1 countdown, then a webcam snapshot; background removal, ornate gold
+      frame and brass plaque
+- [x] **Big animated score** next to the framed photo (counts up, then a sound:
+      celebration at 90+, success at 70+, a gentle fail below 40), with the rank
+      under it; 2 players get a score each and a 🏆 Winner badge
 - [x] Download the framed portrait as a PNG, then "Try another"
+
+**Art vs Music: Higher or Lower**: see its own section below.
 
 ## Project structure
 
 ```
-index.html            The game page: one <section> per screen
+index.html            The page: intro, hub, nav bar, the pose game's screens, #hl-root
 src/
-  main.ts             App shell: screens, playRound(), camera loop, drawing
+  app.ts              Site entry: loads the theme, routes between hub and games
+  router.ts           Hash routes (#/home, #/pose, #/higher-lower)
+  shared/theme.css    Design tokens shared by the whole site
+  audio.ts            Music (file or generated), fades, ducking, chimes, sound effects
+
+  main.ts             Strike a Pose: screens, playRound(), camera loop, drawing,
+                      startPoseGame() / stopPoseGame()
   camera.ts           Start/stop/switch/list cameras, friendly camera errors
   rounds.ts           Gallery Tour: pick 5 paintings, play rounds, add up scores
-  audio.ts            Background music (file or generated), fades, ducking, chime
-  narrator.ts         Reads each painting's history aloud (Web Speech API)
+  narrator.ts         Reads each painting's history aloud (Piper files or Web Speech)
   players.ts          2-player mode: who is Player 1/2, who won
-
-  pose.ts             loadPoseModel(), detect(videoFrame), poseFromKeyJoints()
+  pose.ts             loadPoseModel(), detect(videoFrame)
   scoring.ts          The scoring maths: features, weights, prepareTarget(), scorePose()
   smoothing.ts        Steady scores over time: landmark smoothing, live score, best 1-second hold
   hints.ts            One plain-words tip for the worst limb
   landmarks.ts        Pose data helpers (no MediaPipe): KEY_JOINTS, poseFromKeyJoints(), mirrorPose()
-  paintings.ts        The 6 paintings: { id, title, artist, year, imageUrl, targetPose }
+  paintings.ts        The paintings and their figures' target poses
   composite.ts        Background removal + gold frame + plaque → canvas
   config.ts           All MediaPipe WASM/model URLs in one place
-  style.css           Styling
+  format.ts           Score formatting
+  style.css           Strike a Pose + hub + nav styling
+
+  games/higher-lower/ Art vs Music (React): Game.jsx, Leaderboard.jsx, game.js,
+                      deck.json, higher-lower.css, mount.jsx (mount/unmount)
 public/
-  paintings/          Painting images (served as /paintings/...)
-tests/
-  scoring.test.ts     Scoring checks (npm test)
-  players.test.ts     2-player checks (npm test)
+  paintings/          Strike a Pose painting images
+  art/                Higher or Lower artwork images
+  narration/          Pre-made narration audio (Piper)
+data/wiki/            Higher or Lower's Wikipedia data snapshot
+scripts/higher-lower/ Higher or Lower's data collect/build scripts
+tests/                Vitest checks (scoring, players, tour, router)
+tests/higher-lower/   Higher or Lower's Node tests and browser test
 tools/
   pose-picker.html    Developer tool for making target poses (not part of the game)
-  pose-picker.ts
 ```
 
 ## Narration audio (Piper)
@@ -219,12 +240,13 @@ Press **S** during a round for a debug overlay with every feature's numbers.
 | `LANDMARK_SMOOTHING` (0.5) | `src/smoothing.ts` | Lower = steadier but slower to follow you. |
 | `LIVE_WINDOW_MS` (500), `HOLD_WINDOW_MS` (1000) | `src/smoothing.ts` | Live-score averaging, and how long you must hold the pose. |
 
-## Who works on what
+## Who works on what (Strike a Pose)
 
 To avoid merge conflicts, each person only edits their own files:
 
 - **Person A: camera, pose, scoring, players** (`camera.ts`, `pose.ts`, `landmarks.ts`, `scoring.ts`, `smoothing.ts`, `hints.ts`, `players.ts`)
 - **Person B: paintings, composite, rounds, sound, UI screens** (`paintings.ts`, `composite.ts`, `rounds.ts`, `audio.ts`, `narrator.ts`, `main.ts`, `index.html`, `style.css`, `public/`)
+- **Swarit: Higher or Lower** (`src/games/higher-lower/`, `data/wiki/`, `scripts/higher-lower/`, `tests/higher-lower/`, `public/art/`)
 
 The modules only talk to each other through these functions and types, so if
 you keep the signatures the same, the other person's code keeps working:
@@ -260,37 +282,33 @@ in `.gitignore` because the files are large; each person downloads their own.)
 
 ## Contributors
 
-- Swarit Kapoor
+- Sachin Ragu
+- Suvir
+- Swarit Kapoor (Art vs Music: Higher or Lower)
 
 ## Higher or Lower: Art vs Music (by Swarit)
 
 The second game on the site (open `#/higher-lower`). Its code is in
 `src/games/higher-lower/` (React), its data in `data/wiki/` and its artwork
-images in `public/art/`.
+images in `public/art/`. It uses the site's theme, nav bar and audio.
 
-A React and Vite Higher or Lower game comparing paintings and sculptures with songs from the supplied Spotify CSV. The score metric is **Wikipedia article views from January 1, 2016 through December 31, 2025**, summed across linked Wikipedia language editions and desktop/mobile access.
+A Higher or Lower game comparing paintings and sculptures with songs from the supplied Spotify CSV. The score metric is **Wikipedia article views from January 1, 2016 through December 31, 2025**, summed across linked Wikipedia language editions and desktop/mobile access.
 
-### Install and play
+### Playing and testing
 
-Use Node.js 22.12 or newer and npm. The app opens at Vite’s root URL.
-
-```sh
-npm ci
-npm run dev
-npm run test:higher-lower
-npm run build
-npm run preview
-```
-
-The repository includes the generated deck, the source snapshot, and local artwork assets. Players need no credentials or metadata API calls. Browser-local scores are stored under `art-vs-music.wikipedia-2016-2025.scores`, separate from the earlier song-stream game.
-
-Run browser verification with an installed Google Chrome.
+It runs as part of the site (see "Running it" above): `npm run dev`, then
+choose **Art vs Music** on the hub.
 
 ```sh
-PLAYWRIGHT_CHANNEL=chrome npm run test:browser -- --timeout=60000
+npm run test:higher-lower   # its Node tests
 ```
 
-Alternatively, run `npx playwright install chromium` and then `npm run test:browser -- --timeout=60000`.
+The repository includes the generated deck, the source snapshot, and local artwork assets. Players need no credentials or metadata API calls. Browser-local scores are stored under `art-vs-music.wikipedia-2016-2025.scores`.
+
+Its browser test (`npm run test:browser`, Playwright with an installed Google
+Chrome: `PLAYWRIGHT_CHANNEL=chrome`) was written for the standalone game and
+still opens `/`, so it needs updating to open `/#/higher-lower` and press
+"Enter the gallery" first.
 
 ### Rules
 
@@ -300,7 +318,8 @@ Alternatively, run `npx playwright install chromium` and then `npm run test:brow
 - The 🔥 counter tracks consecutive correct answers. Every fourth correct answer repairs one broken heart as ❤️‍🩹, up to three lives. Mistakes reset the streak.
 - The final mistake reveals the last count. **Show results** opens the leaderboard and username entry. Sample scores are marked. Saved scores remain in the current browser.
 - **Play again** resets score, hearts, difficulty, streak, and history. It avoids repeating the previous opening pair when alternatives exist.
-- The rules popup closes with ×, Escape, or a click outside it. The speaker icon toggles the original instrumental loop, which starts on the first click or keypress. Correct guesses play a short original chime.
+- The rules popup closes with ×, Escape, or a click outside it. Music and sound effects come from the site's shared audio (🎵 and 🔊 in the nav bar): a success sound for a correct guess, a gentle fail for a wrong one, a whoosh as the cards slide, and a celebration for a new high score.
+- Game over shows the final score in the same big gold style as Strike a Pose.
 - Reduced motion shows final counts immediately and disables the slide/reveal animations.
 
 Difficulty uses `abs(log(challenger.views / anchor.views))`. The four ratio bands are at least 1.8, 1.4–under 1.8, 1.15–under 1.4, and greater than 1–under 1.15. Start at the widest band, move one band closer after success, and ease one band after a miss. Exclude same-category and equal-count items, prefer unseen eligible items, and randomly choose in the requested band. If it is empty, use the eligible items nearest its boundaries. Previously seen items cycle back once the unseen pool is exhausted.
@@ -355,20 +374,5 @@ To refresh data that is already cached, move `.cache/wiki/` aside before recolle
 Music cards use original vinyl sleeves with stable per-song colors and patterns. Art cards load local files from `public/art/`, preserving the full painting or sculpture image with `object-fit: contain`.
 
 Commons records in `data/wiki/images.json` preserve the file source URL, creator/photographer attribution, license and license URL when provided, and SHA-256. Expand **Image credit** under an art card for attribution and its Commons source link. Images are unmodified downloaded thumbnails. The snapshot accepts public-domain, CC0, CC BY, and CC BY-SA images. An unavailable image displays a designed fallback with the work’s metadata.
-
-### Review and push
-
-The app lives in the original IntelliJ project folder on `high_low_game`, tracking `origin/high_low_game`. Existing edits to `ideas.txt` or `tasks.txt` can be staged independently. Review the feature files in IntelliJ or scope the Git commands to them.
-
-```sh
-git branch --show-current
-git status --short
-feature_files=(.gitignore README.md index.html package.json package-lock.json playwright.config.js data scripts src test public/art)
-git add -A -- "${feature_files[@]}"
-git diff --cached --check -- "${feature_files[@]}"
-git diff --cached --stat -- "${feature_files[@]}"
-git commit --only -m "Build Art vs Music Wikipedia views game" -- "${feature_files[@]}"
-git push origin high_low_game
-```
 
 Created by Swarit Kapoor.
