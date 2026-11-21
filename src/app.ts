@@ -8,6 +8,7 @@
 // removes its React app. The background music keeps playing throughout.
 // ---------------------------------------------------------------------------
 
+import "./shared/theme.css"; // design tokens first, so every stylesheet can use them
 import { startPoseGame, stopPoseGame, whenSiteEntered } from "./main";
 import { mountHigherLower, unmountHigherLower } from "./games/higher-lower/mount.jsx";
 import { go, otherGame, startRouter } from "./router";

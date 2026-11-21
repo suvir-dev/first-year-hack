@@ -1,0 +1,54 @@
+/* theme.css: the site's design tokens, shared by the hub and both games.
+   ---------------------------------------------------------------------------
+   The pose game's museum look IS the site theme: dark gallery wall, cream
+   text, gold accents, Playfair Display headings. Change a token here and
+   every page follows. Loaded first (see src/app.ts).
+   --------------------------------------------------------------------------- */
+
+:root {
+  /* Colours */
+  --color-wall: #1c1316;          /* deep charcoal */
+  --color-wall-burgundy: #3a1820; /* burgundy tint of the wall */
+  --color-panel: rgba(16, 10, 12, 0.72);
+  --color-cream: #f6ecd6;         /* main text */
+  --color-cream-dim: #d2c3a3;     /* secondary text */
+  --color-ink: #2b1d0e;           /* dark text on light (placards, buttons) */
+  --color-gold-dark: #6e4a14;
+  --color-gold: #c99a3c;
+  --color-gold-light: #f8e8a6;
+  --color-good: #2ecc71;          /* green: 80+ */
+  --gold-gradient: linear-gradient(135deg, var(--color-gold-dark), var(--color-gold-light) 25%, var(--color-gold) 50%, var(--color-gold-light) 75%, var(--color-gold-dark));
+  --brass-gradient: linear-gradient(#f8e8a6, #c99a3c 55%, #9c7a32);
+
+  /* Spacing */
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 24px;
+  --space-6: 32px;
+  --space-7: 48px;
+
+  /* Corners */
+  --radius-sm: 4px;
+  --radius-md: 8px;
+  --radius-lg: 14px;
+  --radius-round: 999px;
+
+  /* Shadows */
+  --shadow-sm: 0 4px 10px rgba(0, 0, 0, 0.5);
+  --shadow-md: 0 10px 24px rgba(0, 0, 0, 0.6);
+  --shadow-lg: 0 18px 40px rgba(0, 0, 0, 0.7);
+  --glow-gold: 0 0 0 2px var(--color-gold), 0 0 18px rgba(248, 232, 166, 0.35);
+
+  /* Fonts */
+  --font-serif: "Playfair Display", Georgia, "Times New Roman", serif;
+  --font-sans: "Segoe UI", system-ui, -apple-system, Helvetica, Arial, sans-serif;
+
+  /* Timing */
+  --fast: 150ms ease;
+  --medium: 220ms ease;
+
+  /* Sizes */
+  --tap: 48px; /* the smallest comfortable size to click or tap */
+}
