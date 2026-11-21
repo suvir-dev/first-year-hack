@@ -1,17 +1,19 @@
 /* style.css: make it feel like a museum.
-   Dark wall, a warm spotlight from above, gold frames, brass labels and
-   serif fonts. The fonts are ones already on most computers, so nothing
-   needs downloading (handy if the Wi-Fi is bad). */
+   Deep charcoal/burgundy wall, a warm spotlight from above, gold frames,
+   brass labels. Headings use "Playfair Display" (Google Fonts) and fall back
+   to Georgia without internet; small text uses a clean sans-serif.
+   Text is large and high-contrast so it reads well on a projector. */
 
 :root {
-  --wall: #221a14;
-  --wall-light: #3a2c20;
-  --text: #f1e4c6;
-  --text-dim: #bfae8c;
+  --wall: #1c1316;
+  --wall-burgundy: #3a1820;
+  --text: #f6ecd6;
+  --text-dim: #d2c3a3;
   --gold-dark: #6e4a14;
   --gold: #c99a3c;
   --gold-light: #f8e8a6;
-  --serif: "Palatino Linotype", Palatino, "Book Antiqua", Georgia, serif;
+  --serif: "Playfair Display", Georgia, "Times New Roman", serif;
+  --sans: "Segoe UI", system-ui, -apple-system, Helvetica, Arial, sans-serif;
 }
 
 * {
@@ -24,13 +26,15 @@ body {
   padding: 24px 16px 48px;
   color: var(--text);
   font-family: var(--serif);
+  font-size: 18px;
   text-align: center;
-  /* Layer 1: warm spotlight from the top. Layer 2: faint wallpaper stripes.
-     Layer 3: the dark wall colour. */
+  /* Layers, top to bottom: dark corners (vignette), a warm spotlight from
+     the top, faint wallpaper stripes, the charcoal-to-burgundy wall. */
   background:
-    radial-gradient(ellipse 80% 55% at 50% -5%, rgba(255, 205, 140, 0.28), transparent 70%),
-    repeating-linear-gradient(90deg, rgba(255, 255, 255, 0.02) 0 14px, transparent 14px 28px),
-    var(--wall);
+    radial-gradient(ellipse at 50% 45%, transparent 45%, rgba(0, 0, 0, 0.6) 100%),
+    radial-gradient(ellipse 80% 55% at 50% -5%, rgba(255, 205, 140, 0.25), transparent 70%),
+    repeating-linear-gradient(90deg, rgba(255, 255, 255, 0.018) 0 14px, transparent 14px 28px),
+    linear-gradient(160deg, var(--wall) 0%, var(--wall-burgundy) 55%, var(--wall) 100%);
   background-attachment: fixed;
 }
 
@@ -49,7 +53,8 @@ body {
   margin: 0;
   letter-spacing: 0.35em;
   text-transform: uppercase;
-  font-size: 13px;
+  font-family: var(--sans);
+  font-size: 14px;
   color: var(--text-dim);
 }
 
@@ -66,6 +71,7 @@ h1 {
 .status {
   color: var(--text-dim);
   font-style: italic;
+  font-size: 20px;
 }
 
 .screen-title {
@@ -299,21 +305,7 @@ button:disabled {
   }
 }
 
-/* ---------- Settings button + window (every screen) ---------- */
-
-.settings-button {
-  position: fixed;
-  top: 12px;
-  right: 12px;
-  z-index: 10;
-  width: 44px;
-  height: 44px;
-  border: 1px solid var(--gold);
-  border-radius: 50%;
-  background: rgba(20, 14, 10, 0.85);
-  font-size: 22px;
-  cursor: pointer;
-}
+/* ---------- Settings window ---------- */
 
 dialog {
   max-width: min(480px, calc(100vw - 32px));
@@ -552,4 +544,245 @@ button.big {
   color: #b8ffb8;
   background: rgba(0, 0, 0, 0.82);
   pointer-events: none;
+}
+
+
+/* ---------- Toolbar: music, narration, settings (every screen) ---------- */
+
+.toolbar {
+  position: fixed;
+  top: 12px;
+  right: 12px;
+  z-index: 10;
+  display: flex;
+  gap: 8px;
+}
+
+.round-button {
+  width: 48px;
+  height: 48px;
+  border: 1px solid var(--gold);
+  border-radius: 50%;
+  background: rgba(20, 12, 14, 0.85);
+  font-size: 22px;
+  cursor: pointer;
+}
+
+.round-button.off {
+  opacity: 0.55;
+}
+
+/* ---------- Intro screen ---------- */
+
+.intro {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: calc(100vh - 72px);
+  animation: fade-in 1.6s ease both;
+}
+
+.intro-title {
+  font-size: clamp(44px, 8vw, 96px);
+  margin: 12px 0;
+  animation: fade-in 1.6s ease 0.3s both;
+}
+
+.intro-tagline {
+  font-size: 28px;
+  font-style: italic;
+  color: var(--text-dim);
+  animation: fade-in 1.6s ease 0.8s both;
+}
+
+/* A start button inside a little gold frame */
+.intro-button {
+  margin-top: 28px;
+  padding: 18px 48px;
+  font-family: var(--serif);
+  font-size: 26px;
+  color: var(--gold-light);
+  background: #1a1012;
+  border: 10px solid transparent;
+  border-image: linear-gradient(135deg, var(--gold-dark), var(--gold-light) 30%, var(--gold) 50%, var(--gold-light) 70%, var(--gold-dark)) 1;
+  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.7);
+  cursor: pointer;
+  animation: fade-in 1.6s ease 1.2s both;
+  transition: transform 0.2s;
+}
+
+.intro-button:hover,
+.intro-button:focus-visible {
+  transform: scale(1.04);
+}
+
+@keyframes fade-in {
+  from { opacity: 0; transform: translateY(12px); }
+  to { opacity: 1; transform: none; }
+}
+
+/* ---------- The painting under its spotlight, with a placard ---------- */
+
+.painting-wall {
+  position: relative;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  align-items: flex-end;
+  gap: 20px;
+}
+
+/* Warm spotlight glow above the painting */
+.painting-wall::before {
+  content: "";
+  position: absolute;
+  left: -40px;
+  right: -40px;
+  top: -80px;
+  height: 70%;
+  background: radial-gradient(closest-side, rgba(255, 214, 150, 0.32), transparent);
+  pointer-events: none;
+  z-index: -1;
+}
+
+.placard {
+  width: 210px;
+  padding: 16px 18px;
+  text-align: left;
+  font-family: var(--sans);
+  color: #2b1d0e;
+  background: linear-gradient(#fbf3df, #efe2c2);
+  border-left: 4px solid var(--gold);
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.6);
+}
+
+.placard h3 {
+  margin: 0 0 6px;
+  font-family: var(--serif);
+  font-size: 22px;
+  line-height: 1.2;
+}
+
+.placard p {
+  margin: 4px 0;
+  font-size: 16px;
+}
+
+.placard-artist {
+  font-weight: 600;
+}
+
+.placard-fact {
+  margin-top: 10px !important;
+  padding-top: 10px;
+  border-top: 1px solid rgba(43, 29, 14, 0.25);
+  font-style: italic;
+}
+
+/* Painting + placard + webcam must fit side by side on a laptop/projector */
+#painting-image {
+  max-width: min(26vw, 480px);
+  max-height: 56vh;
+}
+
+#camera-canvas {
+  max-width: min(40vw, 760px);
+}
+
+/* The webcam fades in after the spotlight has found the painting */
+#camera-exhibit.appear {
+  animation: fade-in 0.7s ease 1s both;
+}
+
+/* ---------- Spotlight sweep when a round starts ---------- */
+
+/* Lets the browser animate the spotlight's position smoothly. */
+@property --spot-x {
+  syntax: "<percentage>";
+  inherits: false;
+  initial-value: 110%;
+}
+
+/* --target-x / --target-y = where the painting is (set by main.ts). */
+.sweep {
+  --target-x: 30%;
+  --target-y: 35%;
+  position: fixed;
+  inset: 0;
+  z-index: 15;
+  pointer-events: none;
+  /* Dark everywhere except a circle of light at --spot-x */
+  background: radial-gradient(circle at var(--spot-x) var(--target-y), transparent 0, transparent 15vw, rgba(5, 2, 3, 0.94) 32vw);
+}
+
+.sweep.play {
+  animation: sweep 1.6s ease-in-out forwards;
+}
+
+@keyframes sweep {
+  0% { --spot-x: 110%; opacity: 1; }
+  65% { --spot-x: var(--target-x); opacity: 1; }
+  100% { --spot-x: var(--target-x); opacity: 0; }
+}
+
+/* ---------- Narration subtitles ---------- */
+
+.subtitles {
+  position: fixed;
+  left: 50%;
+  bottom: 12px;
+  z-index: 12;
+  transform: translateX(-50%);
+  width: min(900px, calc(100vw - 32px));
+  padding: 10px 18px;
+  pointer-events: none; /* never blocks the buttons underneath */
+  font-family: var(--sans);
+  font-size: 22px;
+  line-height: 1.4;
+  color: rgba(255, 255, 255, 0.55);
+  background: rgba(0, 0, 0, 0.75);
+  border-radius: 6px;
+}
+
+.subtitles .current {
+  color: #ffffff;
+}
+
+/* ---------- Footer and credits ---------- */
+
+.site-footer {
+  position: fixed;
+  left: 12px;
+  bottom: 8px;
+  z-index: 10;
+}
+
+.link-button {
+  padding: 4px 6px;
+  border: none;
+  background: none;
+  font-family: var(--sans);
+  font-size: 14px;
+  color: var(--text-dim);
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+.credits-text {
+  max-height: 60vh;
+  overflow: auto;
+  white-space: pre-wrap;
+  font-family: var(--sans);
+  font-size: 15px;
+}
+
+/* Small text in a clean sans-serif */
+.help-note,
+.status,
+.best-hold,
+.notice,
+.choice label,
+.label span {
+  font-family: var(--sans);
 }

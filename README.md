@@ -41,6 +41,13 @@ Other commands:
       paintings, 15 seconds each, then a summary with every photo and the totals)
 - [x] **2-player mode** on one camera: left person = Player 1, each with their own
       colour, name and live score; the winner is announced (a draw if within 2 points)
+- [x] **Museum atmosphere**: animated intro, dark gallery wall, spotlight sweep
+      when a round starts, a placard with a fun fact beside each painting
+- [x] **Background music** (🎵 to mute): `public/audio/gallery.mp3` if you add one
+      (see `public/audio/README.md` for the licensing rules), otherwise soft
+      music generated in the browser. A chime plays when someone reaches 90+.
+- [x] **History narration** (🔊 to turn off): a museum-guide voice tells each
+      painting's story while you pose, with subtitles; the music dips meanwhile
 - [x] **Camera picker** on the start screen and behind the ⚙️ button: built-in,
       USB, iPhone (Continuity Camera), Camo/DroidCam; remembered between visits
 - [x] Webcam starts, PoseLandmarker runs on every frame, skeleton drawn on the video
@@ -58,6 +65,8 @@ src/
   main.ts             App shell: screens, playRound(), camera loop, drawing
   camera.ts           Start/stop/switch/list cameras, friendly camera errors
   rounds.ts           Gallery Tour: pick 5 paintings, play rounds, add up scores
+  audio.ts            Background music (file or generated), fades, ducking, chime
+  narrator.ts         Reads each painting's history aloud (Web Speech API)
   players.ts          2-player mode: who is Player 1/2, who won
 
   pose.ts             loadPoseModel(), detect(videoFrame), poseFromKeyJoints()
@@ -156,7 +165,7 @@ Press **S** during a round for a debug overlay with every feature's numbers.
 To avoid merge conflicts, each person only edits their own files:
 
 - **Person A: camera, pose, scoring, players** (`camera.ts`, `pose.ts`, `landmarks.ts`, `scoring.ts`, `smoothing.ts`, `hints.ts`, `players.ts`)
-- **Person B: paintings, composite, rounds, UI screens** (`paintings.ts`, `composite.ts`, `rounds.ts`, `main.ts`, `index.html`, `style.css`, `public/paintings/`)
+- **Person B: paintings, composite, rounds, sound, UI screens** (`paintings.ts`, `composite.ts`, `rounds.ts`, `audio.ts`, `narrator.ts`, `main.ts`, `index.html`, `style.css`, `public/`)
 
 The modules only talk to each other through these functions and types, so if
 you keep the signatures the same, the other person's code keeps working:

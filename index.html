@@ -6,10 +6,21 @@
     <!-- No icon file: this empty one stops the browser asking for favicon.ico -->
     <link rel="icon" href="data:," />
     <title>Strike a Pose, Old Masters</title>
+    <!-- Elegant serif for headings. Without internet it falls back to Georgia. -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      rel="stylesheet"
+      href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;1,400&display=swap"
+    />
   </head>
   <body>
-    <!-- Settings button, visible on every screen -->
-    <button id="settings-button" class="settings-button" title="Settings" aria-label="Settings">⚙️</button>
+    <!-- Buttons visible on every screen: music, narration, settings -->
+    <div class="toolbar">
+      <button id="music-button" class="round-button" title="Music on/off" aria-label="Music on/off">🎵</button>
+      <button id="narration-button" class="round-button" title="Narration on/off" aria-label="Narration on/off">🔊</button>
+      <button id="settings-button" class="round-button" title="Settings" aria-label="Settings">⚙️</button>
+    </div>
 
     <!-- Settings window (a <dialog> pops up over the page) -->
     <dialog id="settings-dialog">
@@ -25,11 +36,26 @@
       <form method="dialog"><button class="brass">Done</button></form>
     </dialog>
 
+    <!-- Credits window: shows CREDITS.md (main.ts loads it) -->
+    <dialog id="credits-dialog">
+      <h2>Credits</h2>
+      <pre id="credits-text" class="credits-text"></pre>
+      <form method="dialog"><button class="brass">Close</button></form>
+    </dialog>
+
     <!-- Short messages that appear for a few seconds ("Camera disconnected…") -->
     <div id="notice" class="notice" hidden></div>
 
+    <!-- Screen 0: the intro (fades in when the page opens) -->
+    <section id="screen-intro" class="intro">
+      <p class="eyebrow">The Gallery of</p>
+      <h1 class="intro-title">Strike a Pose, Old Masters</h1>
+      <p class="intro-tagline">Step into the painting</p>
+      <button id="intro-button" class="intro-button">Enter the gallery</button>
+    </section>
+
     <!-- Screen 1: the start screen. main.ts fills #painting-list with cards. -->
-    <section id="screen-gallery">
+    <section id="screen-gallery" hidden>
       <header class="museum-header">
         <p class="eyebrow">The Gallery of</p>
         <h1>Strike a Pose, Old Masters</h1>
@@ -84,11 +110,19 @@
     <section id="screen-challenge" hidden>
       <p id="round-label" class="round-label" hidden></p>
       <div class="side-by-side">
-        <figure class="exhibit">
-          <div class="gilt"><img id="painting-image" alt="" /></div>
-          <figcaption id="painting-caption" class="label"></figcaption>
-        </figure>
-        <figure class="exhibit">
+        <!-- The painting under a warm spotlight, with its museum placard -->
+        <div class="painting-wall">
+          <figure class="exhibit">
+            <div class="gilt"><img id="painting-image" alt="" /></div>
+          </figure>
+          <aside class="placard">
+            <h3 id="placard-title"></h3>
+            <p id="placard-artist" class="placard-artist"></p>
+            <p id="placard-year" class="placard-year"></p>
+            <p id="placard-fact" class="placard-fact"></p>
+          </aside>
+        </div>
+        <figure id="camera-exhibit" class="exhibit">
           <div class="gilt camera">
             <canvas id="camera-canvas"></canvas>
             <div id="waiting" class="waiting" hidden></div>
@@ -110,6 +144,13 @@
         <button id="back-button" class="plain">Back to start</button>
       </div>
     </section>
+
+    <!-- Spotlight sweep when a round starts: the screen dims and a spotlight
+         moves onto the painting -->
+    <div id="sweep" class="sweep" hidden></div>
+
+    <!-- Subtitles of the narrator, current sentence highlighted -->
+    <div id="subtitles" class="subtitles" hidden></div>
 
     <!-- Debug overlay: press S during a round to see every feature's numbers -->
     <pre id="debug" class="debug" hidden></pre>
@@ -144,6 +185,10 @@
         <button id="to-start-button" class="plain">Back to start</button>
       </div>
     </section>
+
+    <footer class="site-footer">
+      <button id="credits-button" class="link-button">Music credits</button>
+    </footer>
 
     <!-- The webcam plays here. It is kept out of sight because we draw it
          onto the canvas instead (see main.ts). -->

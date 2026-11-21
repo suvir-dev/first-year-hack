@@ -22,6 +22,10 @@ import { prepareTarget, scorePose, TOLERANCE_DEGREES } from "./scoring";
 import type { Difficulty, PoseScore, PreparedTarget } from "./scoring";
 import { BestHold, LandmarkSmoother, LiveScore } from "./smoothing";
 import { hintFor } from "./hints";
+import { duckMusic, isMuted, playChime, setMuted, startMusic } from "./audio";
+import { isNarrationOn, narrate, setNarrationOn, splitSentences, stopNarration } from "./narrator";
+// The text of CREDITS.md, bundled into the app by Vite ("?raw" = as plain text).
+import creditsMarkdown from "../CREDITS.md?raw";
 import { paintings } from "./paintings";
 import type { Painting } from "./paintings";
 import { createFramedResult, loadSegmenter } from "./composite";
@@ -40,6 +44,7 @@ function byId<T extends HTMLElement>(id: string): T {
 }
 
 const screens = {
+  intro: byId("screen-intro"),
   gallery: byId("screen-gallery"),
   challenge: byId("screen-challenge"),
   break: byId("screen-break"),
@@ -58,7 +63,15 @@ const notice = byId("notice");
 
 const roundLabel = byId("round-label");
 const paintingImage = byId<HTMLImageElement>("painting-image");
-const paintingCaption = byId("painting-caption");
+const placardTitle = byId("placard-title");
+const placardArtist = byId("placard-artist");
+const placardYear = byId("placard-year");
+const placardFact = byId("placard-fact");
+const cameraExhibit = byId("camera-exhibit");
+const sweep = byId("sweep");
+const subtitles = byId("subtitles");
+const musicButton = byId<HTMLButtonElement>("music-button");
+const narrationButton = byId<HTMLButtonElement>("narration-button");
 const video = byId<HTMLVideoElement>("video");
 const cameraCanvas = byId<HTMLCanvasElement>("camera-canvas");
 const ctx = cameraCanvas.getContext("2d")!;
@@ -120,6 +133,8 @@ let lastHintTime = 0;
 const HINT_INTERVAL_MS = 1000;
 /** The debug overlay (press S) is showing. */
 let debugOn = false;
+/** Has each player already heard the 90+ chime this round? */
+let celebrated = [false, false];
 /** Decides which body is Player 1 and which is Player 2. */
 const tracker = new PlayerTracker();
 /** Lets the buttons finish or quit the round that is running. */
@@ -295,6 +310,7 @@ function updateStartScreen(): void {
 /** Build one framed card per painting. Clicking a card starts that painting. */
 function showStart(): void {
   stopCameraLoop();
+  stopNarrating();
   paintingList.innerHTML = "";
 
   for (const painting of paintings) {
@@ -358,6 +374,11 @@ interface RoundOptions {
   timeLimit: number | null;
   /** Text at the top of the screen, e.g. "Round 2 of 5" (null = none). */
   label: string | null;
+  /**
+   * Read the painting's history aloud while posing (default: yes). A future
+   * "Guess the Painting" mode must pass false, or it would give the answer away.
+   */
+  narrate?: boolean;
 }
 
 /**
@@ -368,7 +389,11 @@ async function playRound(painting: Painting, options: RoundOptions): Promise<Rou
   currentPainting = painting;
   paintingImage.src = painting.imageUrl;
   paintingImage.alt = `${painting.title} by ${painting.artist}`;
-  paintingCaption.textContent = `${painting.title}, ${painting.artist} (${painting.year})`;
+  // The museum placard beside the painting.
+  placardTitle.textContent = painting.title;
+  placardArtist.textContent = painting.artist;
+  placardYear.textContent = String(painting.year);
+  placardFact.textContent = painting.funFact;
   roundLabel.textContent = options.label ?? "";
   roundLabel.hidden = !options.label;
   timerText.hidden = options.timeLimit === null;
@@ -384,6 +409,7 @@ async function playRound(painting: Painting, options: RoundOptions): Promise<Rou
   liveScores.forEach((live) => live.reset());
   bestHolds.forEach((hold) => hold.reset());
   tracker.reset();
+  celebrated = [false, false];
   hintText.textContent = "";
   updateScoreDisplay();
 
@@ -404,6 +430,7 @@ async function playRound(painting: Painting, options: RoundOptions): Promise<Rou
   backButton.disabled = false;
   statusText.textContent = "Getting the camera ready…";
   showScreen("challenge");
+  const sweepDone = playSpotlightSweep();
 
   // Wait for the camera + model (normally ready long before this).
   if (!(await ready)) {
@@ -412,13 +439,19 @@ async function playRound(painting: Painting, options: RoundOptions): Promise<Rou
     return null;
   }
   await setMaxPeople(players.length === 2 ? 2 : 1);
+  startCameraLoop();
+  await sweepDone;
+  // The player may have pressed "Back to start" during the sweep.
+  if (screens.challenge.hidden) {
+    stopCameraLoop();
+    return null;
+  }
 
   statusText.textContent =
     players.length === 2
       ? "Both copy the same figure! Player 1 stands on the left."
       : 'Copy the pose! When the score is high, press "Take my portrait".';
   readyButton.disabled = false;
-  startCameraLoop();
 
   return new Promise((resolve) => {
     let finished = false;
@@ -428,6 +461,7 @@ async function playRound(painting: Painting, options: RoundOptions): Promise<Rou
       if (finished) return;
       finished = true;
       clearInterval(timerId);
+      stopNarrating(); // the round is over: stop talking
       roundControl = null;
       readyButton.disabled = true;
 
@@ -468,6 +502,9 @@ async function playRound(painting: Painting, options: RoundOptions): Promise<Rou
       },
       quit: () => finish(false),
     };
+
+    // The museum guide tells the painting's story while you pose.
+    if (options.narrate !== false) startNarration(painting.history);
 
     // Gallery Tour: count down the seconds, then take the photo automatically.
     if (options.timeLimit !== null) {
@@ -521,6 +558,11 @@ function startCameraLoop(): void {
         if (!pose || !target) return null;
         const result = scorePose(pose, target, { difficulty });
         currentScores[i] = liveScores[i].add(result.overall, now);
+        // A little chime the first time someone reaches 90 in a round.
+        if (currentScores[i] >= 90 && !celebrated[i]) {
+          celebrated[i] = true;
+          playChime();
+        }
         // Only frames where we can see (most of) the body count towards the
         // final score.
         bestHolds[i].add(result.inFrame ? result.overall : null, now);
@@ -886,6 +928,73 @@ function downloadResult(): void {
   link.click();
 }
 
+// =============================================================================
+// Spotlight sweep and narration
+// =============================================================================
+
+/**
+ * The start of a round: the screen dims, a spotlight sweeps onto the
+ * painting, then the webcam view fades in (the animation is in style.css).
+ * Resolves when it's done (about 1.6 s).
+ */
+async function playSpotlightSweep(): Promise<void> {
+  // Aim the spotlight at the painting's centre (as % of the screen).
+  const box = paintingImage.getBoundingClientRect();
+  sweep.style.setProperty("--target-x", `${((box.left + box.width / 2) / window.innerWidth) * 100}%`);
+  sweep.style.setProperty("--target-y", `${((box.top + box.height / 2) / window.innerHeight) * 100}%`);
+
+  // Removing and re-adding the class restarts the CSS animations.
+  sweep.hidden = false;
+  sweep.classList.remove("play");
+  cameraExhibit.classList.remove("appear");
+  void sweep.offsetWidth; // forces the browser to notice the removal
+  sweep.classList.add("play");
+  cameraExhibit.classList.add("appear");
+  await wait(1600);
+  sweep.hidden = true;
+}
+
+/** Read the history aloud, with subtitles and the music turned down. */
+function startNarration(text: string): void {
+  // One <span> per sentence, so the current one can be highlighted.
+  subtitles.innerHTML = "";
+  for (const sentence of splitSentences(text)) {
+    const span = document.createElement("span");
+    span.textContent = sentence + " ";
+    subtitles.appendChild(span);
+  }
+
+  narrate(text, {
+    onSentence: (index) => {
+      if (index === 0) duckMusic(true);
+      subtitles.hidden = false;
+      [...subtitles.children].forEach((span, i) => span.classList.toggle("current", i === index));
+    },
+    onDone: endNarration,
+  });
+}
+
+/** Narration finished: hide the subtitles and bring the music back up. */
+function endNarration(): void {
+  subtitles.hidden = true;
+  duckMusic(false);
+}
+
+/** Stop the narrator straight away (round over, or narration switched off). */
+function stopNarrating(): void {
+  stopNarration();
+  endNarration();
+}
+
+/** Show the music and narration buttons' current state. */
+function updateSoundButtons(): void {
+  musicButton.textContent = isMuted() ? "🔇" : "🎵";
+  musicButton.title = isMuted() ? "Music is off (click to turn on)" : "Music is on (click to mute)";
+  narrationButton.textContent = isNarrationOn() ? "🔊" : "🔈";
+  narrationButton.classList.toggle("off", !isNarrationOn());
+  narrationButton.title = isNarrationOn() ? "Narration is on (click to turn off)" : "Narration is off (click to turn on)";
+}
+
 // --- Buttons and inputs ---------------------------------------------------------
 
 readyButton.addEventListener("click", () => roundControl?.takePhoto());
@@ -911,6 +1020,28 @@ for (const select of cameraSelects) {
 
 byId("settings-button").addEventListener("click", () => settingsDialog.showModal());
 
+musicButton.addEventListener("click", () => {
+  setMuted(!isMuted());
+  updateSoundButtons();
+});
+
+narrationButton.addEventListener("click", () => {
+  setNarrationOn(!isNarrationOn());
+  if (!isNarrationOn()) endNarration();
+  updateSoundButtons();
+});
+
+byId("credits-text").textContent = creditsMarkdown;
+byId("credits-button").addEventListener("click", () => byId<HTMLDialogElement>("credits-dialog").showModal());
+
+// The intro button: this first click is also what lets the browser play
+// sound, so the music starts here. Then the camera starts.
+byId("intro-button").addEventListener("click", () => {
+  startMusic();
+  ready = prepare();
+  showStart();
+});
+
 retryButton.addEventListener("click", () => {
   ready = prepare();
 });
@@ -920,5 +1051,5 @@ watchCameras(() => {
 });
 
 // --- Start the app -----------------------------------------------------------
-showStart();
-ready = prepare();
+updateSoundButtons();
+showScreen("intro");
