@@ -1,0 +1,77 @@
+/* Basic styling. TODO (Person B): make it look like a museum. */
+
+body {
+  margin: 0;
+  padding: 16px;
+  background: #1a1410;
+  color: #e8d9a8;
+  font-family: Georgia, serif;
+  text-align: center;
+}
+
+/* The [hidden] attribute hides screens; make sure nothing overrides it. */
+[hidden] {
+  display: none !important;
+}
+
+button {
+  margin: 6px;
+  padding: 10px 18px;
+  font: inherit;
+  cursor: pointer;
+}
+
+#painting-list {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.side-by-side {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  align-items: center;
+  gap: 16px;
+}
+
+figure {
+  margin: 0;
+}
+
+#painting-image {
+  max-height: 60vh;
+  max-width: 40vw;
+}
+
+.camera {
+  position: relative;
+}
+
+#camera-canvas,
+#result-holder canvas {
+  max-width: 100%;
+  max-height: 60vh;
+}
+
+#countdown {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 120px;
+}
+
+#score {
+  font-size: 32px;
+}
+
+/* Keeps the <video> playing but invisible (display: none can pause it in some browsers). */
+.offscreen {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  opacity: 0;
+  pointer-events: none;
+}
