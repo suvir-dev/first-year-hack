@@ -240,8 +240,17 @@ async function prepare(): Promise<boolean> {
 // Camera dropdowns (start screen + settings window)
 // =============================================================================
 
+/** Show the running camera in the small preview on the setup panel. */
+function updateCameraPreview(): void {
+  const preview = byId<HTMLVideoElement>("camera-preview");
+  preview.srcObject = video.srcObject; // the same stream, shown twice
+  preview.style.transform = MIRROR_WEBCAM ? "scaleX(-1)" : "";
+  preview.play().catch(() => undefined);
+}
+
 /** Fill every camera dropdown with the cameras that are plugged in now. */
 async function refreshCameraLists(): Promise<void> {
+  updateCameraPreview();
   const cameras = await listCameras();
   const activeId = activeCameraId();
   for (const select of cameraSelects) {
@@ -323,7 +332,8 @@ function updateStartScreen(): void {
   tourStart.hidden = !tour;
   paintingList.hidden = tour;
   byId("single-start").hidden = tour;
-  playerNamesBox.hidden = selectedPlayerCount() === 1;
+  // The name fields slide in (CSS transition) when 2 players are chosen.
+  playerNamesBox.classList.toggle("open", selectedPlayerCount() === 2);
 }
 
 /** Build one framed card per painting. Clicking a card starts that painting. */
@@ -1114,6 +1124,10 @@ for (const input of document.querySelectorAll('input[name="mode"], input[name="p
 for (const select of cameraSelects) {
   select.addEventListener("change", () => switchCamera(select.value));
 }
+
+byId("refresh-cameras").addEventListener("click", () => {
+  refreshCameraLists();
+});
 
 byId("settings-button").addEventListener("click", () => {
   fillVoiceList();

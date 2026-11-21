@@ -39,14 +39,14 @@
       </label>
       <p class="help-note">Pick the calmest voice on this computer. "Premium" or "Enhanced" voices sound best
         (on a Mac: System Settings → Accessibility → Spoken Content → Manage Voices).</p>
-      <form method="dialog"><button class="brass">Done</button></form>
+      <form method="dialog"><button class="btn btn-primary">Done</button></form>
     </dialog>
 
     <!-- Credits window: shows CREDITS.md (main.ts loads it) -->
     <dialog id="credits-dialog">
       <h2>Credits</h2>
       <pre id="credits-text" class="credits-text"></pre>
-      <form method="dialog"><button class="brass">Close</button></form>
+      <form method="dialog"><button class="btn btn-primary">Close</button></form>
     </dialog>
 
     <!-- Short messages that appear for a few seconds ("Camera disconnected…") -->
@@ -68,50 +68,76 @@
         <p class="tagline">Choose a masterpiece. Copy the pose. Become the art.</p>
       </header>
 
-      <div class="start-panel">
-        <fieldset class="choice">
-          <legend>Mode</legend>
-          <label><input type="radio" name="mode" value="single" checked /> Single Painting</label>
-          <label><input type="radio" name="mode" value="tour" /> Gallery Tour (5 paintings)</label>
-        </fieldset>
+      <!-- The setup panel: mode, players, difficulty, camera -->
+      <div class="setup-panel">
+        <section class="setup-section setup-mode">
+          <h2 class="setup-heading">Mode</h2>
+          <div class="option-cards">
+            <label class="option-card">
+              <input type="radio" name="mode" value="single" checked />
+              <span class="option-icon" aria-hidden="true">🖼️</span>
+              <span class="option-title">Single Painting</span>
+              <span class="option-desc">Choose one masterpiece and strike its pose.</span>
+            </label>
+            <label class="option-card">
+              <input type="radio" name="mode" value="tour" />
+              <span class="option-icon" aria-hidden="true">🏛️</span>
+              <span class="option-title">Gallery Tour (5 rounds)</span>
+              <span class="option-desc">Five random paintings, back to back.</span>
+            </label>
+          </div>
+        </section>
 
-        <fieldset class="choice">
-          <legend>Players</legend>
-          <label><input type="radio" name="players" value="1" checked /> 1</label>
-          <label><input type="radio" name="players" value="2" /> 2</label>
-          <span id="player-names" hidden>
-            <input id="name-1" class="name-input" placeholder="Player 1" maxlength="16" />
-            <input id="name-2" class="name-input" placeholder="Player 2" maxlength="16" />
-          </span>
-        </fieldset>
+        <section class="setup-section">
+          <h2 class="setup-heading">Players</h2>
+          <div class="segmented">
+            <label><input type="radio" name="players" value="1" checked /><span>👤 1 player</span></label>
+            <label><input type="radio" name="players" value="2" /><span>👥 2 players</span></label>
+          </div>
+          <div id="player-names" class="player-names">
+            <input id="name-1" class="name-input" placeholder="Player 1" maxlength="16" aria-label="Player 1 name" />
+            <input id="name-2" class="name-input" placeholder="Player 2" maxlength="16" aria-label="Player 2 name" />
+          </div>
+        </section>
 
-        <fieldset class="choice">
-          <legend>Difficulty</legend>
-          <label><input type="radio" name="difficulty" value="easy" /> Easy</label>
-          <label><input type="radio" name="difficulty" value="medium" checked /> Medium</label>
-          <label><input type="radio" name="difficulty" value="hard" /> Hard</label>
-        </fieldset>
+        <section class="setup-section">
+          <h2 class="setup-heading">Difficulty</h2>
+          <div class="segmented segmented-tall">
+            <label><input type="radio" name="difficulty" value="easy" />
+              <span><strong>Easy</strong><small>Relaxed: close is good enough</small></span></label>
+            <label><input type="radio" name="difficulty" value="medium" checked />
+              <span><strong>Medium</strong><small>Balanced: most limbs must match</small></span></label>
+            <label><input type="radio" name="difficulty" value="hard" />
+              <span><strong>Hard</strong><small>Strict: museum-perfect poses</small></span></label>
+          </div>
+        </section>
 
-        <div class="camera-row">
-          <label class="field">
-            Camera
-            <select class="camera-select"></select>
-          </label>
-          <p class="help-note">
-            Using your phone? On a Mac, iPhones appear automatically via Continuity Camera.
-            Otherwise use a webcam app like Camo or DroidCam.
-          </p>
-          <p id="camera-status" class="status"></p>
-          <button id="retry-button" class="plain" hidden>Try again</button>
-        </div>
+        <section class="setup-section setup-camera">
+          <h2 class="setup-heading">Camera</h2>
+          <div class="camera-picker">
+            <video id="camera-preview" class="camera-preview" muted playsinline></video>
+            <div class="camera-controls">
+              <div class="camera-select-row">
+                <select class="camera-select" aria-label="Camera"></select>
+                <button id="refresh-cameras" class="icon-button" title="Refresh the camera list" aria-label="Refresh the camera list">⟳</button>
+              </div>
+              <details class="phone-tip">
+                <summary>Using your phone?</summary>
+                <p>On a Mac, iPhones appear automatically via Continuity Camera. Otherwise use a webcam app like Camo or DroidCam.</p>
+              </details>
+              <p id="camera-status" class="status"></p>
+              <button id="retry-button" class="btn btn-secondary" hidden>Try again</button>
+            </div>
+          </div>
+        </section>
       </div>
 
       <div id="tour-start" hidden>
-        <button id="tour-button" class="brass big">Start the Gallery Tour</button>
+        <button id="tour-button" class="btn btn-primary btn-big">Start the Gallery Tour</button>
       </div>
       <div id="single-start" class="single-start">
         <h2 class="section-title">Pick a painting</h2>
-        <button id="surprise-button" class="brass">🎲 Surprise me</button>
+        <button id="surprise-button" class="btn btn-primary">🎲 Surprise me</button>
       </div>
       <div id="painting-list" class="gallery"></div>
     </section>
@@ -153,7 +179,7 @@
       </div>
 
       <footer class="control-bar">
-        <button id="back-button" class="plain">← Back to start</button>
+        <button id="back-button" class="btn btn-secondary">← Back to start</button>
         <div class="score-box">
           <!-- The score inside two rings: the outer gold ring is the time left,
                the inner green ring fills while you "Hold it!" -->
@@ -175,7 +201,7 @@
             <div id="best-hold" class="best-hold"></div>
           </div>
         </div>
-        <button id="ready-button" class="plain">📸 Snap now</button>
+        <button id="ready-button" class="btn btn-secondary">📸 Snap now</button>
       </footer>
     </section>
 
@@ -200,8 +226,8 @@
       <p id="result-status" class="status"></p>
       <div id="result-holder"></div>
       <div class="buttons">
-        <button id="download-button" class="brass">Download</button>
-        <button id="again-button" class="plain">Try another</button>
+        <button id="download-button" class="btn btn-primary">Download</button>
+        <button id="again-button" class="btn btn-secondary">Try another</button>
       </div>
     </section>
 
@@ -212,8 +238,8 @@
       <div id="summary-list" class="summary-list"></div>
       <p id="summary-totals" class="summary-totals"></p>
       <div class="buttons">
-        <button id="play-again-button" class="brass">Play again</button>
-        <button id="to-start-button" class="plain">Back to start</button>
+        <button id="play-again-button" class="btn btn-primary">Play again</button>
+        <button id="to-start-button" class="btn btn-secondary">Back to start</button>
       </div>
     </section>
 
