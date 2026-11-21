@@ -27,8 +27,12 @@ import {
   duckMusic,
   isMuted,
   isSfxOn,
+  playCelebration,
   playChime,
+  playFail,
   playGuideChime,
+  playSuccess,
+  playTick,
   playWhoosh,
   setMuted,
   setSfxOn,
@@ -102,6 +106,7 @@ const duetIntro = byId("duet-intro");
 const duetText = byId("duet-text");
 const swapButton = byId<HTMLButtonElement>("swap-button");
 const duetResults = byId("duet-results");
+const bigScores = byId("big-scores");
 const video = byId<HTMLVideoElement>("video");
 const cameraCanvas = byId<HTMLCanvasElement>("camera-canvas");
 const ctx = cameraCanvas.getContext("2d")!;
@@ -1004,6 +1009,7 @@ async function showResult(result: RoundResult): Promise<void> {
   resultCanvas = await createFramedResult(result.photo, result.painting, result.scores[0], plaqueLine);
   resultHolder.appendChild(resultCanvas);
   showDuetResults(result);
+  showBigScores(result);
   resultStatus.textContent = "";
   downloadButton.disabled = false;
 }
@@ -1017,8 +1023,7 @@ function showDuetResults(result: RoundResult): void {
   duetResults.innerHTML = "";
   duetResults.hidden = !isDuet(result.painting);
   if (players.length === 1) {
-    resultWinner.hidden = false;
-    resultWinner.textContent = rankFor(result.scores[0]);
+    resultWinner.hidden = true; // the rank is shown under the big score
     return;
   }
   if (!isDuet(result.painting)) return;
@@ -1038,11 +1043,9 @@ function showDuetResults(result: RoundResult): void {
     const caption = document.createElement("figcaption");
     caption.innerHTML = "";
     const line = document.createElement("div");
-    line.textContent = `${player.name} as ${figure.label}: ${formatScore(result.scores[i])}`;
-    const rank = document.createElement("div");
-    rank.className = "rank";
-    rank.textContent = rankFor(result.scores[i]);
-    caption.append(line, rank);
+    line.textContent = `${player.name} as ${figure.label}`;
+    // The big score (with rank) right under this player's photo.
+    caption.append(line, bigScore(result.scores[i], player, pickWinner(result.scores) === i, true));
     item.append(pair, caption);
     duetResults.appendChild(item);
   });
@@ -1053,6 +1056,88 @@ function showDuetResults(result: RoundResult): void {
     winner === null
       ? "Draw! You matched your figures equally well."
       : `${players[winner].name} matched ${result.painting.figures[result.figureOfPlayer[winner]].label} better!`;
+}
+
+// =============================================================================
+// The big animated score on the result screen
+// =============================================================================
+
+/**
+ * A big score with its funny rank underneath:
+ *   <div class="big-score"><span class="big-score-number">87</span>…</div>
+ * The number starts at 0; animateBigScores() counts it up.
+ * @param player   2 players: whose score (name and colour shown)
+ * @param winner   show a "Winner" badge
+ * @param compact  a bit smaller (under the duet photos)
+ */
+function bigScore(score: number, player: Player | null, winner: boolean, compact = false): HTMLElement {
+  const box = document.createElement("div");
+  box.className = compact ? "big-score compact" : "big-score";
+  if (player) {
+    box.style.setProperty("--player-colour", player.colour);
+    const name = document.createElement("div");
+    name.className = "big-score-name";
+    name.textContent = player.name;
+    box.appendChild(name);
+  }
+  const number = document.createElement("div");
+  number.className = "big-score-number";
+  number.dataset.target = String(toScore(score));
+  number.textContent = "0";
+  const rank = document.createElement("div");
+  rank.className = "big-score-rank";
+  rank.textContent = rankFor(score);
+  box.append(number, rank);
+  if (winner) {
+    const badge = document.createElement("div");
+    badge.className = "winner-badge";
+    badge.textContent = "🏆 Winner";
+    box.appendChild(badge);
+  }
+  return box;
+}
+
+/** Put the big score(s) next to the photo (duets show theirs under each photo). */
+function showBigScores(result: RoundResult): void {
+  bigScores.innerHTML = "";
+  if (!isDuet(result.painting)) {
+    const winner = players.length === 2 ? pickWinner(result.scores) : null;
+    players.forEach((player, i) => {
+      bigScores.appendChild(bigScore(result.scores[i], players.length === 2 ? player : null, winner === i));
+    });
+  }
+  animateBigScores(Math.max(...result.scores));
+}
+
+/**
+ * Count every big score up from 0 over about a second (with light ticks),
+ * then play a sound for the best score: celebration (90+), success (70+)
+ * or a gentle fail (below 40).
+ */
+function animateBigScores(best: number): void {
+  const numbers = [...document.querySelectorAll<HTMLElement>("#screen-result .big-score-number")];
+  const start = performance.now();
+  const DURATION = 1000;
+  let lastTick = 0;
+  const step = (now: number) => {
+    const progress = Math.min(1, (now - start) / DURATION);
+    const eased = 1 - (1 - progress) ** 3; // fast at first, then slowing down
+    for (const number of numbers) number.textContent = String(Math.round(Number(number.dataset.target) * eased));
+    if (now - lastTick > 110 && progress < 1) {
+      playTick();
+      lastTick = now;
+    }
+    if (progress < 1) {
+      requestAnimationFrame(step);
+    } else if (best >= 90) {
+      playCelebration();
+    } else if (best >= 70) {
+      playSuccess();
+    } else if (best < 40) {
+      playFail();
+    }
+  };
+  requestAnimationFrame(step);
 }
 
 /** The part of the photo a player takes up (0..1, as shown on screen). */
@@ -1091,9 +1176,16 @@ function showSummary(results: RoundResult[]): void {
     // <figure class="summary-item"><img><figcaption>Round 1: Title<br>Score</figcaption></figure>
     const item = document.createElement("figure");
     item.className = "summary-item";
-    const thumbnail = document.createElement("img");
-    thumbnail.src = thumbnailOf(result.photo);
-    thumbnail.alt = `Your photo for ${result.painting.title}`;
+    // The photo with its score in a big, readable badge on top.
+    const thumbnail = document.createElement("div");
+    thumbnail.className = "summary-thumb";
+    const image = document.createElement("img");
+    image.src = thumbnailOf(result.photo);
+    image.alt = `Your photo for ${result.painting.title}`;
+    const badge = document.createElement("span");
+    badge.className = "thumb-score";
+    badge.textContent = result.scores.map((score) => formatScore(score)).join(" · ");
+    thumbnail.append(image, badge);
     const caption = document.createElement("figcaption");
     const title = document.createElement("strong");
     title.textContent = `${i + 1}. ${result.painting.title}`;

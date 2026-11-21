@@ -312,3 +312,10 @@
 #hl-root .rules-dialog ul { padding-left: 1.2rem; margin-bottom: 0; font-family: var(--font-sans); }
 #hl-root .rules-dialog li { margin-top: 0.7rem; line-height: 1.45; }
 #hl-root .rules-close { position: absolute; top: 0.65rem; right: 0.65rem; padding: 0; width: 2.75rem; font-size: 1.6rem; }
+
+/* The final score: the same big gold score as the pose game's result screen */
+#hl-root .results-summary strong {
+  font-size: clamp(88px, 8.4vw, 160px);
+  line-height: 1;
+  text-shadow: 0 0 26px rgba(248, 232, 166, 0.45), 0 4px 18px rgba(0, 0, 0, 0.6);
+}

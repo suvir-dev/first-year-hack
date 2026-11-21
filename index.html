@@ -266,7 +266,11 @@
       <h2 class="screen-title">Your masterpiece</h2>
       <p id="result-winner" class="winner" hidden></p>
       <p id="result-status" class="status"></p>
-      <div id="result-holder"></div>
+      <!-- The framed photo, with the big score right next to it -->
+      <div class="result-stage">
+        <div id="result-holder"></div>
+        <div id="big-scores" class="big-scores"></div>
+      </div>
       <!-- Duets: each player's photo next to their figure -->
       <div id="duet-results" class="duet-results" hidden></div>
       <div class="buttons">
@@ -279,8 +283,8 @@
     <section id="screen-summary" hidden>
       <h2 class="screen-title">Your Gallery Tour</h2>
       <p id="summary-winner" class="winner" hidden></p>
-      <div id="summary-list" class="summary-list"></div>
       <p id="summary-totals" class="summary-totals"></p>
+      <div id="summary-list" class="summary-list"></div>
       <div class="buttons">
         <button id="play-again-button" class="btn btn-primary">Play again</button>
         <button id="to-start-button" class="btn btn-secondary">Back to start</button>

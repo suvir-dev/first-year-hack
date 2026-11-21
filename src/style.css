@@ -1377,3 +1377,103 @@ body:has(#site-nav:not([hidden])) #screen-challenge:not([hidden]) {
   font-size: 18px;
   color: var(--color-cream-dim);
 }
+
+/* =============================================================================
+   Big scores (result screens of both games)
+   ============================================================================= */
+
+.result-stage {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  align-items: center;
+  gap: var(--space-5) var(--space-6);
+}
+
+#result-holder canvas {
+  max-width: min(62vw, 1100px);
+  max-height: 62vh;
+}
+
+.big-scores {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-5);
+}
+
+.big-score {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-1);
+  --player-colour: var(--color-gold-light);
+}
+
+/* The score: very large, gold, with a soft glow (about 160px on a 1080p screen) */
+.big-score-number {
+  font-family: var(--font-serif);
+  font-size: clamp(88px, 8.4vw, 160px);
+  font-weight: 700;
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+  color: var(--player-colour);
+  text-shadow: 0 0 26px rgba(248, 232, 166, 0.45), 0 4px 18px rgba(0, 0, 0, 0.6);
+}
+
+/* The rank: about 40% of the score's size */
+.big-score-rank {
+  max-width: 14ch;
+  font-family: var(--font-serif);
+  font-size: clamp(34px, 3.3vw, 64px);
+  font-style: italic;
+  line-height: 1.1;
+  text-align: center;
+  color: var(--color-cream);
+}
+
+.big-score-name {
+  font-family: var(--font-sans);
+  font-size: 22px;
+  font-weight: 600;
+  color: var(--player-colour);
+}
+
+.big-score.compact .big-score-number { font-size: clamp(64px, 5.5vw, 110px); }
+.big-score.compact .big-score-rank { font-size: clamp(22px, 2vw, 40px); }
+
+.winner-badge {
+  margin-top: var(--space-1);
+  padding: 4px 14px;
+  font-family: var(--font-sans);
+  font-weight: 700;
+  color: var(--color-ink);
+  background: var(--brass-gradient);
+  border-radius: var(--radius-round);
+  box-shadow: var(--shadow-sm), 0 0 18px rgba(248, 232, 166, 0.35);
+}
+
+/* Gallery Tour summary: big totals on top, a readable score on each photo */
+.summary-totals {
+  font-family: var(--font-serif);
+  font-size: clamp(30px, 3vw, 52px);
+  text-shadow: 0 0 20px rgba(248, 232, 166, 0.35);
+}
+
+.summary-thumb {
+  position: relative;
+}
+
+.thumb-score {
+  position: absolute;
+  right: 10px;
+  bottom: 10px;
+  padding: 2px 12px;
+  font-family: var(--font-serif);
+  font-size: 34px;
+  font-weight: 700;
+  color: var(--color-gold-light);
+  background: rgba(10, 6, 8, 0.78);
+  border: 2px solid var(--color-gold);
+  border-radius: var(--radius-md);
+  text-shadow: 0 0 12px rgba(248, 232, 166, 0.4);
+}
