@@ -3,39 +3,263 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <!-- No icon file: this empty one stops the browser asking for favicon.ico -->
+    <link rel="icon" href="data:," />
     <title>Strike a Pose, Old Masters</title>
+    <!-- Elegant serif for headings. Without internet it falls back to Georgia. -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      rel="stylesheet"
+      href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;1,400&display=swap"
+    />
   </head>
   <body>
-    <!-- Screen 1: pick a painting -->
-    <section id="screen-gallery">
-      <h1>Strike a Pose, Old Masters</h1>
-      <p>Pick a painting, then copy the pose in front of your webcam.</p>
-      <div id="painting-list"></div>
+    <!-- Buttons visible on every screen: music, narration, settings -->
+    <div class="toolbar">
+      <button id="music-button" class="round-button" title="Music on/off" aria-label="Music on/off">🎵</button>
+      <button id="narration-button" class="round-button" title="Narration on/off" aria-label="Narration on/off">🔊</button>
+      <button id="settings-button" class="round-button" title="Settings" aria-label="Settings">⚙️</button>
+    </div>
+
+    <!-- Settings window (a <dialog> pops up over the page) -->
+    <dialog id="settings-dialog">
+      <h2>Settings</h2>
+      <label class="field">
+        Camera
+        <select class="camera-select"></select>
+      </label>
+      <p class="help-note">
+        Using your phone? On a Mac, iPhones appear automatically via Continuity Camera.
+        Otherwise use a webcam app like Camo or DroidCam.
+      </p>
+      <p id="piper-label" class="field" hidden>Narration: Piper (offline), voice "Cori" (British English)</p>
+      <label id="voice-field" class="field">
+        Narrator voice
+        <select id="voice-select"></select>
+      </label>
+      <p id="voice-help" class="help-note">Pick the calmest voice on this computer. "Premium" or "Enhanced" voices sound best
+        (on a Mac: System Settings → Accessibility → Spoken Content → Manage Voices).</p>
+      <form method="dialog"><button class="btn btn-primary">Done</button></form>
+    </dialog>
+
+    <!-- Credits window: shows CREDITS.md (main.ts loads it) -->
+    <dialog id="credits-dialog">
+      <h2>Credits</h2>
+      <pre id="credits-text" class="credits-text"></pre>
+      <form method="dialog"><button class="btn btn-primary">Close</button></form>
+    </dialog>
+
+    <!-- Short messages that appear for a few seconds ("Camera disconnected…") -->
+    <div id="notice" class="notice" hidden></div>
+
+    <!-- Screen 0: the intro (fades in when the page opens) -->
+    <section id="screen-intro" class="intro">
+      <p class="eyebrow">The Gallery of</p>
+      <h1 class="intro-title">Strike a Pose, Old Masters</h1>
+      <p class="intro-tagline">Step into the painting</p>
+      <button id="intro-button" class="intro-button">Enter the gallery</button>
     </section>
 
-    <!-- Screen 2 + 3: copy the pose, then the countdown -->
-    <section id="screen-challenge" hidden>
-      <div class="side-by-side">
-        <figure>
-          <img id="painting-image" alt="" />
-          <figcaption id="painting-caption"></figcaption>
-        </figure>
-        <div class="camera">
-          <canvas id="camera-canvas"></canvas>
-          <div id="countdown" hidden></div>
-        </div>
+    <!-- Screen 1: the start screen. main.ts fills #painting-list with cards. -->
+    <section id="screen-gallery" hidden>
+      <header class="museum-header">
+        <p class="eyebrow">The Gallery of</p>
+        <h1>Strike a Pose, Old Masters</h1>
+        <p class="tagline">Choose a masterpiece. Copy the pose. Become the art.</p>
+      </header>
+
+      <!-- The setup panel: mode, players, difficulty, camera -->
+      <div class="setup-panel">
+        <section class="setup-section setup-mode">
+          <h2 class="setup-heading">Mode</h2>
+          <div class="option-cards">
+            <label class="option-card">
+              <input type="radio" name="mode" value="single" checked />
+              <span class="option-icon" aria-hidden="true">🖼️</span>
+              <span class="option-title">Single Painting</span>
+              <span class="option-desc">Choose one masterpiece and strike its pose.</span>
+            </label>
+            <label class="option-card">
+              <input type="radio" name="mode" value="tour" />
+              <span class="option-icon" aria-hidden="true">🏛️</span>
+              <span class="option-title">Gallery Tour (5 rounds)</span>
+              <span class="option-desc">Five random paintings, back to back.</span>
+            </label>
+          </div>
+        </section>
+
+        <section class="setup-section">
+          <h2 class="setup-heading">Players</h2>
+          <div class="segmented">
+            <label><input type="radio" name="players" value="1" checked /><span>👤 1 player</span></label>
+            <label><input type="radio" name="players" value="2" /><span>👥 2 players</span></label>
+          </div>
+          <div id="player-names" class="player-names">
+            <input id="name-1" class="name-input" placeholder="Player 1" maxlength="16" aria-label="Player 1 name" />
+            <input id="name-2" class="name-input" placeholder="Player 2" maxlength="16" aria-label="Player 2 name" />
+          </div>
+        </section>
+
+        <section class="setup-section">
+          <h2 class="setup-heading">Difficulty</h2>
+          <div class="segmented segmented-tall">
+            <label><input type="radio" name="difficulty" value="easy" />
+              <span><strong>Easy</strong><small>Relaxed: close is good enough</small></span></label>
+            <label><input type="radio" name="difficulty" value="medium" checked />
+              <span><strong>Medium</strong><small>Balanced: most limbs must match</small></span></label>
+            <label><input type="radio" name="difficulty" value="hard" />
+              <span><strong>Hard</strong><small>Strict: museum-perfect poses</small></span></label>
+          </div>
+        </section>
+
+        <section class="setup-section setup-camera">
+          <h2 class="setup-heading">Camera</h2>
+          <div class="camera-picker">
+            <video id="camera-preview" class="camera-preview" muted playsinline></video>
+            <div class="camera-controls">
+              <div class="camera-select-row">
+                <select class="camera-select" aria-label="Camera"></select>
+                <button id="refresh-cameras" class="icon-button" title="Refresh the camera list" aria-label="Refresh the camera list">⟳</button>
+              </div>
+              <details class="phone-tip">
+                <summary>Using your phone?</summary>
+                <p>On a Mac, iPhones appear automatically via Continuity Camera. Otherwise use a webcam app like Camo or DroidCam.</p>
+              </details>
+              <p id="camera-status" class="status"></p>
+              <button id="retry-button" class="btn btn-secondary" hidden>Try again</button>
+            </div>
+          </div>
+        </section>
       </div>
-      <p id="score">Score: –</p>
-      <p id="status"></p>
-      <button id="ready-button">I'm ready!</button>
-      <button id="back-button">Back to gallery</button>
+
+      <div id="tour-start" hidden>
+        <button id="tour-button" class="btn btn-primary btn-big">Start the Gallery Tour</button>
+      </div>
+      <div id="single-start" class="single-start">
+        <h2 class="section-title">Pick a painting</h2>
+        <button id="surprise-button" class="btn btn-primary">🎲 Surprise me</button>
+      </div>
+      <div id="painting-list" class="gallery"></div>
     </section>
 
-    <!-- Screen 4: the framed photo -->
-    <section id="screen-result" hidden>
-      <div id="result-holder"></div>
-      <button id="again-button">Play again</button>
+    <!-- Screen 2: copy the pose (one round). Laid out in four zones that
+         never overlap: top bar, main area, subtitles, bottom control bar. -->
+    <section id="screen-challenge" class="challenge" hidden>
+      <header class="top-bar">
+        <p id="round-label" class="round-label" hidden></p>
+        <p id="status" class="status"></p>
+      </header>
+
+      <div class="main-area">
+        <!-- The painting under a warm spotlight, with its museum placard -->
+        <div class="painting-wall">
+          <figure class="exhibit">
+            <div class="gilt">
+              <div class="painting-holder">
+                <img id="painting-image" alt="" />
+                <!-- Duets: players' name tags drawn on the painting -->
+                <div id="figure-tags" class="figure-tags"></div>
+              </div>
+            </div>
+          </figure>
+          <aside class="placard">
+            <h3 id="placard-title"></h3>
+            <p id="placard-artist" class="placard-artist"></p>
+            <p id="placard-year" class="placard-year"></p>
+            <p id="placard-fact" class="placard-fact"></p>
+          </aside>
+        </div>
+        <figure id="camera-exhibit" class="exhibit">
+          <div class="gilt camera">
+            <canvas id="camera-canvas"></canvas>
+            <div id="waiting" class="waiting" hidden></div>
+            <div id="countdown" hidden></div>
+            <div id="flash" class="flash"></div>
+            <!-- Duet intro: who copies which figure -->
+            <div id="duet-intro" class="duet-intro" hidden>
+              <p id="duet-text"></p>
+              <button id="swap-button" class="btn btn-secondary">⇄ Swap figures</button>
+            </div>
+          </div>
+        </figure>
+      </div>
+
+      <!-- Subtitles of the narrator (their own strip: never over buttons) -->
+      <div class="subtitle-row">
+        <div id="subtitles" class="subtitles" hidden></div>
+      </div>
+
+      <footer class="control-bar">
+        <button id="back-button" class="btn btn-secondary">← Back to start</button>
+        <div class="score-box">
+          <!-- The score inside two rings: the outer gold ring is the time left,
+               the inner green ring fills while you "Hold it!" -->
+          <div class="score-ring">
+            <svg viewBox="0 0 120 120" aria-hidden="true">
+              <circle class="ring-track" cx="60" cy="60" r="54" />
+              <circle id="time-ring" class="ring-time" cx="60" cy="60" r="54" />
+              <circle id="hold-ring" class="ring-hold" cx="60" cy="60" r="46" />
+            </svg>
+            <div class="ring-centre">
+              <div id="score-one"><span id="score">0</span></div>
+              <div id="score-two" class="score-two" hidden></div>
+              <div id="timer" class="timer"></div>
+            </div>
+          </div>
+          <div class="score-side">
+            <div id="hold-label" class="hold-label" hidden>Hold it!</div>
+            <p id="hint" class="hint"></p>
+            <div id="best-hold" class="best-hold"></div>
+          </div>
+        </div>
+        <button id="ready-button" class="btn btn-secondary">📸 Snap now</button>
+      </footer>
     </section>
+
+    <!-- Spotlight sweep when a round starts: the screen dims and a spotlight
+         moves onto the painting -->
+    <div id="sweep" class="sweep" hidden></div>
+
+    <!-- Debug overlay: press S during a round to see every feature's numbers -->
+    <pre id="debug" class="debug" hidden></pre>
+
+    <!-- Screen 3: short break between Gallery Tour rounds -->
+    <section id="screen-break" class="break-screen" hidden>
+      <p class="eyebrow" id="break-round"></p>
+      <p id="break-score" class="break-score"></p>
+      <p class="tagline">Next painting…</p>
+    </section>
+
+    <!-- Screen 4: the framed photo (Single Painting mode) -->
+    <section id="screen-result" hidden>
+      <h2 class="screen-title">Your masterpiece</h2>
+      <p id="result-winner" class="winner" hidden></p>
+      <p id="result-status" class="status"></p>
+      <div id="result-holder"></div>
+      <!-- Duets: each player's photo next to their figure -->
+      <div id="duet-results" class="duet-results" hidden></div>
+      <div class="buttons">
+        <button id="download-button" class="btn btn-primary">Download</button>
+        <button id="again-button" class="btn btn-secondary">Try another</button>
+      </div>
+    </section>
+
+    <!-- Screen 5: Gallery Tour summary -->
+    <section id="screen-summary" hidden>
+      <h2 class="screen-title">Your Gallery Tour</h2>
+      <p id="summary-winner" class="winner" hidden></p>
+      <div id="summary-list" class="summary-list"></div>
+      <p id="summary-totals" class="summary-totals"></p>
+      <div class="buttons">
+        <button id="play-again-button" class="btn btn-primary">Play again</button>
+        <button id="to-start-button" class="btn btn-secondary">Back to start</button>
+      </div>
+    </section>
+
+    <footer class="site-footer">
+      <button id="credits-button" class="link-button">Music credits</button>
+    </footer>
 
     <!-- The webcam plays here. It is kept out of sight because we draw it
          onto the canvas instead (see main.ts). -->

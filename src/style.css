@@ -1,70 +1,1163 @@
-/* Basic styling. TODO (Person B): make it look like a museum. */
+/* style.css: the museum look.
+   ---------------------------------------------------------------------------
+   Everything uses the DESIGN TOKENS below (colours, spacing, corners,
+   shadows, fonts, timing), so the whole app stays consistent: change a token
+   once and every screen follows.
+
+   Headings use "Playfair Display" (Google Fonts) and fall back to Georgia
+   without internet; small text uses a clean sans-serif. Text is large and
+   high-contrast so it reads well on a projector.
+   --------------------------------------------------------------------------- */
+
+:root {
+  /* Colours */
+  --color-wall: #1c1316;          /* deep charcoal */
+  --color-wall-burgundy: #3a1820; /* burgundy tint of the wall */
+  --color-panel: rgba(16, 10, 12, 0.72);
+  --color-cream: #f6ecd6;         /* main text */
+  --color-cream-dim: #d2c3a3;     /* secondary text */
+  --color-ink: #2b1d0e;           /* dark text on light (placards, buttons) */
+  --color-gold-dark: #6e4a14;
+  --color-gold: #c99a3c;
+  --color-gold-light: #f8e8a6;
+  --color-good: #2ecc71;          /* green: 80+ */
+  --gold-gradient: linear-gradient(135deg, var(--color-gold-dark), var(--color-gold-light) 25%, var(--color-gold) 50%, var(--color-gold-light) 75%, var(--color-gold-dark));
+  --brass-gradient: linear-gradient(#f8e8a6, #c99a3c 55%, #9c7a32);
+
+  /* Spacing */
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 24px;
+  --space-6: 32px;
+  --space-7: 48px;
+
+  /* Corners */
+  --radius-sm: 4px;
+  --radius-md: 8px;
+  --radius-lg: 14px;
+  --radius-round: 999px;
+
+  /* Shadows */
+  --shadow-sm: 0 4px 10px rgba(0, 0, 0, 0.5);
+  --shadow-md: 0 10px 24px rgba(0, 0, 0, 0.6);
+  --shadow-lg: 0 18px 40px rgba(0, 0, 0, 0.7);
+  --glow-gold: 0 0 0 2px var(--color-gold), 0 0 18px rgba(248, 232, 166, 0.35);
+
+  /* Fonts */
+  --font-serif: "Playfair Display", Georgia, "Times New Roman", serif;
+  --font-sans: "Segoe UI", system-ui, -apple-system, Helvetica, Arial, sans-serif;
+
+  /* Timing */
+  --fast: 150ms ease;
+  --medium: 220ms ease;
+
+  /* Sizes */
+  --tap: 48px; /* the smallest comfortable size to click or tap */
+}
+
+* {
+  box-sizing: border-box;
+}
+
+/* Dark behind everything, even when scrolling past the end of the page. */
+html {
+  background: var(--color-wall);
+}
 
 body {
   margin: 0;
-  padding: 16px;
-  background: #1a1410;
-  color: #e8d9a8;
-  font-family: Georgia, serif;
+  min-height: 100vh;
+  padding: var(--space-5) var(--space-4) var(--space-7);
+  color: var(--color-cream);
+  font-family: var(--font-serif);
+  font-size: 18px;
   text-align: center;
+  /* Layers, top to bottom: dark corners (vignette), a warm spotlight from
+     the top, faint wallpaper stripes, the charcoal-to-burgundy wall. */
+  background:
+    radial-gradient(ellipse at 50% 45%, transparent 45%, rgba(0, 0, 0, 0.6) 100%),
+    radial-gradient(ellipse 80% 55% at 50% -5%, rgba(255, 205, 140, 0.25), transparent 70%),
+    repeating-linear-gradient(90deg, rgba(255, 255, 255, 0.018) 0 14px, transparent 14px 28px),
+    linear-gradient(160deg, var(--color-wall) 0%, var(--color-wall-burgundy) 55%, var(--color-wall) 100%);
+  background-attachment: fixed;
 }
 
-/* The [hidden] attribute hides screens; make sure nothing overrides it. */
+/* The [hidden] attribute hides things; make sure nothing overrides it. */
 [hidden] {
   display: none !important;
 }
 
-button {
-  margin: 6px;
-  padding: 10px 18px;
+/* Keyboard users see a clear gold outline on whatever is focused. */
+:focus-visible {
+  outline: 3px solid var(--color-gold-light);
+  outline-offset: 3px;
+}
+
+/* =============================================================================
+   Text
+   ============================================================================= */
+
+.museum-header {
+  margin: var(--space-2) auto var(--space-6);
+}
+
+.eyebrow {
+  margin: 0;
+  letter-spacing: 0.35em;
+  text-transform: uppercase;
+  font-family: var(--font-sans);
+  font-size: 14px;
+  color: var(--color-cream-dim);
+}
+
+h1 {
+  margin: 6px 0;
+  font-size: clamp(32px, 6vw, 56px);
+  font-weight: normal;
+  font-style: italic;
+  color: var(--color-gold-light);
+  text-shadow: 0 2px 12px rgba(0, 0, 0, 0.6);
+}
+
+.tagline,
+.status {
+  font-style: italic;
+  font-size: 20px;
+  color: var(--color-cream-dim);
+}
+
+.status,
+.help-note,
+.best-hold,
+.notice {
+  font-family: var(--font-sans);
+}
+
+.screen-title,
+.section-title {
+  margin: 0;
+  font-weight: normal;
+  font-style: italic;
+  font-size: 32px;
+  color: var(--color-gold-light);
+}
+
+.help-note {
+  margin: var(--space-2) 0;
+  font-size: 14px;
+  font-style: italic;
+  color: var(--color-cream-dim);
+}
+
+/* =============================================================================
+   Buttons: primary = gold, secondary = outlined. Same on every screen.
+   ============================================================================= */
+
+.btn {
+  min-height: var(--tap);
+  margin: var(--space-1);
+  padding: var(--space-3) var(--space-5);
+  border-radius: var(--radius-md);
   font: inherit;
+  font-size: 19px;
+  cursor: pointer;
+  transition: transform var(--fast), box-shadow var(--fast), background-color var(--fast);
+}
+
+.btn-primary {
+  border: 1px solid var(--color-gold-dark);
+  color: var(--color-ink);
+  background: var(--brass-gradient);
+  box-shadow: var(--shadow-sm);
+}
+
+.btn-primary:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-md), 0 0 16px rgba(248, 232, 166, 0.3);
+}
+
+.btn-secondary {
+  border: 1px solid var(--color-cream-dim);
+  color: var(--color-cream);
+  background: transparent;
+}
+
+.btn-secondary:hover {
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.btn-big {
+  padding: var(--space-4) var(--space-7);
+  font-size: 24px;
+}
+
+.btn:disabled {
+  opacity: 0.5;
+  cursor: default;
+  transform: none;
+}
+
+.buttons {
+  margin-top: var(--space-4);
+}
+
+/* Round icon buttons: 🎵 🔊 ⚙️ and ⟳ */
+.round-button,
+.icon-button {
+  width: var(--tap);
+  height: var(--tap);
+  flex: none;
+  border: 1px solid var(--color-gold);
+  border-radius: var(--radius-round);
+  background: rgba(20, 12, 14, 0.85);
+  color: var(--color-cream);
+  font-size: 22px;
+  cursor: pointer;
+  transition: box-shadow var(--fast), transform var(--fast);
+}
+
+.round-button:hover,
+.icon-button:hover {
+  box-shadow: var(--glow-gold);
+  transform: scale(1.05);
+}
+
+.round-button.off {
+  opacity: 0.55;
+}
+
+.toolbar {
+  position: fixed;
+  top: var(--space-3);
+  right: var(--space-3);
+  z-index: 10;
+  display: flex;
+  gap: var(--space-2);
+}
+
+.link-button {
+  padding: var(--space-1) 6px;
+  border: none;
+  background: none;
+  font-family: var(--font-sans);
+  font-size: 14px;
+  color: var(--color-cream-dim);
+  text-decoration: underline;
   cursor: pointer;
 }
 
-#painting-list {
+/* =============================================================================
+   Frames, labels, placards
+   ============================================================================= */
+
+/* A gilt (gold) picture frame made only with CSS. */
+.gilt {
+  display: inline-block;
+  padding: 10px;
+  background: var(--gold-gradient);
+  box-shadow:
+    inset 0 0 0 2px rgba(60, 35, 5, 0.7),
+    inset 0 0 0 6px rgba(255, 240, 190, 0.35),
+    var(--shadow-lg);
+}
+
+.gilt img,
+.gilt canvas {
+  display: block;
+  box-shadow: 0 0 0 3px #3b2708;
+}
+
+/* Small brass label under a picture. */
+.label {
+  display: inline-flex;
+  flex-direction: column;
+  gap: 2px;
+  margin-top: var(--space-3);
+  padding: 6px var(--space-4);
+  color: var(--color-ink);
+  background: var(--brass-gradient);
+  box-shadow: var(--shadow-sm);
+  font-size: 15px;
+}
+
+.label strong {
+  font-size: 17px;
+}
+
+.label span {
+  font-family: var(--font-sans);
+}
+
+/* The museum placard beside a painting */
+.placard {
+  width: 210px;
+  padding: var(--space-4) 18px;
+  text-align: left;
+  font-family: var(--font-sans);
+  color: var(--color-ink);
+  background: linear-gradient(#fbf3df, #efe2c2);
+  border-left: 4px solid var(--color-gold);
+  border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+  box-shadow: var(--shadow-md);
+}
+
+.placard h3 {
+  margin: 0 0 6px;
+  font-family: var(--font-serif);
+  font-size: 22px;
+  line-height: 1.2;
+}
+
+.placard p {
+  margin: var(--space-1) 0;
+  font-size: 16px;
+}
+
+.placard-artist {
+  font-weight: 600;
+}
+
+.placard .placard-fact {
+  margin-top: 10px;
+  padding-top: 10px;
+  border-top: 1px solid rgba(43, 29, 14, 0.25);
+  font-style: italic;
+}
+
+/* =============================================================================
+   Intro screen
+   ============================================================================= */
+
+.intro {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: calc(100vh - 72px);
+  animation: fade-in 1.6s ease both;
+}
+
+.intro-title {
+  margin: var(--space-3) 0;
+  font-size: clamp(44px, 8vw, 96px);
+  animation: fade-in 1.6s ease 0.3s both;
+}
+
+.intro-tagline {
+  font-size: 28px;
+  font-style: italic;
+  color: var(--color-cream-dim);
+  animation: fade-in 1.6s ease 0.8s both;
+}
+
+/* The start button sits in a little gold frame. */
+.intro-button {
+  margin-top: 28px;
+  padding: 18px var(--space-7);
+  font-family: var(--font-serif);
+  font-size: 26px;
+  color: var(--color-gold-light);
+  background: #1a1012;
+  border: 10px solid transparent;
+  border-image: var(--gold-gradient) 1;
+  box-shadow: var(--shadow-lg);
+  cursor: pointer;
+  animation: fade-in 1.6s ease 1.2s both;
+  transition: transform var(--medium), box-shadow var(--medium);
+}
+
+.intro-button:hover,
+.intro-button:focus-visible {
+  transform: scale(1.04);
+  box-shadow: var(--shadow-lg), 0 0 30px rgba(248, 232, 166, 0.25);
+}
+
+@keyframes fade-in {
+  from { opacity: 0; transform: translateY(12px); }
+  to { opacity: 1; transform: none; }
+}
+
+/* =============================================================================
+   Setup panel (start screen)
+   ============================================================================= */
+
+.setup-panel {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1.3fr); /* players | difficulty */
+  gap: var(--space-5) var(--space-6);
+  max-width: 1150px;
+  margin: 0 auto var(--space-6);
+  padding: var(--space-5) var(--space-6);
+  text-align: left;
+  background: var(--color-panel);
+  border: 1px solid var(--color-gold);
+  border-radius: var(--radius-lg);
+  box-shadow: inset 0 0 0 4px rgba(201, 154, 60, 0.18), var(--shadow-lg);
+}
+
+.setup-mode,
+.setup-camera {
+  grid-column: 1 / -1; /* these use the full width */
+}
+
+.setup-heading {
+  margin: 0 0 var(--space-3);
+  font-family: var(--font-sans);
+  font-size: 14px;
+  font-weight: 600;
+  letter-spacing: 0.25em;
+  text-transform: uppercase;
+  color: var(--color-gold-light);
+}
+
+/* The real radio buttons are hidden; the cards/segments show the choice. */
+.option-card input,
+.segmented input {
+  position: absolute;
+  opacity: 0;
+  pointer-events: none;
+}
+
+/* Mode: two big cards */
+.option-cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: var(--space-4);
+}
+
+.option-card {
+  position: relative;
+  display: grid;
+  grid-template-columns: auto 1fr;
+  grid-template-rows: auto auto;
+  column-gap: var(--space-4);
+  align-items: center;
+  min-height: 88px;
+  padding: var(--space-4) var(--space-5);
+  border: 1px solid rgba(201, 154, 60, 0.45);
+  border-radius: var(--radius-md);
+  background: rgba(255, 255, 255, 0.04);
+  cursor: pointer;
+  transition: border-color var(--fast), box-shadow var(--fast), background-color var(--fast), transform var(--fast);
+}
+
+.option-card:hover {
+  background: rgba(255, 255, 255, 0.08);
+  transform: translateY(-2px);
+}
+
+.option-card:has(input:checked) {
+  border-color: var(--color-gold-light);
+  background: rgba(201, 154, 60, 0.14);
+  box-shadow: var(--glow-gold);
+}
+
+.option-card:has(input:focus-visible) {
+  outline: 3px solid var(--color-gold-light);
+  outline-offset: 3px;
+}
+
+.option-icon {
+  grid-row: 1 / 3;
+  font-size: 36px;
+}
+
+.option-title {
+  font-size: 22px;
+  color: var(--color-gold-light);
+}
+
+.option-desc {
+  font-family: var(--font-sans);
+  font-size: 15px;
+  color: var(--color-cream-dim);
+}
+
+/* Players / difficulty: segmented controls */
+.segmented {
+  display: flex;
+  border: 1px solid rgba(201, 154, 60, 0.6);
+  border-radius: var(--radius-md);
+  overflow: hidden;
+}
+
+.segmented label {
+  flex: 1;
+  cursor: pointer;
+}
+
+.segmented label + label span {
+  border-left: 1px solid rgba(201, 154, 60, 0.4);
+}
+
+.segmented span {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  min-height: var(--tap);
+  height: 100%;
+  padding: var(--space-2) var(--space-3);
+  font-family: var(--font-sans);
+  font-size: 17px;
+  text-align: center;
+  transition: background-color var(--fast), color var(--fast), box-shadow var(--fast);
+}
+
+.segmented label:hover span {
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.segmented input:checked + span {
+  color: var(--color-ink);
+  background: var(--brass-gradient);
+  box-shadow: inset 0 0 0 1px var(--color-gold-light);
+}
+
+.segmented input:focus-visible + span {
+  outline: 3px solid var(--color-gold-light);
+  outline-offset: -3px;
+}
+
+.segmented-tall small {
+  font-size: 13px;
+  opacity: 0.85;
+}
+
+/* Player names slide in when "2 players" is chosen */
+.player-names {
+  display: flex;
+  gap: var(--space-2);
+  max-height: 0;
+  margin-top: 0;
+  overflow: hidden;
+  opacity: 0;
+  transition: max-height var(--medium), opacity var(--medium), margin-top var(--medium);
+}
+
+.player-names.open {
+  max-height: 70px;
+  margin-top: var(--space-3);
+  opacity: 1;
+}
+
+select,
+.name-input {
+  min-height: 44px;
+  max-width: 100%;
+  padding: var(--space-2) var(--space-3);
+  border: 1px solid rgba(201, 154, 60, 0.6);
+  border-radius: var(--radius-md);
+  font: inherit;
+  font-family: var(--font-sans);
+  font-size: 16px;
+  color: var(--color-cream);
+  background: rgba(0, 0, 0, 0.35);
+  transition: border-color var(--fast), box-shadow var(--fast);
+}
+
+.name-input {
+  flex: 1;
+  min-width: 0;
+}
+
+select:hover,
+.name-input:hover,
+select:focus,
+.name-input:focus {
+  border-color: var(--color-gold-light);
+  box-shadow: 0 0 0 2px rgba(248, 232, 166, 0.25);
+}
+
+select option {
+  color: #000;
+}
+
+/* Camera: live preview + dropdown + refresh + phone tip */
+.camera-picker {
+  display: flex;
+  gap: var(--space-5);
+  align-items: flex-start;
+}
+
+.camera-preview {
+  width: 180px;
+  aspect-ratio: 16 / 9;
+  flex: none;
+  object-fit: cover;
+  background: #000;
+  border: 3px solid var(--color-gold);
+  border-radius: var(--radius-sm);
+  box-shadow: var(--shadow-sm);
+}
+
+.camera-controls {
+  flex: 1;
+  min-width: 0;
+}
+
+.camera-select-row {
+  display: flex;
+  gap: var(--space-2);
+}
+
+.camera-select-row select {
+  flex: 1;
+  min-width: 0;
+}
+
+.camera-controls .status {
+  margin: var(--space-2) 0 0;
+  font-size: 15px;
+}
+
+.phone-tip {
+  margin-top: var(--space-2);
+  font-family: var(--font-sans);
+  font-size: 15px;
+  color: var(--color-cream-dim);
+}
+
+.phone-tip summary {
+  cursor: pointer;
+  color: var(--color-gold-light);
+}
+
+.phone-tip p {
+  margin: var(--space-1) 0 0;
+}
+
+/* =============================================================================
+   Gallery
+   ============================================================================= */
+
+.single-start {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  align-items: center;
+  gap: var(--space-5);
+  margin: 0 auto 28px;
+}
+
+#tour-start {
+  margin-bottom: var(--space-6);
+}
+
+.gallery {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  gap: var(--space-7) var(--space-6);
+  max-width: 1300px;
+  margin: 0 auto;
+}
+
+.card {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;
+  padding: 0;
+  border: none;
+  background: none;
+  color: inherit;
+  font: inherit;
+  cursor: pointer;
+  transition: transform var(--medium);
+}
+
+/* Each card has its own soft pool of spotlight on the wall above it. */
+.card::before {
+  content: "";
+  position: absolute;
+  top: -70px;
+  left: 0;
+  right: 0;
+  height: 240px;
+  background: radial-gradient(closest-side, rgba(255, 210, 150, 0.2), transparent);
+  pointer-events: none;
+  z-index: -1;
+}
+
+.card:hover,
+.card:focus-visible {
+  transform: translateY(-6px);
+}
+
+.card:focus-visible {
+  outline-offset: 8px;
+}
+
+.card .gilt {
+  display: block;
+  width: 100%;
+}
+
+.card .gilt img {
+  width: 100%;
+  height: 210px;
+  object-fit: cover; /* crop to fill the card without stretching */
+  object-position: 50% 30%; /* keep heads in view when cropping */
+}
+
+.card .label {
+  max-width: 100%;
+}
+
+/* =============================================================================
+   Challenge screen: four zones (top bar, main area, subtitles, controls)
+   ============================================================================= */
+
+body:has(#screen-challenge:not([hidden])) {
+  padding-top: var(--space-3);
+  padding-bottom: var(--space-3);
+}
+
+/* The "Music credits" link would sit on the Back button during a round. */
+body:has(#screen-challenge:not([hidden])) .site-footer {
+  display: none;
+}
+
+#screen-challenge:not([hidden]) {
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr) auto auto;
+  gap: 6px;
+  height: calc(100vh - 24px);
+}
+
+.top-bar {
+  display: flex;
+  justify-content: center;
+  align-items: baseline;
+  gap: var(--space-5);
+  min-height: 40px;
+  padding: 0 170px; /* room for the 🎵 🔊 ⚙️ buttons */
+}
+
+.top-bar .round-label,
+.top-bar .status {
+  margin: 0;
+}
+
+.round-label {
+  font-size: 22px;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--color-gold-light);
+}
+
+.main-area {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 28px;
+  min-height: 0;
+}
+
+.exhibit {
+  margin: 0;
   display: flex;
   flex-direction: column;
   align-items: center;
 }
 
-.side-by-side {
+.painting-wall {
+  position: relative;
   display: flex;
-  flex-wrap: wrap;
   justify-content: center;
-  align-items: center;
-  gap: 16px;
+  align-items: flex-end;
+  gap: var(--space-5);
 }
 
-figure {
-  margin: 0;
+/* Warm spotlight glow above the painting */
+.painting-wall::before {
+  content: "";
+  position: absolute;
+  left: -40px;
+  right: -40px;
+  top: -80px;
+  height: 70%;
+  background: radial-gradient(closest-side, rgba(255, 214, 150, 0.32), transparent);
+  pointer-events: none;
+  z-index: -1;
 }
 
+/* Painting + placard + webcam fit side by side; they shrink with the screen. */
 #painting-image {
-  max-height: 60vh;
-  max-width: 40vw;
+  max-width: min(26vw, 480px);
+  max-height: calc(100vh - 360px);
+}
+
+#camera-canvas {
+  max-width: min(40vw, 760px);
+  max-height: calc(100vh - 360px);
 }
 
 .camera {
   position: relative;
 }
 
-#camera-canvas,
-#result-holder canvas {
-  max-width: 100%;
-  max-height: 60vh;
+/* The webcam fades in after the spotlight has found the painting */
+#camera-exhibit.appear {
+  animation: fade-in 0.7s ease 1s both;
 }
 
+/* Messages over the camera ("Waiting for…", "Step back…", tips) */
+.waiting {
+  position: absolute;
+  left: 10px;
+  right: 10px;
+  bottom: 10px;
+  padding: 10px;
+  font-size: 22px;
+  color: var(--color-gold-light);
+  background: rgba(0, 0, 0, 0.6);
+}
+
+/* "Hold still… 3, 2, 1" */
 #countdown {
   position: absolute;
-  inset: 0;
+  inset: 10px;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 120px;
+  font-size: clamp(48px, 6vw, 110px);
+  color: var(--color-gold-light);
+  text-shadow: 0 4px 24px rgba(0, 0, 0, 0.8);
+  background: rgba(0, 0, 0, 0.25);
+}
+
+/* Camera flash */
+.flash {
+  position: absolute;
+  inset: 0;
+  background: #fff;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.flash.go {
+  animation: flash 0.6s ease-out;
+}
+
+@keyframes flash {
+  from { opacity: 0.95; }
+  to { opacity: 0; }
+}
+
+/* Subtitles: their own row, above the controls, never blocking anything */
+.subtitle-row {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 3.4em;
+  pointer-events: none;
+}
+
+.subtitles {
+  max-width: 70%;
+  padding: var(--space-2) 18px;
+  font-family: var(--font-sans);
+  font-size: 21px;
+  line-height: 1.35;
+  color: rgba(255, 255, 255, 0.55);
+  background: rgba(0, 0, 0, 0.6);
+  border-radius: var(--radius-md);
+  pointer-events: none;
+}
+
+.subtitles .current {
+  color: #fff;
+}
+
+/* Bottom control bar: Back | score | Snap now */
+.control-bar {
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  align-items: center;
+  gap: var(--space-4);
+  padding: 0 var(--space-2);
+}
+
+.control-bar #back-button { justify-self: start; }
+.control-bar #ready-button { justify-self: end; }
+
+/* =============================================================================
+   Score: a ring for time left (gold) and "Hold it!" (green)
+   ============================================================================= */
+
+.score-box {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 20px;
+}
+
+.score-ring {
+  position: relative;
+  width: 140px;
+  height: 140px;
+}
+
+.score-ring svg {
+  width: 100%;
+  height: 100%;
+  transform: rotate(-90deg); /* rings start at the top */
+}
+
+.score-ring circle {
+  fill: none;
+  stroke-linecap: round;
+  transition: stroke-dashoffset 0.1s linear;
+}
+
+.ring-track { stroke: rgba(255, 255, 255, 0.12); stroke-width: 8; }
+.ring-time { stroke: var(--color-gold); stroke-width: 8; }
+.ring-hold { stroke: var(--color-good); stroke-width: 6; }
+
+.ring-centre {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
 }
 
 #score {
-  font-size: 32px;
+  font-size: 50px;
+  font-weight: bold;
+  line-height: 1;
+  /* Every digit is the same width, so the number doesn't wobble as it changes. */
+  font-variant-numeric: tabular-nums;
+  transition: color 0.3s;
+}
+
+.score-two {
+  display: flex;
+  flex-direction: column;
+  font-size: 20px;
+  font-weight: bold;
+}
+
+.timer {
+  font-size: 18px;
+  font-variant-numeric: tabular-nums;
+  color: var(--color-gold-light);
+}
+
+.score-side {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--space-1);
+  min-width: 260px;
+  max-width: 420px;
+  text-align: left;
+}
+
+.hold-label {
+  font-size: 34px;
+  font-weight: bold;
+  color: var(--color-good);
+  animation: pulse 0.6s ease-in-out infinite alternate;
+}
+
+@keyframes pulse {
+  from { transform: scale(1); }
+  to { transform: scale(1.08); }
+}
+
+/* One plain-words tip, e.g. "Raise your right arm higher" */
+.hint {
+  margin: 0;
+  font-size: 20px;
+  color: var(--color-gold-light);
+}
+
+.best-hold {
+  font-size: 15px;
+  color: var(--color-cream-dim);
+}
+
+/* =============================================================================
+   Spotlight sweep when a round starts
+   ============================================================================= */
+
+/* Lets the browser animate the spotlight's position smoothly. */
+@property --spot-x {
+  syntax: "<percentage>";
+  inherits: false;
+  initial-value: 110%;
+}
+
+/* --target-x / --target-y = where the painting is (set by main.ts). */
+.sweep {
+  --target-x: 30%;
+  --target-y: 35%;
+  position: fixed;
+  inset: 0;
+  z-index: 15;
+  pointer-events: none;
+  /* Dark everywhere except a circle of light at --spot-x */
+  background: radial-gradient(circle at var(--spot-x) var(--target-y), transparent 0, transparent 15vw, rgba(5, 2, 3, 0.94) 32vw);
+}
+
+.sweep.play {
+  animation: sweep 1.6s ease-in-out forwards;
+}
+
+@keyframes sweep {
+  0% { --spot-x: 110%; opacity: 1; }
+  65% { --spot-x: var(--target-x); opacity: 1; }
+  100% { --spot-x: var(--target-x); opacity: 0; }
+}
+
+/* =============================================================================
+   Between rounds, results, summary
+   ============================================================================= */
+
+.break-screen {
+  padding-top: 25vh;
+}
+
+.break-score {
+  font-size: 40px;
+  color: var(--color-gold-light);
+}
+
+.winner {
+  font-size: 40px;
+  font-style: italic;
+  color: var(--color-gold-light);
+}
+
+#result-holder canvas {
+  max-width: 100%;
+  max-height: 75vh;
+  border-radius: var(--radius-sm);
+}
+
+.summary-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: var(--space-5);
+  max-width: 1100px;
+  margin: var(--space-5) auto 0;
+}
+
+.summary-item {
+  margin: 0;
+}
+
+.summary-item img {
+  width: 100%;
+  border: 6px solid var(--color-gold);
+  box-shadow: var(--shadow-md);
+}
+
+.summary-item figcaption {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  margin-top: 6px;
+}
+
+.summary-item figcaption span {
+  font-family: var(--font-sans);
+}
+
+.summary-totals {
+  margin-top: var(--space-5);
+  font-size: 22px;
+  color: var(--color-gold-light);
+}
+
+/* =============================================================================
+   Dialogs, notices, footer, debug
+   ============================================================================= */
+
+dialog {
+  max-width: min(520px, calc(100vw - 32px));
+  padding: var(--space-5);
+  border: 3px solid var(--color-gold);
+  border-radius: var(--radius-lg);
+  background: #2b211a;
+  color: var(--color-cream);
+  font-family: var(--font-serif);
+  text-align: left;
+  box-shadow: var(--shadow-lg);
+}
+
+dialog::backdrop {
+  background: rgba(0, 0, 0, 0.6);
+}
+
+dialog h2 {
+  margin-top: 0;
+  font-weight: normal;
+  font-style: italic;
+  color: var(--color-gold-light);
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  margin-top: var(--space-3);
+  text-align: left;
+  font-family: var(--font-sans);
+}
+
+.credits-text {
+  max-height: 60vh;
+  overflow: auto;
+  white-space: pre-wrap;
+  font-family: var(--font-sans);
+  font-size: 14px;
+}
+
+/* Short messages at the top ("Camera disconnected…") */
+.notice {
+  position: fixed;
+  top: var(--space-3);
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 20;
+  max-width: calc(100vw - 200px);
+  padding: 10px 18px;
+  color: var(--color-ink);
+  background: var(--brass-gradient);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-md);
+}
+
+.site-footer {
+  position: fixed;
+  left: var(--space-3);
+  bottom: var(--space-2);
+  z-index: 10;
+}
+
+/* Debug overlay (press S) */
+.debug {
+  position: fixed;
+  left: var(--space-2);
+  top: var(--space-2);
+  z-index: 30;
+  max-height: calc(100vh - 16px);
+  overflow: auto;
+  margin: 0;
+  padding: 10px var(--space-3);
+  font: 12px/1.35 ui-monospace, Menlo, monospace;
+  text-align: left;
+  color: #b8ffb8;
+  background: rgba(0, 0, 0, 0.82);
+  pointer-events: none;
 }
 
 /* Keeps the <video> playing but invisible (display: none can pause it in some browsers). */
@@ -74,4 +1167,139 @@ figure {
   height: 1px;
   opacity: 0;
   pointer-events: none;
+}
+
+/* =============================================================================
+   Small screens
+   ============================================================================= */
+
+@media (max-width: 900px) {
+  .setup-panel {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 700px) {
+  .setup-panel {
+    padding: var(--space-4);
+  }
+
+  .camera-picker {
+    flex-direction: column;
+  }
+
+  #painting-image,
+  #camera-canvas {
+    max-width: 100%;
+  }
+}
+
+/* =============================================================================
+   Duets: name tags on the painting, intro, results
+   ============================================================================= */
+
+.painting-holder {
+  position: relative; /* the tags are placed in % of this box = the painting */
+}
+
+.figure-tags {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+/* A small plaque with a pointer down to the figure's head. */
+.figure-tag {
+  position: absolute;
+  transform: translate(-50%, calc(-100% - 8px));
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: 3px 10px;
+  white-space: nowrap;
+  font-family: var(--font-sans);
+  font-size: 14px;
+  color: var(--color-ink);
+  background: var(--tag-colour);
+  border-radius: var(--radius-round);
+  box-shadow: var(--shadow-sm);
+}
+
+.figure-tag::after {
+  content: "";
+  position: absolute;
+  left: 50%;
+  bottom: -7px;
+  transform: translateX(-50%);
+  border: 7px solid transparent;
+  border-bottom: none;
+  border-top-color: var(--tag-colour);
+}
+
+.figure-tag-score {
+  font-size: 16px;
+}
+
+/* A soft coloured glow around the figure each player copies */
+.figure-glow {
+  position: absolute;
+  border-radius: 40%;
+  box-shadow: 0 0 0 2px var(--tag-colour), 0 0 26px var(--tag-colour), inset 0 0 26px var(--tag-colour);
+  opacity: 0.55;
+}
+
+.duet-intro {
+  position: absolute;
+  inset: 10px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-3);
+  font-size: 30px;
+  color: var(--color-gold-light);
+  background: rgba(0, 0, 0, 0.72);
+}
+
+.duet-intro p {
+  margin: 0;
+  padding: 0 var(--space-4);
+}
+
+.duet-results {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: var(--space-6);
+  margin-top: var(--space-5);
+}
+
+.duet-result {
+  margin: 0;
+  padding: var(--space-4);
+  border: 2px solid var(--tag-colour);
+  border-radius: var(--radius-lg);
+  background: var(--color-panel);
+}
+
+.duet-result .pair {
+  display: flex;
+  gap: var(--space-3);
+  align-items: flex-end;
+}
+
+.duet-result canvas {
+  height: 220px;
+  width: auto;
+  border: 4px solid var(--color-gold);
+}
+
+.duet-result figcaption {
+  margin-top: var(--space-2);
+  font-family: var(--font-sans);
+}
+
+.duet-result .rank {
+  color: var(--color-gold-light);
+  font-style: italic;
 }

@@ -1,0 +1,363 @@
+{
+  "voice": "en_GB-cori-high",
+  "paintings": {
+    "napoleon-crossing-the-alps": [
+      {
+        "file": "/narration/napoleon-crossing-the-alps/0.m4a",
+        "text": "Before you rides Napoleon, painted by David in 1801.",
+        "duration": 4.17
+      },
+      {
+        "file": "/narration/napoleon-crossing-the-alps/1.m4a",
+        "text": "Notice his calm face on a wild, rearing horse.",
+        "duration": 3.73
+      },
+      {
+        "file": "/narration/napoleon-crossing-the-alps/2.m4a",
+        "text": "In truth, he crossed on a mule.",
+        "duration": 2.81
+      }
+    ],
+    "wanderer-above-the-sea-of-fog": [
+      {
+        "file": "/narration/wanderer-above-the-sea-of-fog/0.m4a",
+        "text": "Before you stands a lone traveller above a sea of fog, painted by Friedrich around 1818.",
+        "duration": 6.56
+      },
+      {
+        "file": "/narration/wanderer-above-the-sea-of-fog/1.m4a",
+        "text": "Notice how we share his view.",
+        "duration": 1.89
+      }
+    ],
+    "the-fifer": [
+      {
+        "file": "/narration/the-fifer/0.m4a",
+        "text": "Before you stands a young army musician, painted by Manet in 1866.",
+        "duration": 5.54
+      },
+      {
+        "file": "/narration/the-fifer/1.m4a",
+        "text": "Notice the plain grey background: so daring, the Paris Salon rejected it.",
+        "duration": 4.96
+      }
+    ],
+    "the-blue-boy": [
+      {
+        "file": "/narration/the-blue-boy/0.m4a",
+        "text": "Before you stands Gainsborough's Blue Boy, painted around 1770.",
+        "duration": 5.07
+      },
+      {
+        "file": "/narration/the-blue-boy/1.m4a",
+        "text": "Notice the shimmering blue silk, a costume already old-fashioned in his day.",
+        "duration": 4.9
+      }
+    ],
+    "louis-xiv": [
+      {
+        "file": "/narration/louis-xiv/0.m4a",
+        "text": "Before you stands King Louis the Fourteenth, painted by Rigaud in 1701.",
+        "duration": 5.43
+      },
+      {
+        "file": "/narration/louis-xiv/1.m4a",
+        "text": "It was meant as a gift for Spain, but the king kept it.",
+        "duration": 3.53
+      }
+    ],
+    "napoleon-in-his-study": [
+      {
+        "file": "/narration/napoleon-in-his-study/0.m4a",
+        "text": "Before you, Napoleon stands in his study, painted by David in 1812.",
+        "duration": 5.77
+      },
+      {
+        "file": "/narration/napoleon-in-his-study/1.m4a",
+        "text": "Notice the clock: past four in the morning.",
+        "duration": 2.48
+      },
+      {
+        "file": "/narration/napoleon-in-his-study/2.m4a",
+        "text": "He has worked all night.",
+        "duration": 1.46
+      }
+    ],
+    "colonel-heathcote": [
+      {
+        "file": "/narration/colonel-heathcote/0.m4a",
+        "text": "Before you stands Colonel Charles Heathcote, painted by Joseph Wright of Derby around 1771.",
+        "duration": 6.75
+      },
+      {
+        "file": "/narration/colonel-heathcote/1.m4a",
+        "text": "Notice how he points out across the landscape.",
+        "duration": 2.91
+      }
+    ],
+    "saint-jerome": [
+      {
+        "file": "/narration/saint-jerome/0.m4a",
+        "text": "Before you sits Saint Jerome, painted by Jusepe de Ribera around 1640.",
+        "duration": 5.86
+      },
+      {
+        "file": "/narration/saint-jerome/1.m4a",
+        "text": "Notice the skull, a quiet reminder that life is short.",
+        "duration": 4.01
+      }
+    ],
+    "caillebotte-man": [
+      {
+        "file": "/narration/caillebotte-man/0.m4a",
+        "text": "Before you sits a gentleman, painted by Gustave Caillebotte in 1880.",
+        "duration": 5.1
+      },
+      {
+        "file": "/narration/caillebotte-man/1.m4a",
+        "text": "Notice how relaxed he is, leaning back by the window.",
+        "duration": 3.68
+      }
+    ],
+    "lotto-man": [
+      {
+        "file": "/narration/lotto-man/0.m4a",
+        "text": "Before you, a gentleman stretches out his hand, painted by Lorenzo Lotto around 1534.",
+        "duration": 7.83
+      },
+      {
+        "file": "/narration/lotto-man/1.m4a",
+        "text": "Notice the dramatic gesture, as if he is speaking to us.",
+        "duration": 4.2
+      }
+    ],
+    "saint-peter-repentant": [
+      {
+        "file": "/narration/saint-peter-repentant/0.m4a",
+        "text": "Before you sits Saint Peter, painted by Georges de La Tour in 1645.",
+        "duration": 5.94
+      },
+      {
+        "file": "/narration/saint-peter-repentant/1.m4a",
+        "text": "Notice the rooster: it crowed after Peter denied knowing Jesus.",
+        "duration": 3.58
+      }
+    ],
+    "the-tired-gleaner": [
+      {
+        "file": "/narration/the-tired-gleaner/0.m4a",
+        "text": "Before you, a tired gleaner stretches at sunset, painted by Jules Breton in 1880.",
+        "duration": 6.58
+      },
+      {
+        "file": "/narration/the-tired-gleaner/1.m4a",
+        "text": "Notice her arm raised to her head after a long day.",
+        "duration": 3.46
+      }
+    ],
+    "charles-ii": [
+      {
+        "file": "/narration/charles-ii/0.m4a",
+        "text": "Before you stands the young Charles the Second, painted by Philippe de Champaigne in 1653.",
+        "duration": 6.76
+      },
+      {
+        "file": "/narration/charles-ii/1.m4a",
+        "text": "At the time, he was a king in exile.",
+        "duration": 2.24
+      }
+    ],
+    "saint-peter-of-alcantara": [
+      {
+        "file": "/narration/saint-peter-of-alcantara/0.m4a",
+        "text": "Before you stands Saint Peter of Alcántara, carved and painted in wood by Pedro de Mena.",
+        "duration": 5.79
+      },
+      {
+        "file": "/narration/saint-peter-of-alcantara/1.m4a",
+        "text": "Notice the book held in his hands.",
+        "duration": 2.3
+      }
+    ],
+    "standing-apostle": [
+      {
+        "file": "/narration/standing-apostle/0.m4a",
+        "text": "Before you stands an apostle, perhaps Saint Paul, carved around 1430.",
+        "duration": 6.07
+      },
+      {
+        "file": "/narration/standing-apostle/1.m4a",
+        "text": "Notice the heavy folds of his robe.",
+        "duration": 2.11
+      }
+    ],
+    "woman-as-diana": [
+      {
+        "file": "/narration/woman-as-diana/0.m4a",
+        "text": "Before you sits a lady dressed as Diana, goddess of the hunt, painted by Jean-Marc Nattier in 1752.",
+        "duration": 8.13
+      },
+      {
+        "file": "/narration/woman-as-diana/1.m4a",
+        "text": "Notice the bow and the leopard skin.",
+        "duration": 2.35
+      }
+    ],
+    "mary-magdalen-vouet": [
+      {
+        "file": "/narration/mary-magdalen-vouet/0.m4a",
+        "text": "Before you, Mary Magdalen looks up to heaven, painted by Simon Vouet around 1630.",
+        "duration": 7.3
+      },
+      {
+        "file": "/narration/mary-magdalen-vouet/1.m4a",
+        "text": "Notice her hand pressed to her heart.",
+        "duration": 2.48
+      }
+    ],
+    "arnolfini-portrait": [
+      {
+        "file": "/narration/arnolfini-portrait/0.m4a",
+        "text": "Before you stand a merchant and his wife, painted by Jan van Eyck in 1434.",
+        "duration": 6.07
+      },
+      {
+        "file": "/narration/arnolfini-portrait/1.m4a",
+        "text": "Notice how their hands meet between them.",
+        "duration": 2.38
+      }
+    ],
+    "the-ambassadors": [
+      {
+        "file": "/narration/the-ambassadors/0.m4a",
+        "text": "Before you stand two French ambassadors, painted by Hans Holbein in 1533.",
+        "duration": 6.12
+      },
+      {
+        "file": "/narration/the-ambassadors/1.m4a",
+        "text": "Notice the globes and instruments between them.",
+        "duration": 2.69
+      }
+    ],
+    "romeo-and-juliet": [
+      {
+        "file": "/narration/romeo-and-juliet/0.m4a",
+        "text": "Before you, Romeo and Juliet say goodbye at dawn, painted by Ford Madox Brown.",
+        "duration": 6.21
+      },
+      {
+        "file": "/narration/romeo-and-juliet/1.m4a",
+        "text": "Notice how tightly they hold each other.",
+        "duration": 2.65
+      }
+    ],
+    "mr-and-mrs-andrews": [
+      {
+        "file": "/narration/mr-and-mrs-andrews/0.m4a",
+        "text": "Before you are Mr and Mrs Andrews on their estate, painted by Thomas Gainsborough around 1750.",
+        "duration": 7.44
+      },
+      {
+        "file": "/narration/mr-and-mrs-andrews/1.m4a",
+        "text": "Notice how relaxed he looks beside her bench.",
+        "duration": 2.77
+      }
+    ],
+    "the-jewish-bride": [
+      {
+        "file": "/narration/the-jewish-bride/0.m4a",
+        "text": "Before you is Rembrandt's Jewish Bride, painted in the late 1660s.",
+        "duration": 6.08
+      },
+      {
+        "file": "/narration/the-jewish-bride/1.m4a",
+        "text": "Notice the groom's gentle hand resting near the bride's heart.",
+        "duration": 3.48
+      }
+    ],
+    "henry-viii": [
+      {
+        "file": "/narration/henry-viii/0.m4a",
+        "text": "Before you stands King Henry the Eighth, after a portrait by Hans Holbein.",
+        "duration": 4.67
+      },
+      {
+        "file": "/narration/henry-viii/1.m4a",
+        "text": "Notice his wide stance and broad shoulders: pure royal power.",
+        "duration": 3.89
+      }
+    ],
+    "lansdowne-washington": [
+      {
+        "file": "/narration/lansdowne-washington/0.m4a",
+        "text": "Before you stands George Washington, painted by Gilbert Stuart in 1796.",
+        "duration": 6.16
+      },
+      {
+        "file": "/narration/lansdowne-washington/1.m4a",
+        "text": "Notice his outstretched arm, as if he is giving a speech.",
+        "duration": 4.16
+      }
+    ],
+    "laughing-cavalier": [
+      {
+        "file": "/narration/laughing-cavalier/0.m4a",
+        "text": "Before you is Frans Hals's Laughing Cavalier, painted in 1624.",
+        "duration": 5.77
+      },
+      {
+        "file": "/narration/laughing-cavalier/1.m4a",
+        "text": "Notice his hand on his hip and his proud, confident smile.",
+        "duration": 4.16
+      }
+    ],
+    "madame-x": [
+      {
+        "file": "/narration/madame-x/0.m4a",
+        "text": "Before you stands Madame X, painted by John Singer Sargent in 1884.",
+        "duration": 5.62
+      },
+      {
+        "file": "/narration/madame-x/1.m4a",
+        "text": "Notice how she turns her head proudly to the side.",
+        "duration": 3.01
+      }
+    ],
+    "little-dancer": [
+      {
+        "file": "/narration/little-dancer/0.m4a",
+        "text": "Before you stands Degas's Little Dancer, modelled around 1880.",
+        "duration": 4.97
+      },
+      {
+        "file": "/narration/little-dancer/1.m4a",
+        "text": "Notice her hands held behind her back and her chin held high.",
+        "duration": 3.74
+      }
+    ],
+    "mona-lisa": [
+      {
+        "file": "/narration/mona-lisa/0.m4a",
+        "text": "Before you sits the Mona Lisa, painted by Leonardo da Vinci.",
+        "duration": 4.16
+      },
+      {
+        "file": "/narration/mona-lisa/1.m4a",
+        "text": "Notice her folded hands and that famous, mysterious smile.",
+        "duration": 4.44
+      }
+    ],
+    "innocent-x": [
+      {
+        "file": "/narration/innocent-x/0.m4a",
+        "text": "Before you sits Pope Innocent the Tenth, painted by Velázquez in 1650.",
+        "duration": 6.71
+      },
+      {
+        "file": "/narration/innocent-x/1.m4a",
+        "text": "Notice his sharp, watchful eyes and the paper in his hand.",
+        "duration": 4.27
+      }
+    ]
+  }
+}

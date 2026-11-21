@@ -8,16 +8,13 @@
 // ---------------------------------------------------------------------------
 
 import { FilesetResolver, PoseLandmarker } from "@mediapipe/tasks-vision";
-import type { NormalizedLandmark } from "@mediapipe/tasks-vision";
 import { POSE_MODEL_URL, WASM_FOLDER_URL } from "./config";
+import type { DetectedPose } from "./landmarks";
 
-/**
- * One detected body: an array of 33 landmarks.
- * Each landmark has x and y between 0 and 1 (fractions of the image width and
- * height, measured from the top-left corner), a depth z, and a `visibility`
- * score between 0 and 1.
- */
-export type PoseLandmarks = NormalizedLandmark[];
+// The pose data types and helpers (DetectedPose, KEY_JOINTS, mirrorPose...)
+// live in landmarks.ts. Re-export them so other files can keep importing
+// them from "./pose".
+export * from "./landmarks";
 
 /** Pairs of landmark indexes to join with lines when drawing a skeleton. */
 export const POSE_CONNECTIONS = PoseLandmarker.POSE_CONNECTIONS;
@@ -55,24 +52,43 @@ function createLandmarker(
   });
 }
 
+/** How many people the model looks for right now. */
+let maxPeople = 1;
+
 /**
- * Find the pose in one video frame.
- * Returns the 33 landmarks of the person, or null if nobody was found
- * (or the model hasn't finished loading).
+ * Look for 1 person (faster) or 2 people (2-player mode).
+ * Changing this rebuilds MediaPipe's pipeline, so only call it when the
+ * number actually changes.
  */
-export function detect(videoFrame: HTMLVideoElement): PoseLandmarks | null {
-  if (!landmarker) return null;
+export async function setMaxPeople(count: 1 | 2): Promise<void> {
+  if (!landmarker || count === maxPeople) return;
+  await landmarker.setOptions({ numPoses: count });
+  maxPeople = count;
+}
+
+/**
+ * Find everybody's pose in one video frame (at most setMaxPeople() people).
+ * Returns one DetectedPose per person found: an empty array if nobody was
+ * found, the model hasn't loaded yet, or the video has no picture yet.
+ */
+export function detectAll(videoFrame: HTMLVideoElement): DetectedPose[] {
+  // readyState < 2 means the video has no frame to look at (e.g. while
+  // switching cameras), and MediaPipe would throw an error.
+  if (!landmarker || videoFrame.readyState < 2 || videoFrame.videoWidth === 0) return [];
 
   // In VIDEO mode MediaPipe needs a timestamp (in ms) that always increases.
   const result = landmarker.detectForVideo(videoFrame, performance.now());
 
-  // result.landmarks has one entry per person. We asked for at most one.
-  return result.landmarks[0] ?? null;
+  // result.landmarks has one entry per person found. Remember the video's
+  // size in pixels so scoring can convert the 0–1 numbers to real pixels.
+  return result.landmarks.map((landmarks) => ({
+    landmarks,
+    width: videoFrame.videoWidth,
+    height: videoFrame.videoHeight,
+  }));
 }
 
-// TODO (Person A): the paintings need target poses. One option is a
-// detectImage(img: HTMLImageElement) function that switches the landmarker to
-// runningMode "IMAGE" with landmarker.setOptions(...), runs .detect(img), and
-// switches back to "VIDEO". Paintings are not photos, so check the result
-// visually; for some paintings it may be easier to pose like the painting
-// yourself and save those landmarks instead.
+/** Find one person's pose (the first one found), or null. */
+export function detect(videoFrame: HTMLVideoElement): DetectedPose | null {
+  return detectAll(videoFrame)[0] ?? null;
+}
