@@ -57,12 +57,13 @@ export function isMuted(): boolean {
  * Start the background music. Browsers only allow sound after the user has
  * clicked something, so call this from a click (the intro button).
  */
+let musicStarted = false;
+
 export function startMusic(): void {
-  if (ctx) return; // already started
-  ctx = new AudioContext();
-  musicVolume = ctx.createGain();
-  musicVolume.gain.value = 0; // start silent, then fade in
-  musicVolume.connect(ctx.destination);
+  if (musicStarted) return; // already playing: never restart or double it
+  musicStarted = true;
+  unlockSiteAudio(); // the one shared AudioContext (created on first use)
+  if (!ctx || !musicVolume) return;
 
   // Try the mp3 file first.
   const audio = new Audio(MUSIC_URL);
@@ -219,4 +220,126 @@ export function playGuideChime(): void {
     tone.start(start);
     tone.stop(start + 1.7);
   }
+}
+
+// =============================================================================
+// Shared sound effects (both games use these, so they sound the same)
+// =============================================================================
+// All made with the Web Audio API in the same soft style as the chimes above:
+// gentle sine/triangle tones with smooth fades. Switched on/off separately
+// from the music (the 🔊 button), remembered in localStorage.
+
+const SFX_KEY = "strike-a-pose.sfx-off";
+
+let sfxOn = (() => {
+  try {
+    return localStorage.getItem(SFX_KEY) !== "true";
+  } catch {
+    return true;
+  }
+})();
+
+export function isSfxOn(): boolean {
+  return sfxOn;
+}
+
+export function setSfxOn(on: boolean): void {
+  sfxOn = on;
+  try {
+    localStorage.setItem(SFX_KEY, String(!on));
+  } catch {
+    // ignore
+  }
+}
+
+/**
+ * Make sure the (single, shared) AudioContext exists and is running.
+ * Browsers (Safari especially) only allow this after a click, so the site
+ * calls it on the first click anywhere.
+ */
+export function unlockSiteAudio(): void {
+  if (!ctx) {
+    ctx = new AudioContext();
+    musicVolume = ctx.createGain();
+    musicVolume.gain.value = 0;
+    musicVolume.connect(ctx.destination);
+  }
+  if (ctx.state === "suspended") ctx.resume().catch(() => undefined);
+}
+
+/** One soft tone (used by all the sound effects below). */
+function tone(note: number, delay: number, seconds: number, loudness: number, type: OscillatorType = "sine"): void {
+  if (!ctx) return;
+  const start = ctx.currentTime + delay;
+  const osc = ctx.createOscillator();
+  osc.type = type;
+  osc.frequency.value = midiToHz(note);
+  const envelope = ctx.createGain();
+  envelope.gain.setValueAtTime(0, start);
+  envelope.gain.linearRampToValueAtTime(loudness, start + 0.012);
+  envelope.gain.exponentialRampToValueAtTime(0.0001, start + seconds);
+  osc.connect(envelope);
+  envelope.connect(ctx.destination); // effects aren't ducked with the music
+  osc.start(start);
+  osc.stop(start + seconds + 0.05);
+}
+
+/** May we play a sound effect right now? */
+function sfxReady(): boolean {
+  return ctx !== null && sfxOn;
+}
+
+/** A soft tap: buttons and option cards. */
+export function playUiClick(): void {
+  if (sfxReady()) tone(93, 0, 0.08, 0.035);
+}
+
+/** A pleasant rising chime: a good round / a correct guess. */
+export function playSuccess(): void {
+  if (!sfxReady()) return;
+  [72, 76, 79].forEach((note, i) => tone(note, i * 0.08, 0.6, 0.07));
+}
+
+/** A gentle low tone (not harsh): a weak round / a wrong guess. */
+export function playFail(): void {
+  if (!sfxReady()) return;
+  tone(55, 0, 0.5, 0.08, "triangle");
+  tone(52, 0.18, 0.7, 0.07, "triangle");
+}
+
+/** A grand flourish: score 90+ / a new high score. */
+export function playCelebration(): void {
+  if (!sfxReady()) return;
+  [72, 76, 79, 84, 88].forEach((note, i) => tone(note, i * 0.07, 0.9, 0.06));
+  [60, 64, 67, 72].forEach((note) => tone(note, 0.4, 1.6, 0.045, "triangle"));
+}
+
+/** A soft "whoosh" (filtered noise sweep): transitions and card slides. */
+export function playWhoosh(): void {
+  if (!sfxReady() || !ctx) return;
+  const seconds = 0.45;
+  const noise = ctx.createBuffer(1, Math.ceil(ctx.sampleRate * seconds), ctx.sampleRate);
+  const data = noise.getChannelData(0);
+  for (let i = 0; i < data.length; i++) data[i] = Math.random() * 2 - 1;
+  const source = ctx.createBufferSource();
+  source.buffer = noise;
+  const filter = ctx.createBiquadFilter();
+  filter.type = "bandpass";
+  filter.Q.value = 0.8;
+  const start = ctx.currentTime;
+  filter.frequency.setValueAtTime(300, start);
+  filter.frequency.exponentialRampToValueAtTime(2400, start + seconds);
+  const envelope = ctx.createGain();
+  envelope.gain.setValueAtTime(0, start);
+  envelope.gain.linearRampToValueAtTime(0.05, start + seconds * 0.4);
+  envelope.gain.exponentialRampToValueAtTime(0.0001, start + seconds);
+  source.connect(filter);
+  filter.connect(envelope);
+  envelope.connect(ctx.destination);
+  source.start(start);
+}
+
+/** A light tick: countdowns and count-ups. */
+export function playTick(): void {
+  if (sfxReady()) tone(98, 0, 0.05, 0.025);
 }

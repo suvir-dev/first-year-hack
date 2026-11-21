@@ -23,7 +23,17 @@ import type { Difficulty, PoseScore, PreparedTarget } from "./scoring";
 import { BestHold, LandmarkSmoother, LiveScore } from "./smoothing";
 import { hintFor } from "./hints";
 import { formatScore, formatYear, rankFor, toScore } from "./format";
-import { duckMusic, isMuted, playChime, playGuideChime, setMuted, startMusic } from "./audio";
+import {
+  duckMusic,
+  isMuted,
+  isSfxOn,
+  playChime,
+  playGuideChime,
+  playWhoosh,
+  setMuted,
+  setSfxOn,
+  startMusic,
+} from "./audio";
 import {
   isNarrationOn,
   listEnglishVoices,
@@ -86,6 +96,7 @@ const sweep = byId("sweep");
 const subtitles = byId("subtitles");
 const musicButton = byId<HTMLButtonElement>("music-button");
 const narrationButton = byId<HTMLButtonElement>("narration-button");
+const sfxButton = byId<HTMLButtonElement>("sfx-button");
 const figureTags = byId("figure-tags");
 const duetIntro = byId("duet-intro");
 const duetText = byId("duet-text");
@@ -1272,6 +1283,7 @@ async function playSpotlightSweep(): Promise<void> {
   cameraExhibit.classList.remove("appear");
   void sweep.offsetWidth; // forces the browser to notice the removal
   sweep.classList.add("play");
+  playWhoosh(); // the spotlight sweeps across
   cameraExhibit.classList.add("appear");
   await wait(1600);
   sweep.hidden = true;
@@ -1342,11 +1354,14 @@ async function fillVoiceList(): Promise<void> {
   select.disabled = voices.length === 0;
 }
 
-/** Show the music and narration buttons' current state. */
+/** Show the music, sound-effects and narration buttons' current state. */
 function updateSoundButtons(): void {
+  sfxButton.textContent = isSfxOn() ? "🔊" : "🔇";
+  sfxButton.classList.toggle("off", !isSfxOn());
+  sfxButton.title = isSfxOn() ? "Sound effects are on (click to mute)" : "Sound effects are off (click to turn on)";
   musicButton.textContent = isMuted() ? "🔇" : "🎵";
   musicButton.title = isMuted() ? "Music is off (click to turn on)" : "Music is on (click to mute)";
-  narrationButton.textContent = isNarrationOn() ? "🔊" : "🔈";
+  narrationButton.textContent = "🗣️";
   narrationButton.classList.toggle("off", !isNarrationOn());
   narrationButton.title = isNarrationOn() ? "Narration is on (click to turn off)" : "Narration is off (click to turn on)";
 }
@@ -1401,6 +1416,11 @@ byId<HTMLSelectElement>("voice-select").addEventListener("change", (event) => {
 
 musicButton.addEventListener("click", () => {
   setMuted(!isMuted());
+  updateSoundButtons();
+});
+
+sfxButton.addEventListener("click", () => {
+  setSfxOn(!isSfxOn());
   updateSoundButtons();
 });
 

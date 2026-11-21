@@ -12,6 +12,7 @@ import "./shared/theme.css"; // design tokens first, so every stylesheet can use
 import { startPoseGame, stopPoseGame, whenSiteEntered } from "./main";
 import { mountHigherLower, unmountHigherLower } from "./games/higher-lower/mount.jsx";
 import { go, otherGame, startRouter } from "./router";
+import { playUiClick, unlockSiteAudio } from "./audio";
 import type { Route } from "./router";
 
 const nav = document.getElementById("site-nav")!;
@@ -47,6 +48,15 @@ function show(route: Route): void {
 
 document.getElementById("switch-game")!.addEventListener("click", () => {
   go(otherGame(current ?? "home"));
+});
+
+// Sound for the whole site: the first click anywhere unlocks audio (Safari
+// needs this), and every button / card click makes the same soft tap in
+// both games.
+document.addEventListener("pointerdown", unlockSiteAudio, { once: true });
+document.addEventListener("click", (event) => {
+  const target = event.target as HTMLElement | null;
+  if (target?.closest("button, .option-card, .segmented label, .hub-card, .card")) playUiClick();
 });
 
 // The intro ("Enter the gallery") comes first: its click also lets the

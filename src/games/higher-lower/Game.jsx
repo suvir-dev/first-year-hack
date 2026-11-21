@@ -1,7 +1,8 @@
 import React, { useEffect, useReducer, useRef, useState } from 'react';
 import { STARTING_LIVES, STREAK_FOR_LIFE, startGame, trackKey, transition } from './game.js';
 import { displayTrack, sleeveTitle } from './track-display.js';
-import { createGameAudio } from './audio.js';
+// The site's ONE shared audio system (same music and sound effects as the pose game).
+import { playCelebration, playFail, playSuccess, playWhoosh } from '../../audio';
 import { Leaderboard } from './Leaderboard.jsx';
 
 const ignoreRepeat = (event) => {
@@ -142,13 +143,23 @@ function Hearts({ lives, mendedHearts, streak }) {
   );
 }
 
+/** The best score saved in this browser's Higher or Lower leaderboard. */
+function bestSavedScore() {
+  try {
+    const saved = JSON.parse(localStorage.getItem('art-vs-music.wikipedia-2016-2025.scores') ?? '[]');
+    return Array.isArray(saved) ? Math.max(0, ...saved.map((entry) => Number(entry?.score) || 0)) : 0;
+  } catch {
+    return 0;
+  }
+}
+
 export function Game({ deck, random = Math.random }) {
   const [state, dispatch] = useReducer(
     (current, action) => transition(current, action, deck),
     deck, (tracks) => startGame(tracks, random),
   );
-  const audio = useRef(null);
-  const [musicOn, setMusicOn] = useState(true);
+  // The best score saved before this game, to spot a new high score.
+  const previousBest = useRef(bestSavedScore());
   const rules = useRef(null);
   const firstGuess = useRef(null);
   const continueButton = useRef(null);
@@ -169,47 +180,29 @@ export function Game({ deck, random = Math.random }) {
     rules.current?.showModal();
   }, []);
 
+  // Sound effects from the shared audio system: success for a correct
+  // guess, a gentle fail for a wrong one.
   useEffect(() => {
-    if (!musicOn) return;
-    const startMusic = () => {
-      audio.current ??= createGameAudio();
-      audio.current?.unlock();
-      audio.current?.setMusic(true);
-    };
-    document.addEventListener('pointerdown', startMusic, { once: true });
-    document.addEventListener('keydown', startMusic, { once: true });
-    return () => {
-      document.removeEventListener('pointerdown', startMusic);
-      document.removeEventListener('keydown', startMusic);
-    };
-  }, [musicOn]);
-
-  useEffect(() => () => {
-    audio.current?.close();
-    audio.current = null;
-  }, []);
-
-  useEffect(() => {
-    if (state.result?.correct) audio.current?.chime();
+    if (!state.result) return;
+    if (state.result.correct) playSuccess();
+    else playFail();
   }, [state.result]);
 
-  function unlockAudio() {
-    audio.current ??= createGameAudio();
-    audio.current?.unlock();
-    return audio.current;
-  }
+  // Game over: a celebration for a new high score.
+  useEffect(() => {
+    if (state.phase !== 'results') return;
+    if (state.score > previousBest.current) playCelebration();
+    previousBest.current = Math.max(previousBest.current, bestSavedScore());
+  }, [state.phase]);
 
-  function toggleMusic() {
-    const player = unlockAudio();
-    if (!player) return;
-    player.setMusic(!musicOn);
-    setMusicOn(!musicOn);
-  }
+  // The right card slides over to the left for the next round: a soft whoosh.
+  useEffect(() => {
+    if (state.phase === 'guess' && state.round > 1) playWhoosh();
+  }, [state.round]);
 
   const guessing = state.phase === 'guess';
   const over = state.phase === 'over';
   function guess(direction) {
-    unlockAudio();
     dispatch({ type: 'guess', direction, round: state.round });
   }
 
@@ -330,11 +323,6 @@ export function Game({ deck, random = Math.random }) {
         <span>© {new Date().getFullYear()} Swarit Kapoor</span>
         <div className="footer-actions">
           <button className="secondary music-toggle" onClick={() => rules.current.showModal()}>Rules</button>
-          <button className="secondary music-toggle speaker-toggle" onClick={toggleMusic}
-            aria-label={musicOn ? 'Mute music' : 'Unmute music'} aria-pressed={!musicOn}>
-            <span aria-hidden="true">🔊</span>
-            {!musicOn && <span className="speaker-slash" aria-hidden="true" />}
-          </button>
         </div>
       </footer>
     </main>
