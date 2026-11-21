@@ -422,6 +422,8 @@ async function playRound(painting: Painting, options: RoundOptions): Promise<Rou
   bestHolds.forEach((hold) => hold.reset());
   tracker.reset();
   celebrated = [false, false];
+  fullBodyTipUntil = 0;
+  fullBodyTipNext = 0;
   hintText.textContent = "";
   updateScoreDisplay();
 
@@ -505,15 +507,7 @@ async function playRound(painting: Painting, options: RoundOptions): Promise<Rou
     };
 
     roundControl = {
-      takePhoto: () => {
-        // No score without a properly visible pose: wait until we've seen
-        // every player for at least one full second.
-        if (bestHolds.slice(0, players.length).every((hold) => hold.best() === null)) {
-          showNotice("Step back so we can see your whole pose for a second, then try again.");
-          return;
-        }
-        finish(true);
-      },
+      takePhoto: () => finish(true),
       quit: () => finish(false),
     };
 
@@ -579,13 +573,14 @@ function startCameraLoop(): void {
           celebrated[i] = true;
           playChime();
         }
-        // Only frames where we can see (most of) the body count towards the
-        // final score.
-        bestHolds[i].add(result.inFrame ? result.overall : null, now);
+        // Every frame where we can see the player counts (never blocked, even
+        // if they aren't fully in shot: hidden legs simply aren't scored).
+        bestHolds[i].add(result.overall, now);
+        if (result.legsMissing) maybeShowFullBodyTip(now);
         return result;
       });
 
-      updateMessages(poses.length, shownPoses);
+      updateMessages(poses.length, shownPoses, now);
       updateHints(now);
       updateScoreDisplay();
       if (debugOn) updateDebug();
@@ -606,7 +601,7 @@ function stopCameraLoop(): void {
  * The message across the bottom of the camera picture: who we're waiting
  * for (2 players), or "step back" when too much of a body is hidden.
  */
-function updateMessages(peopleFound: number, shownPoses: (DetectedPose | null)[]): void {
+function updateMessages(peopleFound: number, shownPoses: (DetectedPose | null)[], now: number): void {
   let message = "";
   if (peopleFound === 0) {
     message = "We can't see you yet: step into the picture";
@@ -617,12 +612,30 @@ function updateMessages(peopleFound: number, shownPoses: (DetectedPose | null)[]
     if (hidden !== -1) {
       message =
         players.length === 2
-          ? `Step back, ${players[hidden].name}: we can't see your whole pose`
-          : "Step back: we can't see your whole pose";
+          ? `Step back a little, ${players[hidden].name}: we can't see your arms`
+          : "Step back a little: we can't see your arms";
+    } else if (now < fullBodyTipUntil) {
+      message = "Tip: step back to show your full body for an even more accurate score.";
     }
   }
   waitingText.hidden = message === "";
   waitingText.textContent = message;
+}
+
+/** Until when the "show your full body" tip is visible, and when it may show again. */
+let fullBodyTipUntil = 0;
+let fullBodyTipNext = 0;
+const FULL_BODY_TIP_MS = 4000;
+
+/**
+ * The painting's legs count, but we can't see the player's legs. That's not
+ * a problem (legs are then left out of the score), so we just show a gentle
+ * tip for a few seconds, at most once every 20 seconds.
+ */
+function maybeShowFullBodyTip(now: number): void {
+  if (now < fullBodyTipNext) return;
+  fullBodyTipUntil = now + FULL_BODY_TIP_MS;
+  fullBodyTipNext = now + 20000;
 }
 
 /** One tip per player for their worst limb, updated at most once a second. */

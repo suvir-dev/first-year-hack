@@ -33,8 +33,12 @@
 //   5. Overall = weighted average. Arms and torso count most (they define a
 //      painting's pose), legs less, the head least. Each painting can also
 //      mark "signature" limbs (Napoleon's pointing arm) that count double.
-//   6. No free points: a limb the painting shows but the camera can't see
-//      scores 0. (Otherwise hiding a wrong arm would RAISE your score.)
+//   6. No free points for hiding: arms, shoulders, torso and head that the
+//      painting shows but the camera can't see score 0 (otherwise hiding a
+//      wrong arm would RAISE your score). LEGS are different: if the camera
+//      can't see your legs (e.g. you're sitting at a desk), we simply score
+//      your upper body and leave the legs out, with no penalty. And if your
+//      hips are hidden too, we estimate them from your shoulders.
 //   7. Mirror images count: people copy a painting like a mirror, so we also
 //      score your pose flipped left-to-right and keep the better result.
 // ---------------------------------------------------------------------------
@@ -152,8 +156,13 @@ export interface PoseScore {
   mirrored: boolean;
   /** Share (0..1) of the features' weight that the camera could see. */
   seenFraction: number;
-  /** false = too much of the body is hidden: "step back". */
+  /** false = too much of the upper body is hidden: "step back". */
   inFrame: boolean;
+  /**
+   * true = the painting's legs count but the camera can't see (all of)
+   * yours. Not a penalty: just a reason to suggest stepping back.
+   */
+  legsMissing: boolean;
 }
 
 /** A painting's pose, measured once in advance (see prepareTarget). */
@@ -228,11 +237,38 @@ function pixelPoint(pose: DetectedPose, landmarkNumbers: number[]): Point | null
   return { x: x / landmarkNumbers.length, y: y / landmarkNumbers.length };
 }
 
+/** Hip landmark numbers (left 23, right 24). */
+const HIPS = [23, 24];
+
+/**
+ * Where the hips probably are when the camera can't see them (e.g. sitting
+ * behind a desk): straight "down the body" from each shoulder, about 1.6
+ * shoulder-widths. "Down the body" = at right angles to the shoulder line, so
+ * if you lean, the estimated hips lean with you.
+ */
+function estimatedHips(pose: DetectedPose, landmarkNumbers: number[]): Point | null {
+  if (!landmarkNumbers.every((n) => HIPS.includes(n))) return null;
+  const left = pixelPoint(pose, [11]);
+  const right = pixelPoint(pose, [12]);
+  if (!left || !right) return null;
+  const across = { x: left.x - right.x, y: left.y - right.y };
+  // The two right-angle directions; pick the one pointing down the screen.
+  let down = { x: -across.y, y: across.x };
+  if (down.y < 0) down = { x: across.y, y: -across.x };
+  const scale = 1.6;
+  const hip = (shoulder: Point) => ({ x: shoulder.x + down.x * scale, y: shoulder.y + down.y * scale });
+  const points = landmarkNumbers.map((n) => hip(n === 23 ? left : right));
+  return { x: points.reduce((s, p) => s + p.x, 0) / points.length, y: points.reduce((s, p) => s + p.y, 0) / points.length };
+}
+
 /** Every feature's angle in degrees. Features that aren't seen are missing. */
 export function measureFeatures(pose: DetectedPose): Partial<Record<FeatureName, number>> {
   const angles: Partial<Record<FeatureName, number>> = {};
   for (const feature of FEATURES) {
-    const points = feature.points.map((numbers) => pixelPoint(pose, numbers));
+    // Upper-body features may use estimated hips; leg features need the real ones.
+    const points = feature.points.map(
+      (numbers) => pixelPoint(pose, numbers) ?? (feature.isLeg ? null : estimatedHips(pose, numbers)),
+    );
     if (points.some((point) => point === null)) continue; // not seen
     const [a, b, c] = points as Point[];
     angles[feature.name] = feature.kind === "direction" ? directionOf(a, b) : angleAt(a, b, c);
@@ -296,10 +332,16 @@ function compare(
   let totalWeight = 0;
   let weightedPoints = 0;
   let seenWeight = 0;
+  let legsMissing = false;
 
   for (const { feature, targetAngle, weight } of prepared.features) {
     const playerAngle = playerAngles[feature.name];
     const seen = playerAngle !== undefined;
+    // Legs the camera can't see are left out: no penalty (e.g. sitting down).
+    if (feature.isLeg && !seen) {
+      legsMissing = true;
+      continue;
+    }
     const diff = seen ? angleDifference(playerAngle, targetAngle) : null;
     // Not seen = 0 points, but it still counts in the average: no free points.
     const points = diff === null ? 0 : featureScore(diff, tolerance);
@@ -327,6 +369,7 @@ function compare(
     mirrored,
     seenFraction,
     inFrame: seenFraction >= IN_FRAME_FRACTION,
+    legsMissing,
   };
 }
 

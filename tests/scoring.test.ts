@@ -166,11 +166,21 @@ describe("scorePose: other rules", () => {
     expect(scorePose(withVisibility(makePose(STANDING), [25, 26, 27, 28], 0), target).overall).toBe(100);
   });
 
-  it("says 'step back' when the legs are hidden in a full-body painting", () => {
+  it("hidden legs (e.g. sitting down) are left out: same score as visible, matching legs", () => {
     const target = prepareTarget(makePose(STANDING));
-    const result = scorePose(withVisibility(makePose(STANDING), [25, 26, 27, 28], 0), target);
-    expect(result.inFrame).toBe(false);
-    expect(result.overall).toBeLessThan(100); // hidden legs score 0, not free points
+    const legsVisible = scorePose(makePose(STANDING), target);
+    const legsHidden = scorePose(withVisibility(makePose(STANDING), [25, 26, 27, 28], 0), target);
+    expect(legsHidden.overall).toBe(legsVisible.overall);
+    expect(legsHidden.overall).toBe(100);
+    expect(legsHidden.legsMissing).toBe(true); // ...so the app can suggest stepping back
+    expect(legsVisible.legsMissing).toBe(false);
+  });
+
+  it("sitting behind a desk (hips hidden too) still scores the upper body well", () => {
+    const target = prepareTarget(makePose(STANDING));
+    const sitting = scorePose(withVisibility(makePose(STANDING), [23, 24, 25, 26, 27, 28], 0), target);
+    expect(sitting.overall).toBeGreaterThanOrEqual(85);
+    expect(sitting.inFrame).toBe(true);
   });
 
   it("signature limbs count double", () => {
@@ -210,9 +220,9 @@ describe("hints", () => {
     expect(hintFor(result)).toMatch(/left (arm|hand) higher/);
   });
 
-  it("asks you to step back when we can't see enough", () => {
+  it("asks you to step back when we can't see your arms", () => {
     const target = prepareTarget(makePose(STANDING));
-    const result = scorePose(withVisibility(makePose(STANDING), [25, 26, 27, 28], 0), target);
+    const result = scorePose(withVisibility(makePose(STANDING), ARMS_AND_HANDS, 0), target);
     expect(hintFor(result)).toMatch(/Step back/);
   });
 });

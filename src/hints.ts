@@ -18,7 +18,7 @@ const GOOD_ENOUGH = 85;
 
 /** One tip for the player, based on their worst feature. */
 export function hintFor(score: PoseScore, mirrorView = MIRROR_WEBCAM): string {
-  if (!score.inFrame) return "Step back: we can't see your whole pose";
+  if (!score.inFrame) return "Step back a little: we can't see your arms and body";
 
   // Worst feature = the one losing the most weighted points.
   const worst = [...score.features].sort(
