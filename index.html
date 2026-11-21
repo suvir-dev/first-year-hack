@@ -15,12 +15,17 @@
     />
   </head>
   <body>
-    <!-- Buttons visible on every screen: music, narration, settings -->
-    <div class="toolbar">
-      <button id="music-button" class="round-button" title="Music on/off" aria-label="Music on/off">🎵</button>
-      <button id="narration-button" class="round-button" title="Narration on/off" aria-label="Narration on/off">🔊</button>
-      <button id="settings-button" class="round-button" title="Settings" aria-label="Settings">⚙️</button>
-    </div>
+    <!-- The site's top bar, on every screen of both games: title (goes home),
+         "Switch game", and the music / narration / settings buttons. -->
+    <nav id="site-nav" class="site-nav" hidden>
+      <a href="#/home" class="site-title">The Old Masters Arcade</a>
+      <button id="switch-game" class="btn btn-secondary nav-switch">⇄ Switch game</button>
+      <div class="toolbar">
+        <button id="music-button" class="round-button" title="Music on/off" aria-label="Music on/off">🎵</button>
+        <button id="narration-button" class="round-button" title="Narration on/off" aria-label="Narration on/off">🔊</button>
+        <button id="settings-button" class="round-button" title="Settings" aria-label="Settings">⚙️</button>
+      </div>
+    </nav>
 
     <!-- Settings window (a <dialog> pops up over the page) -->
     <dialog id="settings-dialog">
@@ -60,6 +65,30 @@
       <p class="intro-tagline">Step into the painting</p>
       <button id="intro-button" class="intro-button">Enter the gallery</button>
     </section>
+
+    <!-- The home hub: choose a game -->
+    <section id="hub" class="hub" hidden>
+      <header class="museum-header">
+        <p class="eyebrow">Welcome to</p>
+        <h1>The Old Masters Arcade</h1>
+        <p class="tagline">Two galleries. Choose your game.</p>
+      </header>
+      <div class="hub-cards">
+        <a class="hub-card" href="#/pose">
+          <div class="gilt"><img src="/paintings/napoleon-crossing-the-alps.jpg" alt="" /></div>
+          <h2>Strike a Pose</h2>
+          <p>Recreate famous artworks with your body.</p>
+        </a>
+        <a class="hub-card" href="#/higher-lower">
+          <div class="gilt"><img src="/paintings/mona-lisa.jpg" alt="" /></div>
+          <h2>Art vs Music: Higher or Lower</h2>
+          <p>Which is more famous: the masterpiece or the hit song?</p>
+        </a>
+      </div>
+    </section>
+
+    <!-- The pose game ("Strike a Pose"): all of its screens -->
+    <div id="pose-app" hidden>
 
     <!-- Screen 1: the start screen. main.ts fills #painting-list with cards. -->
     <section id="screen-gallery" hidden>
@@ -257,6 +286,12 @@
       </div>
     </section>
 
+    </div>
+    <!-- end of #pose-app -->
+
+    <!-- The Higher or Lower game (React) is mounted here by the router -->
+    <div id="hl-root" hidden></div>
+
     <footer class="site-footer">
       <button id="credits-button" class="link-button">Music credits</button>
     </footer>
@@ -265,6 +300,6 @@
          onto the canvas instead (see main.ts). -->
     <video id="video" class="offscreen" playsinline muted></video>
 
-    <script type="module" src="/src/main.ts"></script>
+    <script type="module" src="/src/app.ts"></script>
   </body>
 </html>

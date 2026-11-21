@@ -14,7 +14,7 @@
 // ---------------------------------------------------------------------------
 
 import "./style.css";
-import { activeCameraId, listCameras, startCamera, watchCameras } from "./camera";
+import { activeCameraId, listCameras, startCamera, stopCamera, watchCameras } from "./camera";
 import { MIRROR_WEBCAM } from "./config";
 import { detectAll, loadPoseModel, POSE_CONNECTIONS, setMaxPeople } from "./pose";
 import type { DetectedPose } from "./pose";
@@ -296,6 +296,7 @@ async function switchCamera(deviceId: string): Promise<void> {
 
 /** A camera was plugged in or unplugged. */
 async function onCamerasChanged(): Promise<void> {
+  if (!poseActive) return; // the pose game isn't open: leave the camera off
   const cameras = await listCameras();
   const activeId = activeCameraId();
   const stillThere = cameras.some((camera) => camera.deviceId === activeId);
@@ -1417,8 +1418,7 @@ byId("credits-button").addEventListener("click", () => byId<HTMLDialogElement>("
 byId("intro-button").addEventListener("click", () => {
   unlockAudio(); // lets Safari play the narration files later
   startMusic();
-  ready = prepare();
-  showStart();
+  siteEntered?.(); // app.ts takes over: show the hub (or the game in the URL)
 });
 
 retryButton.addEventListener("click", () => {
@@ -1428,6 +1428,43 @@ retryButton.addEventListener("click", () => {
 watchCameras(() => {
   onCamerasChanged();
 });
+
+// =============================================================================
+// Start / stop API, used by the site's router (app.ts)
+// =============================================================================
+
+/** true while the pose game is the open page. */
+let poseActive = false;
+/** Called once the visitor clicks "Enter the gallery" on the intro. */
+let siteEntered: (() => void) | null = null;
+
+/** app.ts: tell me when the intro has been clicked. */
+export function whenSiteEntered(callback: () => void): void {
+  siteEntered = callback;
+}
+
+/** Open the pose game: start the camera and the pose model, show its start screen. */
+export function startPoseGame(): void {
+  if (poseActive) return;
+  poseActive = true;
+  ready = prepare();
+  showStart();
+}
+
+/**
+ * Leave the pose game: end any round, stop the pose-detection loop and the
+ * narration, and turn the camera OFF (every track stopped, so the camera
+ * light goes out). startPoseGame() starts everything again.
+ */
+export function stopPoseGame(): void {
+  if (!poseActive) return;
+  poseActive = false;
+  roundControl?.quit();
+  stopCameraLoop();
+  stopNarrating();
+  stopCamera(video);
+  byId<HTMLVideoElement>("camera-preview").srcObject = null;
+}
 
 // --- Start the app -----------------------------------------------------------
 updateSoundButtons();
