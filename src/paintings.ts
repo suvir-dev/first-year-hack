@@ -4,7 +4,7 @@
 // Image files go in public/paintings/ (see the README in that folder).
 // ---------------------------------------------------------------------------
 
-import type { PoseLandmarks } from "./pose";
+import type { DetectedPose } from "./pose";
 
 export interface Painting {
   /** Short unique name, also used as the image file name. */
@@ -14,11 +14,12 @@ export interface Painting {
   /** Path to the image. "/paintings/x.jpg" means the file public/paintings/x.jpg. */
   imageUrl: string;
   /**
-   * The pose of the person in the painting (33 landmarks, same format as
+   * The pose of the person in the painting: 33 landmarks plus the aspect
+   * ratio of the image they were measured in (same format as detect() in
    * pose.ts). null means "not recorded yet": the game can show the painting
    * but cannot score it.
    */
-  targetPose: PoseLandmarks | null;
+  targetPose: DetectedPose | null;
 }
 
 // TODO (Person B): download these images into public/paintings/ (see the
@@ -27,7 +28,9 @@ export interface Painting {
 // are the easiest to copy and to score.
 //
 // TODO (Person A + B together): fill in targetPose for each painting (see the
-// TODO at the bottom of pose.ts).
+// TODO at the bottom of pose.ts). Quick way: on the challenge screen, strike
+// the pose and press T. The pose is printed in the browser console (F12) as
+// JSON. Paste it here in place of null.
 export const paintings: Painting[] = [
   {
     id: "mona-lisa",

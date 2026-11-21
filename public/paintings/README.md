@@ -25,12 +25,15 @@ in the demo.
 
 ## Images the app expects right now
 
-| File name                        | Painting                                     | Source URL |
-| -------------------------------- | -------------------------------------------- | ---------- |
-| `mona-lisa.jpg`                  | Mona Lisa, Leonardo da Vinci                 |            |
-| `the-scream.jpg`                 | The Scream, Edvard Munch                     |            |
-| `napoleon-crossing-the-alps.jpg` | Napoleon Crossing the Alps, Jacques-Louis David |         |
-| `girl-with-a-pearl-earring.jpg`  | Girl with a Pearl Earring, Johannes Vermeer  |            |
+All four were downloaded from Wikimedia Commons, where each file is marked
+"Public domain", and resized to about 1300–1600 px tall.
+
+| File name                        | Painting                                        | Source |
+| -------------------------------- | ----------------------------------------------- | ------ |
+| `mona-lisa.jpg`                  | Mona Lisa, Leonardo da Vinci                    | https://commons.wikimedia.org/wiki/File:Mona_Lisa,_by_Leonardo_da_Vinci,_from_C2RMF_retouched.jpg |
+| `the-scream.jpg`                 | The Scream, Edvard Munch                        | https://commons.wikimedia.org/wiki/File:Edvard_Munch,_1893,_The_Scream,_oil,_tempera_and_pastel_on_cardboard,_91_x_73_cm,_National_Gallery_of_Norway.jpg |
+| `napoleon-crossing-the-alps.jpg` | Napoleon Crossing the Alps, Jacques-Louis David | https://commons.wikimedia.org/wiki/File:David_-_Napoleon_crossing_the_Alps_-_Malmaison2.jpg |
+| `girl-with-a-pearl-earring.jpg`  | Girl with a Pearl Earring, Johannes Vermeer     | https://commons.wikimedia.org/wiki/File:1665_Girl_with_a_Pearl_Earring.jpg |
 
 Tips:
 - Keep images under about 1 MB so the gallery loads quickly.

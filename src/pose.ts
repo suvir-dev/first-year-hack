@@ -19,6 +19,20 @@ import { POSE_MODEL_URL, WASM_FOLDER_URL } from "./config";
  */
 export type PoseLandmarks = NormalizedLandmark[];
 
+/**
+ * A pose together with the shape of the image it was found in.
+ *
+ * Why the shape matters: x is a fraction of the image WIDTH and y is a
+ * fraction of the image HEIGHT. On a 16:9 webcam those are different
+ * lengths, so a 45° arm would look like a 29° arm if we used x and y
+ * directly. scoring.ts multiplies x by aspectRatio to undo this.
+ */
+export interface DetectedPose {
+  landmarks: PoseLandmarks;
+  /** Image width divided by image height, e.g. 1280 / 720 = 1.78. */
+  aspectRatio: number;
+}
+
 /** Pairs of landmark indexes to join with lines when drawing a skeleton. */
 export const POSE_CONNECTIONS = PoseLandmarker.POSE_CONNECTIONS;
 
@@ -57,22 +71,30 @@ function createLandmarker(
 
 /**
  * Find the pose in one video frame.
- * Returns the 33 landmarks of the person, or null if nobody was found
- * (or the model hasn't finished loading).
+ * Returns the person's 33 landmarks plus the frame's aspect ratio, or null if
+ * nobody was found (or the model hasn't finished loading).
  */
-export function detect(videoFrame: HTMLVideoElement): PoseLandmarks | null {
+export function detect(videoFrame: HTMLVideoElement): DetectedPose | null {
   if (!landmarker) return null;
 
   // In VIDEO mode MediaPipe needs a timestamp (in ms) that always increases.
   const result = landmarker.detectForVideo(videoFrame, performance.now());
 
   // result.landmarks has one entry per person. We asked for at most one.
-  return result.landmarks[0] ?? null;
+  const landmarks = result.landmarks[0];
+  if (!landmarks) return null;
+
+  return {
+    landmarks,
+    aspectRatio: videoFrame.videoWidth / videoFrame.videoHeight,
+  };
 }
 
 // TODO (Person A): the paintings need target poses. One option is a
 // detectImage(img: HTMLImageElement) function that switches the landmarker to
 // runningMode "IMAGE" with landmarker.setOptions(...), runs .detect(img), and
 // switches back to "VIDEO". Paintings are not photos, so check the result
-// visually; for some paintings it may be easier to pose like the painting
-// yourself and save those landmarks instead.
+// visually. For some paintings it is easier to pose like the painting
+// yourself: on the challenge screen, press T to record your current pose as
+// the target (main.ts logs it to the console so it can be pasted into
+// paintings.ts).
