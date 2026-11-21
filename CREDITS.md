@@ -16,9 +16,20 @@ browser (Web Audio API). That music is our own code: no licence needed.
 
 The celebration chime is also generated in the browser.
 
-## Narration
+## Narration voice
 
-The history voiceover uses your browser's built-in speech (Web Speech API).
+The history voiceover is pre-generated offline with **Piper**
+(https://github.com/rhasspy/piper, MIT licence) and stored in `public/narration/`.
+If those files are missing, the browser's built-in speech is used instead.
+
+| Voice | Used | Source | Licence |
+| ----- | ---- | ------ | ------- |
+| en_GB-cori-high ("Cori") | yes (default) | https://huggingface.co/rhasspy/piper-voices/tree/main/en/en_GB/cori/high | Trained on LibriVox recordings: public domain |
+| en_GB-jenny_dioco-medium ("Jenny (Dioco)") | alternative | https://huggingface.co/rhasspy/piper-voices/tree/main/en/en_GB/jenny_dioco/medium | Jenny dataset licence: commercial use allowed; attribution required ("Jenny (Dioco)") |
+| en_GB-southern_english_female-low | alternative | https://huggingface.co/rhasspy/piper-voices/tree/main/en/en_GB/southern_english_female/low | Dataset CC BY-SA 4.0 (OpenSLR 83): attribution required |
+
+If you switch to Jenny, keep the credit "Jenny (Dioco)" visible (it's here in
+the app's credits).
 
 ## Artworks
 

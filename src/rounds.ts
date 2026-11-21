@@ -33,7 +33,7 @@ export interface RoundResult {
 /** The things main.ts must provide so a tour can run. */
 export interface TourHooks {
   /** Play one round. Resolve null if the player quits. */
-  playRound(painting: Painting, roundNumber: number, totalRounds: number): Promise<RoundResult | null>;
+  playRound(painting: Painting, roundNumber: number, totalRounds: number, next?: Painting): Promise<RoundResult | null>;
   /** Show the short "Next painting…" break after a round. */
   showBreak(result: RoundResult, roundNumber: number, totalRounds: number): Promise<void>;
 }
@@ -96,7 +96,7 @@ export async function runGalleryTour(
   const results: RoundResult[] = [];
 
   for (let i = 0; i < chosen.length; i++) {
-    const result = await hooks.playRound(chosen[i], i + 1, chosen.length);
+    const result = await hooks.playRound(chosen[i], i + 1, chosen.length, chosen[i + 1]);
     if (!result) return null; // quit
     results.push(result);
 

@@ -29,11 +29,14 @@ import {
   listEnglishVoices,
   narrate,
   preferredVoice,
+  preloadNarration,
   setNarrationOn,
   setPreferredVoice,
   speakSample,
   splitSentences,
   stopNarration,
+  unlockAudio,
+  usingPiperAudio,
 } from "./narrator";
 // The text of CREDITS.md, bundled into the app by Vite ("?raw" = as plain text).
 import creditsMarkdown from "../CREDITS.md?raw";
@@ -403,8 +406,8 @@ async function playSinglePainting(painting: Painting): Promise<void> {
 async function playGalleryTour(): Promise<void> {
   players = readPlayers();
   const results = await runGalleryTour({
-    playRound: (painting, round, total) =>
-      playRound(painting, { timeLimit: ROUND_SECONDS, label: `Round ${round} of ${total}` }),
+    playRound: (painting, round, total, next) =>
+      playRound(painting, { timeLimit: ROUND_SECONDS, label: `Round ${round} of ${total}`, next }),
     showBreak,
   }, selectedDifficulty(), players.length === 2 ? 2 : 1);
   if (results) showSummary(results);
@@ -424,6 +427,8 @@ interface RoundOptions {
    * "Guess the Painting" mode must pass false, or it would give the answer away.
    */
   narrate?: boolean;
+  /** Gallery Tour: the painting after this one (its narration is preloaded). */
+  next?: Painting;
 }
 
 /**
@@ -437,6 +442,8 @@ async function playRound(painting: Painting, options: RoundOptions): Promise<Rou
     painting = randomSolo(painting.id);
   }
   currentPainting = painting;
+  preloadNarration(painting.id); // so it plays without delay
+  if (options.next) preloadNarration(options.next.id); // Gallery Tour: the next one too
   paintingImage.src = painting.imageUrl;
   paintingImage.alt = `${painting.title} by ${painting.artist}`;
   // The museum placard beside the painting.
@@ -559,7 +566,7 @@ async function playRound(painting: Painting, options: RoundOptions): Promise<Rou
     };
 
     // The museum guide tells the painting's story while you pose.
-    if (options.narrate !== false) startNarration(painting.history);
+    if (options.narrate !== false) startNarration(painting.history, painting.id);
 
     // Every 0.1 s: update the countdown ring, and check the "Hold it!" rule.
     const startedAt = performance.now();
@@ -1270,7 +1277,7 @@ async function playSpotlightSweep(): Promise<void> {
 }
 
 /** Read the history aloud, with subtitles and the music turned down. */
-function startNarration(text: string): void {
+function startNarration(text: string, paintingId: string): void {
   // One <span> per sentence, so the current one can be highlighted.
   subtitles.innerHTML = "";
   for (const sentence of splitSentences(text)) {
@@ -1290,7 +1297,7 @@ function startNarration(text: string): void {
       [...subtitles.children].forEach((span, i) => span.classList.toggle("current", i === index));
     },
     onDone: endNarration,
-  });
+  }, paintingId);
 }
 
 /** Narration finished: hide the subtitles and bring the music back up. */
@@ -1307,6 +1314,12 @@ function stopNarrating(): void {
 
 /** Fill the "Narrator voice" dropdown in Settings with the English voices. */
 async function fillVoiceList(): Promise<void> {
+  // With pre-made Piper audio there is no voice to choose: show a label instead.
+  const piper = await usingPiperAudio();
+  byId("voice-field").hidden = piper;
+  byId("voice-help").hidden = piper;
+  byId("piper-label").hidden = !piper;
+  if (piper) return;
   const select = byId<HTMLSelectElement>("voice-select");
   const voices = await listEnglishVoices();
   select.innerHTML = "";
@@ -1402,6 +1415,7 @@ byId("credits-button").addEventListener("click", () => byId<HTMLDialogElement>("
 // The intro button: this first click is also what lets the browser play
 // sound, so the music starts here. Then the camera starts.
 byId("intro-button").addEventListener("click", () => {
+  unlockAudio(); // lets Safari play the narration files later
   startMusic();
   ready = prepare();
   showStart();

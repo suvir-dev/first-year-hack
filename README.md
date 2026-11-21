@@ -92,6 +92,37 @@ tools/
   pose-picker.ts
 ```
 
+## Narration audio (Piper)
+
+Each painting's history is read by a pre-made voice: one `.m4a` file per
+sentence in `public/narration/`, made offline with [Piper](https://github.com/rhasspy/piper)
+(listed in `public/narration/manifest.json`). If the files are missing, the
+browser's own voice is used instead.
+
+One-time setup (already done on Sachin's Mac):
+
+```bash
+python3 -m venv tools/.venv
+tools/.venv/bin/pip install piper-tts
+tools/.venv/bin/python -m piper.download_voices --download-dir tools/piper-voices \
+  en_GB-cori-high en_GB-jenny_dioco-medium en_GB-southern_english_female-low
+```
+
+After editing a painting's `history` (only changed sentences are re-made):
+
+```bash
+npm run narration
+```
+
+With another voice (re-makes everything):
+
+```bash
+node tools/export-narration.mjs
+tools/.venv/bin/python tools/generate_narration.py --voice en_GB-jenny_dioco-medium
+```
+
+Voice licences are in `CREDITS.md` ("Narration voice").
+
 ## Camera tips
 
 - Pick the camera from the dropdown on the start screen, or press ⚙️ on any

@@ -25,3 +25,8 @@ dist-ssr
 
 # Optional offline copies of MediaPipe files (see README "If the Wi-Fi fails")
 public/mediapipe/
+
+# Piper text-to-speech (see tools/generate_narration.py)
+tools/.venv/
+tools/piper-voices/
+tools/narration.json
