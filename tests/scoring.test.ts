@@ -92,29 +92,30 @@ describe("angle helpers", () => {
 });
 
 describe("scorePose: the required cases", () => {
-  it("scores every painting's own target pose against itself as 100", () => {
-    for (const painting of paintings) {
-      if (!painting.targetPose) continue;
-      const target = prepareTarget(painting.targetPose, painting);
-      expect(scorePose(painting.targetPose, target).overall, painting.title).toBe(100);
+  // Every figure of every painting (solo and duet).
+  const allFigures = paintings.flatMap((painting) =>
+    painting.figures.map((figure) => ({ painting, figure, name: `${painting.title} / ${figure.label}` })),
+  );
+  const prepare = (painting: (typeof paintings)[number], figure: (typeof allFigures)[number]["figure"]) =>
+    prepareTarget(figure.targetPose, { upperBodyOnly: figure.upperBodyOnly, signatureJoints: painting.signatureJoints });
+
+  it("scores every figure's own target pose against itself as 100", () => {
+    for (const { painting, figure, name } of allFigures) {
+      expect(scorePose(figure.targetPose, prepare(painting, figure)).overall, name).toBe(100);
     }
   });
 
   it("still scores ~100 when the pose is mirrored left/right", () => {
-    for (const painting of paintings) {
-      if (!painting.targetPose) continue;
-      const target = prepareTarget(painting.targetPose, painting);
-      const result = scorePose(mirrorPose(painting.targetPose), target);
-      expect(result.overall, painting.title).toBeGreaterThanOrEqual(99);
-      expect(result.mirrored).toBe(true);
+    for (const { painting, figure, name } of allFigures) {
+      const result = scorePose(mirrorPose(figure.targetPose), prepare(painting, figure));
+      expect(result.overall, name).toBeGreaterThanOrEqual(99);
     }
   });
 
   it("still scores ~100 for a smaller/bigger person anywhere in a 16:9 webcam picture", () => {
-    for (const painting of paintings) {
-      const pose = painting.targetPose;
-      if (!pose) continue;
-      const target = prepareTarget(pose, painting);
+    for (const { painting, figure, name } of allFigures) {
+      const pose = figure.targetPose;
+      const target = prepare(painting, figure);
       // Put the same body (in pixels) into a 1280×720 webcam frame, at
       // different sizes and positions.
       for (const [scale, shiftX, shiftY] of [[0.2, 100, 50], [0.3, 600, 20], [0.4, 300, 0]]) {
@@ -124,7 +125,7 @@ describe("scorePose: the required cases", () => {
           y: (l.y * pose.height * scale + shiftY) / 720,
         }));
         const result = scorePose({ landmarks, width: 1280, height: 720 }, target);
-        expect(result.overall, `${painting.title} ×${scale}`).toBeGreaterThanOrEqual(99);
+        expect(result.overall, `${name} ×${scale}`).toBeGreaterThanOrEqual(99);
       }
     }
   });

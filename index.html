@@ -154,7 +154,13 @@
         <!-- The painting under a warm spotlight, with its museum placard -->
         <div class="painting-wall">
           <figure class="exhibit">
-            <div class="gilt"><img id="painting-image" alt="" /></div>
+            <div class="gilt">
+              <div class="painting-holder">
+                <img id="painting-image" alt="" />
+                <!-- Duets: players' name tags drawn on the painting -->
+                <div id="figure-tags" class="figure-tags"></div>
+              </div>
+            </div>
           </figure>
           <aside class="placard">
             <h3 id="placard-title"></h3>
@@ -169,6 +175,11 @@
             <div id="waiting" class="waiting" hidden></div>
             <div id="countdown" hidden></div>
             <div id="flash" class="flash"></div>
+            <!-- Duet intro: who copies which figure -->
+            <div id="duet-intro" class="duet-intro" hidden>
+              <p id="duet-text"></p>
+              <button id="swap-button" class="btn btn-secondary">⇄ Swap figures</button>
+            </div>
           </div>
         </figure>
       </div>
@@ -225,6 +236,8 @@
       <p id="result-winner" class="winner" hidden></p>
       <p id="result-status" class="status"></p>
       <div id="result-holder"></div>
+      <!-- Duets: each player's photo next to their figure -->
+      <div id="duet-results" class="duet-results" hidden></div>
       <div class="buttons">
         <button id="download-button" class="btn btn-primary">Download</button>
         <button id="again-button" class="btn btn-secondary">Try another</button>

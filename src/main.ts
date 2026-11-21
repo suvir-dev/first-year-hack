@@ -22,7 +22,7 @@ import { prepareTarget, scorePose, TOLERANCE_DEGREES } from "./scoring";
 import type { Difficulty, PoseScore, PreparedTarget } from "./scoring";
 import { BestHold, LandmarkSmoother, LiveScore } from "./smoothing";
 import { hintFor } from "./hints";
-import { formatScore, formatYear, toScore } from "./format";
+import { formatScore, formatYear, rankFor, toScore } from "./format";
 import { duckMusic, isMuted, playChime, playGuideChime, setMuted, startMusic } from "./audio";
 import {
   isNarrationOn,
@@ -37,8 +37,8 @@ import {
 } from "./narrator";
 // The text of CREDITS.md, bundled into the app by Vite ("?raw" = as plain text).
 import creditsMarkdown from "../CREDITS.md?raw";
-import { paintings } from "./paintings";
-import type { Painting } from "./paintings";
+import { figureCount, paintings, soloPaintings } from "./paintings";
+import type { Figure, Painting } from "./paintings";
 import { createFramedResult, loadSegmenter } from "./composite";
 import { PLAYER_COLOURS, PlayerTracker, pickWinner, winnerText } from "./players";
 import type { Player } from "./players";
@@ -83,6 +83,11 @@ const sweep = byId("sweep");
 const subtitles = byId("subtitles");
 const musicButton = byId<HTMLButtonElement>("music-button");
 const narrationButton = byId<HTMLButtonElement>("narration-button");
+const figureTags = byId("figure-tags");
+const duetIntro = byId("duet-intro");
+const duetText = byId("duet-text");
+const swapButton = byId<HTMLButtonElement>("swap-button");
+const duetResults = byId("duet-results");
 const video = byId<HTMLVideoElement>("video");
 const cameraCanvas = byId<HTMLCanvasElement>("camera-canvas");
 const ctx = cameraCanvas.getContext("2d")!;
@@ -128,7 +133,16 @@ let currentPainting: Painting | null = null;
 /** The id of the running animation frame loop, so we can stop it. */
 let loopId: number | null = null;
 /** The painting's pose, measured once when the round starts. */
-let target: PreparedTarget | null = null;
+let targets: (PreparedTarget | null)[] = [null, null];
+/**
+ * Which figure of the painting each player copies (index into
+ * painting.figures). Solo painting: both copy figure 0. Duet: Player 1
+ * (the LEFT player on the mirrored camera view) copies the LEFT figure.
+ * The choice belongs to the PLAYER, so it stays the same if they swap sides.
+ */
+let figureOfPlayer = [0, 0];
+/** Each player's latest pose (kept for the result screen). */
+let latestPoses: (DetectedPose | null)[] = [null, null];
 /** How forgiving the scoring is (chosen on the start screen). */
 let difficulty: Difficulty = "medium";
 
@@ -342,7 +356,9 @@ function showStart(): void {
   stopNarrating();
   paintingList.innerHTML = "";
 
-  for (const painting of paintings) {
+  // 1 player: only solo paintings (one figure). 2 players: duets too.
+  const choices = selectedPlayerCount() === 1 ? soloPaintings : paintings;
+  for (const painting of choices) {
     // <button class="card">
     //   <div class="gilt"><img></div>
     //   <div class="label"><strong>Title</strong><span>Artist, year</span></div>
@@ -390,7 +406,7 @@ async function playGalleryTour(): Promise<void> {
     playRound: (painting, round, total) =>
       playRound(painting, { timeLimit: ROUND_SECONDS, label: `Round ${round} of ${total}` }),
     showBreak,
-  }, selectedDifficulty());
+  }, selectedDifficulty(), players.length === 2 ? 2 : 1);
   if (results) showSummary(results);
 }
 
@@ -415,6 +431,11 @@ interface RoundOptions {
  * or null if the player pressed "Back to start".
  */
 async function playRound(painting: Painting, options: RoundOptions): Promise<RoundResult | null> {
+  // Safety net: 1 player must never get a painting with two people.
+  if (players.length === 1 && figureCount(painting) > 1) {
+    console.warn(`"${painting.title}" has ${figureCount(painting)} figures: using a solo painting instead.`);
+    painting = randomSolo(painting.id);
+  }
   currentPainting = painting;
   paintingImage.src = painting.imageUrl;
   paintingImage.alt = `${painting.title} by ${painting.artist}`;
@@ -443,18 +464,12 @@ async function playRound(painting: Painting, options: RoundOptions): Promise<Rou
   hintText.textContent = "";
   updateScoreDisplay();
 
-  // Measure the painting's pose ONCE (not every frame), in real pixels of
-  // the painting image as it actually loaded.
-  target = null;
-  if (painting.targetPose) {
-    await paintingImage.decode().catch(() => undefined);
-    target = prepareTarget(painting.targetPose, {
-      width: paintingImage.naturalWidth || painting.targetPose.width,
-      height: paintingImage.naturalHeight || painting.targetPose.height,
-      upperBodyOnly: painting.upperBodyOnly,
-      signatureJoints: painting.signatureJoints,
-    });
-  }
+  // Who copies which figure, then measure those figures' poses ONCE (not
+  // every frame), in real pixels of the painting image as it loaded.
+  await paintingImage.decode().catch(() => undefined);
+  figureOfPlayer = isDuet(painting) ? [0, 1] : [0, 0];
+  prepareTargets(painting);
+  renderFigureTags(painting);
 
   readyButton.disabled = true;
   backButton.disabled = false;
@@ -477,8 +492,18 @@ async function playRound(painting: Painting, options: RoundOptions): Promise<Rou
     return null;
   }
 
-  statusText.textContent =
-    players.length === 2
+  // Duet: show who copies whom for 3 seconds (with a "Swap figures" button).
+  if (isDuet(painting)) {
+    await showDuetIntro(painting);
+    if (screens.challenge.hidden) {
+      stopCameraLoop();
+      return null;
+    }
+  }
+
+  statusText.textContent = isDuet(painting)
+    ? "Duet! Each of you copies your own figure."
+    : players.length === 2
       ? "Both copy the same figure! Player 1 stands on the left."
       : `Copy the pose! Stay above ${HOLD_SCORE} for ${HOLD_SECONDS} seconds to lock it in early.`;
   readyButton.disabled = false;
@@ -525,7 +550,7 @@ async function playRound(painting: Painting, options: RoundOptions): Promise<Rou
       await wait(400); // let the flash be seen
       stopCameraLoop();
       backButton.disabled = false;
-      resolve({ painting, photo, scores });
+      resolve({ painting, photo, scores, figureOfPlayer: [...figureOfPlayer], poses: [...latestPoses] });
     };
 
     roundControl = {
@@ -613,8 +638,11 @@ function startCameraLoop(): void {
         return landmarkSmoothers[i].smooth(pose);
       });
 
+      latestPoses = shownPoses;
       latestScores = shownPoses.map((pose, i) => {
+        const target = targets[i];
         if (!pose || !target) return null;
+        // Each player is scored only against THEIR figure.
         const result = scorePose(pose, target, { difficulty });
         currentScores[i] = liveScores[i].add(result.overall, now);
         // A little chime the first time someone reaches 90 in a round.
@@ -704,6 +732,7 @@ function updateHints(now: number): void {
 
 /** Show the big score (1 player) or both players' scores (2 players). */
 function updateScoreDisplay(): void {
+  updateFigureTagScores();
   const two = players.length === 2;
   scoreOne.hidden = two;
   scoreTwo.hidden = !two;
@@ -916,8 +945,14 @@ document.addEventListener("keydown", (event) => {
 // =============================================================================
 
 /** "Ana 81 · Ben 77" */
-function scoresLine(scores: (number | null)[]): string {
-  return players.map((player, i) => `${player.name} ${formatScore(scores[i])}`).join(" · ");
+function scoresLine(scores: (number | null)[], result?: RoundResult): string {
+  return players
+    .map((player, i) => {
+      // Duet: also say which figure each player copied ("Ana as The Husband 84").
+      const figure = result && isDuet(result.painting) ? ` as ${result.painting.figures[result.figureOfPlayer[i]].label}` : "";
+      return `${player.name}${figure} ${formatScore(scores[i])}`;
+    })
+    .join(" · ");
 }
 
 /** Gallery Tour: the 3-second "Next painting…" break between rounds. */
@@ -925,7 +960,7 @@ async function showBreak(result: RoundResult, round: number, total: number): Pro
   breakRound.textContent = `Round ${round} of ${total} done`;
   breakScore.textContent =
     players.length === 2
-      ? `${scoresLine(result.scores)} — ${winnerText(players, result.scores)}`
+      ? `${scoresLine(result.scores, result)} — ${winnerText(players, result.scores)}`
       : `Score: ${formatScore(result.scores[0])} / 100`;
   showScreen("break");
   await wait(BREAK_SECONDS * 1000);
@@ -945,12 +980,89 @@ async function showResult(result: RoundResult): Promise<void> {
 
   const plaqueLine =
     players.length === 2
-      ? `${scoresLine(result.scores)} — ${winnerText(players, result.scores)}`.toUpperCase()
+      ? `${scoresLine(result.scores, result)} — ${winnerText(players, result.scores)}`.toUpperCase()
       : undefined;
   resultCanvas = await createFramedResult(result.photo, result.painting, result.scores[0], plaqueLine);
   resultHolder.appendChild(resultCanvas);
+  showDuetResults(result);
   resultStatus.textContent = "";
   downloadButton.disabled = false;
+}
+
+/**
+ * Duet results: each player's photo next to the figure they copied, their
+ * score and rank, and who matched their figure better (higher score wins;
+ * within 2 points is a draw). 1 player: just the rank.
+ */
+function showDuetResults(result: RoundResult): void {
+  duetResults.innerHTML = "";
+  duetResults.hidden = !isDuet(result.painting);
+  if (players.length === 1) {
+    resultWinner.hidden = false;
+    resultWinner.textContent = rankFor(result.scores[0]);
+    return;
+  }
+  if (!isDuet(result.painting)) return;
+
+  players.forEach((player, i) => {
+    const figure = result.painting.figures[result.figureOfPlayer[i]];
+    const item = document.createElement("figure");
+    item.className = "duet-result";
+    item.style.setProperty("--tag-colour", player.colour);
+    const pair = document.createElement("div");
+    pair.className = "pair";
+    // The figure, cut out of the painting (its joints + some padding)...
+    pair.appendChild(crop(paintingImage, paintingImage.naturalWidth, paintingImage.naturalHeight, figureBox(figure)));
+    // ...and the player, cut out of the photo.
+    const pose = result.poses[i];
+    if (pose) pair.appendChild(crop(result.photo, result.photo.width, result.photo.height, playerBox(pose)));
+    const caption = document.createElement("figcaption");
+    caption.innerHTML = "";
+    const line = document.createElement("div");
+    line.textContent = `${player.name} as ${figure.label}: ${formatScore(result.scores[i])}`;
+    const rank = document.createElement("div");
+    rank.className = "rank";
+    rank.textContent = rankFor(result.scores[i]);
+    caption.append(line, rank);
+    item.append(pair, caption);
+    duetResults.appendChild(item);
+  });
+
+  const winner = pickWinner(result.scores);
+  resultWinner.hidden = false;
+  resultWinner.textContent =
+    winner === null
+      ? "Draw! You matched your figures equally well."
+      : `${players[winner].name} matched ${result.painting.figures[result.figureOfPlayer[winner]].label} better!`;
+}
+
+/** The part of the photo a player takes up (0..1, as shown on screen). */
+function playerBox(pose: DetectedPose): { left: number; top: number; right: number; bottom: number } {
+  const points = pose.landmarks.filter((landmark) => landmark.visibility > 0.5);
+  const xs = points.map((p) => (MIRROR_WEBCAM ? 1 - p.x : p.x)); // the photo is mirrored like the screen
+  const ys = points.map((p) => p.y);
+  return {
+    left: Math.max(0, Math.min(...xs) - 0.05),
+    right: Math.min(1, Math.max(...xs) + 0.05),
+    top: Math.max(0, Math.min(...ys) - 0.12), // room for the top of the head
+    bottom: Math.min(1, Math.max(...ys) + 0.05),
+  };
+}
+
+/** Copy part of an image (box in 0..1) into a new canvas. */
+function crop(
+  source: CanvasImageSource,
+  width: number,
+  height: number,
+  box: { left: number; top: number; right: number; bottom: number },
+): HTMLCanvasElement {
+  const canvas = document.createElement("canvas");
+  const sx = box.left * width;
+  const sy = box.top * height;
+  canvas.width = Math.max(1, (box.right - box.left) * width);
+  canvas.height = Math.max(1, (box.bottom - box.top) * height);
+  canvas.getContext("2d")!.drawImage(source, sx, sy, canvas.width, canvas.height, 0, 0, canvas.width, canvas.height);
+  return canvas;
 }
 
 /** Gallery Tour: every round's photo + score, then totals and the winner. */
@@ -967,7 +1079,7 @@ function showSummary(results: RoundResult[]): void {
     const title = document.createElement("strong");
     title.textContent = `${i + 1}. ${result.painting.title}`;
     const score = document.createElement("span");
-    score.textContent = players.length === 2 ? scoresLine(result.scores) : `${formatScore(result.scores[0])} / 100`;
+    score.textContent = players.length === 2 ? scoresLine(result.scores, result) : `${formatScore(result.scores[0])} / 100`;
     caption.append(title, score);
     item.append(thumbnail, caption);
     summaryList.appendChild(item);
@@ -1004,6 +1116,131 @@ function downloadResult(): void {
   link.download = `you-after-${currentPainting.id}.png`;
   link.href = resultCanvas.toDataURL("image/png");
   link.click();
+}
+
+// =============================================================================
+// Figures: who copies whom, and the name tags on the painting
+// =============================================================================
+
+/** A duet round = a 2-figure painting played by 2 players. */
+function isDuet(painting: Painting): boolean {
+  return figureCount(painting) === 2 && players.length === 2;
+}
+
+/** A random solo painting (not the given one). */
+function randomSolo(exceptId: string): Painting {
+  const options = soloPaintings.filter((painting) => painting.id !== exceptId);
+  return options[Math.floor(Math.random() * options.length)];
+}
+
+/**
+ * Measure each player's figure once, in real pixels of the painting image.
+ *
+ * FAIRNESS NOTE: in a duet the two figures can be harder or easier to copy
+ * (one may be standing still, the other dancing). We don't adjust for that:
+ * each player is simply scored on how well they match THEIR figure, and the
+ * higher score wins. "Swap figures" lets players choose who takes which.
+ */
+function prepareTargets(painting: Painting): void {
+  targets = [0, 1].map((player) => {
+    const figure = painting.figures[figureOfPlayer[player]];
+    if (!figure) return null;
+    return prepareTarget(figure.targetPose, {
+      width: paintingImage.naturalWidth || figure.targetPose.width,
+      height: paintingImage.naturalHeight || figure.targetPose.height,
+      upperBodyOnly: figure.upperBodyOnly,
+      signatureJoints: painting.signatureJoints,
+    });
+  });
+}
+
+/**
+ * Name tags (and a soft glow) drawn ON the painting, in each player's colour.
+ * They are positioned in % of the painting, so they stay in the right place
+ * whatever size the painting is shown at.
+ */
+function renderFigureTags(painting: Painting): void {
+  figureTags.innerHTML = "";
+  if (players.length < 2) return; // 1 player: no tags needed
+
+  const addTag = (figure: Figure, text: string, colour: string, player: number | null) => {
+    // A soft glow around the figure's body (the box around its joints).
+    if (player !== null) {
+      const box = figureBox(figure);
+      const glow = document.createElement("div");
+      glow.className = "figure-glow";
+      glow.style.left = `${box.left * 100}%`;
+      glow.style.top = `${box.top * 100}%`;
+      glow.style.width = `${(box.right - box.left) * 100}%`;
+      glow.style.height = `${(box.bottom - box.top) * 100}%`;
+      glow.style.setProperty("--tag-colour", colour);
+      figureTags.appendChild(glow);
+    }
+    // The tag: a small plaque with a pointer down to the figure's head.
+    const tag = document.createElement("div");
+    tag.className = "figure-tag";
+    tag.style.left = `${figure.anchor.x * 100}%`;
+    tag.style.top = `${figure.anchor.y * 100}%`;
+    tag.style.setProperty("--tag-colour", colour);
+    const name = document.createElement("span");
+    name.textContent = text;
+    const score = document.createElement("strong");
+    score.className = "figure-tag-score";
+    if (player !== null) score.dataset.player = String(player);
+    tag.append(name, score);
+    figureTags.appendChild(tag);
+  };
+
+  if (isDuet(painting)) {
+    players.forEach((player, i) => {
+      const figure = painting.figures[figureOfPlayer[i]];
+      addTag(figure, `${player.name} · ${figure.label}`, player.colour, i);
+    });
+  } else {
+    // Solo painting, 2 players: both copy the same figure.
+    addTag(painting.figures[0], `Both: ${players[0].name} & ${players[1].name}`, "#f8e8a6", null);
+  }
+  updateFigureTagScores();
+}
+
+/** The live score next to each player's name tag on the painting. */
+function updateFigureTagScores(): void {
+  for (const element of figureTags.querySelectorAll<HTMLElement>(".figure-tag-score[data-player]")) {
+    element.textContent = formatScore(currentScores[Number(element.dataset.player)]);
+  }
+}
+
+/** The area of the painting a figure takes up (0..1), from its joints. */
+function figureBox(figure: Figure): { left: number; top: number; right: number; bottom: number } {
+  const points = figure.targetPose.landmarks.filter((landmark) => landmark.visibility > 0.5);
+  const xs = points.map((p) => p.x);
+  const ys = points.map((p) => p.y);
+  const pad = 0.04;
+  return {
+    left: Math.max(0, Math.min(...xs) - pad),
+    right: Math.min(1, Math.max(...xs) + pad),
+    top: Math.max(0, Math.min(figure.anchor.y, ...ys)),
+    bottom: Math.min(1, Math.max(...ys) + pad),
+  };
+}
+
+/** "Duet! Ana is The Husband, Ben is The Wife" for 3 seconds, with a Swap button. */
+async function showDuetIntro(painting: Painting): Promise<void> {
+  const update = () => {
+    duetText.textContent = `Duet! ${players
+      .map((player, i) => `${player.name} is ${painting.figures[figureOfPlayer[i]].label}`)
+      .join(", ")}`;
+  };
+  update();
+  duetIntro.hidden = false;
+  swapButton.onclick = () => {
+    figureOfPlayer = [figureOfPlayer[1], figureOfPlayer[0]];
+    prepareTargets(painting);
+    renderFigureTags(painting);
+    update();
+  };
+  await wait(3000);
+  duetIntro.hidden = true;
 }
 
 // =============================================================================
@@ -1111,7 +1348,7 @@ byId("tour-button").addEventListener("click", () => playGalleryTour());
 
 // "Surprise me": a random painting that has a target pose.
 byId("surprise-button").addEventListener("click", () => {
-  const playable = paintings.filter((painting) => painting.targetPose);
+  const playable = selectedPlayerCount() === 1 ? soloPaintings : paintings;
   playSinglePainting(playable[Math.floor(Math.random() * playable.length)]);
 });
 byId("play-again-button").addEventListener("click", () => playGalleryTour());
@@ -1119,6 +1356,10 @@ byId("to-start-button").addEventListener("click", () => showStart());
 
 for (const input of document.querySelectorAll('input[name="mode"], input[name="players"]')) {
   input.addEventListener("change", updateStartScreen);
+}
+// Changing the number of players changes which paintings are offered.
+for (const input of document.querySelectorAll('input[name="players"]')) {
+  input.addEventListener("change", showStart);
 }
 
 for (const select of cameraSelects) {

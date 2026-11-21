@@ -36,11 +36,15 @@ Other commands:
 
 ## What works so far
 
-- [x] Museum-style gallery of 10 public-domain paintings with full-body poses
+- [x] Museum-style gallery of public-domain artworks: **solo** paintings (one
+      figure) and **duet** paintings (two figures)
 - [x] Two modes: **Single Painting**, and **Gallery Tour** (5 random one-person
       paintings, 15 seconds each, then a summary with every photo and the totals)
 - [x] **2-player mode** on one camera: left person = Player 1, each with their own
       colour, name and live score; the winner is announced (a draw if within 2 points)
+- [x] **Duets**: on 2-figure paintings each player copies their own figure (left
+      player = left figure, "Swap figures" to change), with name tags on the
+      painting and per-figure results. 1 player never gets a duet.
 - [x] **Museum atmosphere**: animated intro, dark gallery wall, spotlight sweep
       when a round starts, a placard with a fun fact beside each painting
 - [x] **Background music** (🎵 to mute): `public/audio/gallery.mp3` if you add one
@@ -97,22 +101,27 @@ tools/
 - Stand back so your whole body is in the picture. In 2-player mode, Player 1
   stands on the left.
 
-## Making a target pose (the pose picker)
+## Making figures (the pose picker)
 
-Each painting in `src/paintings.ts` has a `targetPose`: where its person's
-shoulders, elbows, wrists, hips, knees and ankles are, from 0 to 1 across and
-down the image. To add a painting or fix a pose:
+Each painting in `src/paintings.ts` has a `figures` list: one figure (solo)
+or two (duet; the first is the LEFT person). Each figure has a `label`
+("The Husband"), an `anchor` (where its name tag goes, just above the head)
+and a `targetPose`: where its shoulders, elbows, wrists, hips, knees and
+ankles are, from 0 to 1 across and down the image. Paintings with 3 or more
+people aren't allowed. To add a painting or fix a pose:
 
 1. Put the image in `public/paintings/` and add an entry to `src/paintings.ts`
    (`targetPose: null` for now).
 2. With `npm run dev` running, open http://localhost:5173/tools/pose-picker.html
    and choose the painting.
-3. It tries to find the pose automatically. On paintings this often fails or
+3. Choose "1 (solo)" or "2 (duet)". It tries to find the pose(s) automatically. On paintings this often fails or
    gets some joints wrong (it worked on 2 of our 6). Fix a joint by clicking
    its name on the right, then clicking where it belongs. If a joint is hidden
    in the painting, select it and press "Selected joint isn't visible".
    "Left" and "right" mean the person's own left and right.
-4. Press **Copy** and paste over the `targetPose` line in `src/paintings.ts`.
+4. Type each figure's label and press "Set name-tag position", then click just
+   above its head.
+5. Press **Copy** and paste over the `figures: [...]` block in `src/paintings.ts`.
 
 Joints you leave out are simply skipped when scoring.
 

@@ -8,9 +8,10 @@
 // function, so the two files don't get tangled.
 // ---------------------------------------------------------------------------
 
-import { paintings } from "./paintings";
+import { duetPaintings, soloPaintings } from "./paintings";
 import type { Painting } from "./paintings";
 import type { Difficulty } from "./scoring";
+import type { DetectedPose } from "./landmarks";
 
 export const TOUR_LENGTH = 5;
 export const ROUND_SECONDS = 15;
@@ -23,6 +24,10 @@ export interface RoundResult {
   photo: HTMLCanvasElement;
   /** Each player's final score: always a whole number 0..100. */
   scores: number[];
+  /** Which figure of the painting each player copied (index into painting.figures). */
+  figureOfPlayer: number[];
+  /** Each player's pose at the moment of the photo (for cropping the result). */
+  poses: (DetectedPose | null)[];
 }
 
 /** The things main.ts must provide so a tour can run. */
@@ -47,20 +52,33 @@ function shuffle<T>(items: T[]): T[] {
 /** The paintings of the previous tour, so the next one can avoid them. */
 let previousTour = new Set<string>();
 
+/** Shuffle a pool, putting paintings NOT in the previous tour first. */
+function freshFirst(pool: Painting[]): Painting[] {
+  return [
+    ...shuffle(pool.filter((painting) => !previousTour.has(painting.id))),
+    ...shuffle(pool.filter((painting) => previousTour.has(painting.id))),
+  ];
+}
+
 /**
- * Choose the paintings for a tour: random order, no repeats, only paintings
- * with exactly one person and a target pose.
- * - If at least `count` paintings match the chosen difficulty, use only those.
+ * Choose the paintings for a tour: random order, no repeats.
+ * - 1 player: ONLY solo paintings (one figure). Never a duet.
+ * - 2 players: a mix: 2 duet paintings (each player copies their own figure)
+ *   if there are enough, the rest solo (both copy the same figure).
+ * - If at least `count` solo paintings match the chosen difficulty, the solo
+ *   paintings come from those.
  * - Paintings from the previous tour are used only if there aren't enough new ones.
  */
-export function pickTourPaintings(difficulty?: Difficulty, count = TOUR_LENGTH): Painting[] {
-  let pool = paintings.filter((painting) => painting.onePerson && painting.targetPose);
-  const matching = pool.filter((painting) => painting.difficulty === difficulty);
-  if (matching.length >= count) pool = matching;
+export function pickTourPaintings(difficulty?: Difficulty, count = TOUR_LENGTH, playerCount: 1 | 2 = 1): Painting[] {
+  let solos = soloPaintings;
+  const matching = solos.filter((painting) => painting.difficulty === difficulty);
+  if (matching.length >= count) solos = matching;
 
-  const fresh = shuffle(pool.filter((painting) => !previousTour.has(painting.id)));
-  const seenLastTime = shuffle(pool.filter((painting) => previousTour.has(painting.id)));
-  const chosen = [...fresh, ...seenLastTime].slice(0, count);
+  const duetCount = playerCount === 2 ? Math.min(2, duetPaintings.length) : 0;
+  const chosen = shuffle([
+    ...freshFirst(duetPaintings).slice(0, duetCount),
+    ...freshFirst(solos).slice(0, count - duetCount),
+  ]);
   previousTour = new Set(chosen.map((painting) => painting.id));
   return chosen;
 }
@@ -69,8 +87,12 @@ export function pickTourPaintings(difficulty?: Difficulty, count = TOUR_LENGTH):
  * Play a whole Gallery Tour.
  * @returns every round's result, or null if the player quit part-way
  */
-export async function runGalleryTour(hooks: TourHooks, difficulty?: Difficulty): Promise<RoundResult[] | null> {
-  const chosen = pickTourPaintings(difficulty);
+export async function runGalleryTour(
+  hooks: TourHooks,
+  difficulty: Difficulty | undefined,
+  playerCount: 1 | 2,
+): Promise<RoundResult[] | null> {
+  const chosen = pickTourPaintings(difficulty, TOUR_LENGTH, playerCount);
   const results: RoundResult[] = [];
 
   for (let i = 0; i < chosen.length; i++) {

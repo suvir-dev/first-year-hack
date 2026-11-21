@@ -21,7 +21,10 @@
       .side { flex: 1; min-width: 280px; }
       #joint-list { list-style: none; padding: 0; display: grid; grid-template-columns: 1fr 1fr; gap: 4px; }
       #joint-list button { width: 100%; text-align: left; padding: 6px; font: inherit; cursor: pointer; }
-      #joint-list button.selected { outline: 3px solid #ffd54a; }
+      #joint-list button.selected,
+      .figure-tabs button.selected,
+      #anchor-button.selected { outline: 3px solid #ffd54a; }
+      .figure-tabs button { border: 3px solid; margin-right: 6px; }
       #joint-list button.missing { opacity: 0.6; }
       textarea { width: 100%; font-family: ui-monospace, monospace; font-size: 12px; }
       button { padding: 6px 12px; font: inherit; cursor: pointer; }
@@ -35,14 +38,27 @@
       Pick a painting. It tries to find the pose automatically. Check the dots:
       to move one, click its name on the right, then click where it belongs in the
       painting. "Left" and "right" are the <b>person's</b> own left and right
-      (blue = left, pink = right). Then copy the code into <code>src/paintings.ts</code>.
+      (blue = left, pink = right). For a duet, choose 2 people: Figure 1 is the LEFT person.
+      Give each figure a label and set its name-tag position (click just above its head).
+      Then copy the code into <code>src/paintings.ts</code>.
     </p>
 
     <div class="controls">
       <label>Painting <select id="painting-select"></select></label>
       <label>…or open any image <input type="file" id="file-input" accept="image/*" /></label>
+      <label>People
+        <select id="figure-count">
+          <option value="1">1 (solo)</option>
+          <option value="2">2 (duet)</option>
+        </select>
+      </label>
       <button id="detect-button">Detect automatically</button>
-      <button id="clear-button">Clear all joints</button>
+      <button id="clear-button">Clear this figure's joints</button>
+    </div>
+    <div class="controls">
+      <span id="figure-tabs" class="figure-tabs"></span>
+      <label>Label <input id="label-input" placeholder="e.g. The Husband" /></label>
+      <button id="anchor-button">Set name-tag position</button>
     </div>
     <p id="status"></p>
 

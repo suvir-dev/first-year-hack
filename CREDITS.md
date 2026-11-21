@@ -28,34 +28,34 @@ Images are resized copies; the source and licence of each image file:
 | Artwork | Artist | Image source | Image licence |
 | ------- | ------ | ------------ | ------------- |
 | Napoleon Crossing the Alps | Jacques-Louis David | https://commons.wikimedia.org/wiki/File:David_-_Napoleon_crossing_the_Alps_-_Malmaison2.jpg | Public domain (Wikimedia Commons) |
-| Liberty Leading the People | Eugène Delacroix | https://commons.wikimedia.org/wiki/File:Eug%C3%A8ne_Delacroix_-_Le_28_Juillet._La_Libert%C3%A9_guidant_le_peuple.jpg | Public domain (Wikimedia Commons) |
-| The Creation of Adam | Michelangelo | https://commons.wikimedia.org/wiki/File:Michelangelo_-_Creation_of_Adam_(cropped).jpg | Public domain (Wikimedia Commons) |
-| Washington Crossing the Delaware | Emanuel Leutze | https://commons.wikimedia.org/wiki/File:Washington_Crossing_the_Delaware_by_Emanuel_Leutze,_MMA-NYC,_1851.jpg | Public domain (Wikimedia Commons) |
-| Oath of the Horatii | Jacques-Louis David | https://commons.wikimedia.org/wiki/File:Jacques-Louis_David,_Le_Serment_des_Horaces.jpg | Public domain (Wikimedia Commons) |
 | Wanderer above the Sea of Fog | Caspar David Friedrich | https://commons.wikimedia.org/wiki/File:Caspar_David_Friedrich_-_Wanderer_above_the_sea_of_fog.jpg | Public domain (Wikimedia Commons) |
 | The Fifer | Édouard Manet | https://commons.wikimedia.org/wiki/File:Manet,_Edouard_-_Young_Flautist,_or_The_Fifer,_1866_(2).jpg | Public domain (Wikimedia Commons) |
 | The Blue Boy | Thomas Gainsborough | https://commons.wikimedia.org/wiki/File:Thomas_Gainsborough_-_The_Blue_Boy_(c._1770).jpg | Public domain (Wikimedia Commons) |
 | Louis XIV | Hyacinthe Rigaud | https://commons.wikimedia.org/wiki/File:Rigaud_Louis_XIV_1701.jpg | Public domain (Wikimedia Commons) |
 | Napoleon in His Study | Jacques-Louis David | https://commons.wikimedia.org/wiki/File:Jacques-Louis_David_-_The_Emperor_Napoleon_in_His_Study_at_the_Tuileries_-_Google_Art_Project.jpg | Public domain (Wikimedia Commons) |
-| The Thinker | Auguste Rodin | https://clevelandart.org/art/1917.42 | CC0 (Cleveland Museum of Art Open Access) |
 | Colonel Charles Heathcote | Joseph Wright of Derby | https://clevelandart.org/art/2017.100 | CC0 (Cleveland Museum of Art Open Access) |
 | Saint Jerome | Jusepe de Ribera | https://clevelandart.org/art/1961.219 | CC0 (Cleveland Museum of Art Open Access) |
-| Dancer Looking at the Sole of Her Right Foot | Edgar Degas | https://clevelandart.org/art/1947.2028 | CC0 (Cleveland Museum of Art Open Access) |
-| Apollo the Lizard-Slayer | Praxiteles (attributed) | https://clevelandart.org/art/2004.30 | CC0 (Cleveland Museum of Art Open Access) |
-| Hercules | Unknown Roman artist | https://clevelandart.org/art/1987.2 | CC0 (Cleveland Museum of Art Open Access) |
 | Portrait of a Man | Gustave Caillebotte | https://clevelandart.org/art/2009.157 | CC0 (Cleveland Museum of Art Open Access) |
 | Portrait of a Man | Lorenzo Lotto | https://clevelandart.org/art/1950.250 | CC0 (Cleveland Museum of Art Open Access) |
 | Saint Peter Repentant | Georges de La Tour | https://clevelandart.org/art/1951.454 | CC0 (Cleveland Museum of Art Open Access) |
-| Mars | Giambologna | https://clevelandart.org/art/1964.421 | CC0 (Cleveland Museum of Art Open Access) |
 | The Tired Gleaner | Jules Breton | https://clevelandart.org/art/1915.721 | CC0 (Cleveland Museum of Art Open Access) |
 | Charles II of England | Philippe de Champaigne | https://clevelandart.org/art/1959.38 | CC0 (Cleveland Museum of Art Open Access) |
-| Statue of an Athlete | Unknown Roman sculptor | https://clevelandart.org/art/1924.1046 | CC0 (Cleveland Museum of Art Open Access) |
-| Athlete Making an Offering | Unknown Greek sculptor | https://clevelandart.org/art/1955.684 | CC0 (Cleveland Museum of Art Open Access) |
 | Saint Peter of Alcántara | Pedro de Mena | https://clevelandart.org/art/2009.81 | CC0 (Cleveland Museum of Art Open Access) |
 | Standing Apostle | Master of the Saint-Omer Apostles | https://clevelandart.org/art/2022.41.2 | CC0 (Cleveland Museum of Art Open Access) |
 | Portrait of a Woman as Diana | Jean-Marc Nattier | https://clevelandart.org/art/1942.643 | CC0 (Cleveland Museum of Art Open Access) |
 | Saint Mary Magdalen | Simon Vouet | https://clevelandart.org/art/1988.108 | CC0 (Cleveland Museum of Art Open Access) |
-| Diana | Augustus Saint-Gaudens | https://clevelandart.org/art/1946.354 | CC0 (Cleveland Museum of Art Open Access) |
+| The Arnolfini Portrait | Jan van Eyck | https://commons.wikimedia.org/wiki/File:Van_Eyck_-_Arnolfini_Portrait.jpg | Public domain (Wikimedia Commons) |
+| The Ambassadors | Hans Holbein the Younger | https://commons.wikimedia.org/wiki/File:Hans_Holbein_the_Younger_-_The_Ambassadors_-_Google_Art_Project.jpg | Public domain (Wikimedia Commons) |
+| Romeo and Juliet | Ford Madox Brown | https://commons.wikimedia.org/wiki/File:Romeo_and_Juliet_(watercolour)_by_Ford_Maddox_Brown.jpg | Public domain (Wikimedia Commons) |
+| Mr and Mrs Andrews | Thomas Gainsborough | https://commons.wikimedia.org/wiki/File:Thomas_Gainsborough_-_Mr_and_Mrs_Andrews.jpg | Public domain (Wikimedia Commons) |
+| The Jewish Bride | Rembrandt van Rijn | https://commons.wikimedia.org/wiki/File:Rembrandt_Harmensz._van_Rijn_-_Portret_van_een_paar_als_oudtestamentische_figuren,_genaamd_%27Het_Joodse_bruidje%27_-_Google_Art_Project.jpg | Public domain (Wikimedia Commons) |
+| Portrait of Henry VIII | After Hans Holbein the Younger | https://commons.wikimedia.org/wiki/File:After_Hans_Holbein_the_Younger_-_Portrait_of_Henry_VIII_-_Google_Art_Project.jpg | Public domain (Wikimedia Commons) |
+| George Washington | Gilbert Stuart | https://commons.wikimedia.org/wiki/File:Gilbert_Stuart_-_George_Washington_-_Google_Art_Project.jpg | Public domain (Wikimedia Commons) |
+| The Laughing Cavalier | Frans Hals | https://commons.wikimedia.org/wiki/File:Frans_Hals_%E2%80%93_The_Laughing_Cavalier.jpg | Public domain (Wikimedia Commons) |
+| Madame X | John Singer Sargent | https://commons.wikimedia.org/wiki/File:Sargent_MadameX.jpeg | Public domain (Wikimedia Commons) |
+| Little Dancer Aged Fourteen | Edgar Degas | https://commons.wikimedia.org/wiki/File:Edgar_Degas,_Little_Dancer_Aged_Fourteen,_1878-1881,_NGA_110292.jpg | CC0 (Wikimedia Commons) |
+| Mona Lisa | Leonardo da Vinci | https://commons.wikimedia.org/wiki/File:Mona_Lisa,_by_Leonardo_da_Vinci,_from_C2RMF_retouched.jpg | Public domain (Wikimedia Commons) |
+| Portrait of Innocent X | Diego Velázquez | https://commons.wikimedia.org/wiki/File:Portrait_of_Pope_Innocent_X_(by_Diego_Vel%C3%A1zquez)_-_Doria_Pamphilj_Gallery,_Rome.jpg | Public domain (Wikimedia Commons) |
 
 ## Software
 

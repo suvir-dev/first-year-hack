@@ -1,12 +1,14 @@
-// pose-picker.ts: developer tool for making the paintings' target poses.
+// pose-picker.ts: developer tool for making the paintings' figures.
 // ---------------------------------------------------------------------------
 // Open http://localhost:5173/tools/pose-picker.html while `npm run dev` runs.
 //
 // 1. Load a painting (from paintings.ts, or any image file).
-// 2. If the painting already has a target pose, show it. Otherwise run
-//    PoseLandmarker on the image to find the joints automatically.
-// 3. Let the user fix joints by hand: select a joint, click the painting.
-// 4. Print TypeScript code to paste into src/paintings.ts.
+// 2. Choose 1 figure (solo) or 2 figures (duet). Figure 1 = the LEFT person.
+// 3. If the painting already has figures, show them. Otherwise run
+//    PoseLandmarker (up to 2 people) and give the leftmost to Figure 1.
+// 4. Fix joints by hand: select a joint, click the painting. Set each
+//    figure's label and its name-tag position (just above its head).
+// 5. Copy the `figures: [...]` code into src/paintings.ts.
 //
 // This page is NOT part of the game; `npm run build` ignores it.
 // ---------------------------------------------------------------------------
@@ -24,6 +26,10 @@ function byId<T extends HTMLElement>(id: string): T {
 }
 const paintingSelect = byId<HTMLSelectElement>("painting-select");
 const fileInput = byId<HTMLInputElement>("file-input");
+const figureCountSelect = byId<HTMLSelectElement>("figure-count");
+const figureTabs = byId("figure-tabs");
+const labelInput = byId<HTMLInputElement>("label-input");
+const anchorButton = byId<HTMLButtonElement>("anchor-button");
 const detectButton = byId<HTMLButtonElement>("detect-button");
 const clearButton = byId<HTMLButtonElement>("clear-button");
 const hideButton = byId<HTMLButtonElement>("hide-button");
@@ -38,12 +44,23 @@ const ctx = canvas.getContext("2d")!;
 
 const JOINT_NAMES = Object.keys(KEY_JOINTS) as KeyJointName[];
 
-/** The image being edited. */
+interface FigureDraft {
+  label: string;
+  joints: KeyJointPositions;
+  /** Where the name tag goes (just above the head), 0..1. */
+  anchor: { x: number; y: number } | null;
+}
+
 let image = new Image();
-/** Where each joint is (0..1). Missing = not placed / not visible. */
-let joints: KeyJointPositions = {};
+let figures: FigureDraft[] = [{ label: "", joints: {}, anchor: null }];
+/** Which figure we are editing (0 = Figure 1 = left). */
+let current = 0;
 /** The joint that the next click on the painting will move. */
 let selectedJoint: KeyJointName = "nose";
+/** true = the next click sets the name-tag position instead of a joint. */
+let placingAnchor = false;
+
+const FIGURE_COLOURS = ["#f5c542", "#2ec4b6"]; // gold, teal (same as the players)
 
 // Lines to draw between joints, so the dots look like a skeleton.
 const BONES: [KeyJointName, KeyJointName][] = [
@@ -55,7 +72,7 @@ const BONES: [KeyJointName, KeyJointName][] = [
   ["rightHip", "rightKnee"], ["rightKnee", "rightAnkle"],
 ];
 
-// --- Pose detection on a still image -------------------------------------------
+// --- Pose detection on a still image (up to 2 people) ---------------------------
 
 let landmarker: PoseLandmarker | null = null;
 
@@ -65,7 +82,7 @@ async function getLandmarker(): Promise<PoseLandmarker> {
     landmarker = await PoseLandmarker.createFromOptions(vision, {
       baseOptions: { modelAssetPath: POSE_MODEL_URL, delegate: "CPU" },
       runningMode: "IMAGE", // one still picture, not a video
-      numPoses: 1,
+      numPoses: 2,
       // Paintings aren't photos, so accept less confident detections.
       minPoseDetectionConfidence: 0.3,
       minPosePresenceConfidence: 0.3,
@@ -74,21 +91,39 @@ async function getLandmarker(): Promise<PoseLandmarker> {
   return landmarker;
 }
 
-async function detectAutomatically(): Promise<void> {
-  statusText.textContent = "Looking for a person in the painting…";
-  const result = (await getLandmarker()).detect(image);
-  const landmarks = result.landmarks[0];
+/** Middle of a figure's shoulders and hips across the image (0..1). */
+function centreX(joints: KeyJointPositions): number {
+  const xs = (["leftShoulder", "rightShoulder", "leftHip", "rightHip"] as KeyJointName[])
+    .map((name) => joints[name]?.[0])
+    .filter((x): x is number => x !== undefined);
+  return xs.length ? xs.reduce((a, b) => a + b, 0) / xs.length : 0.5;
+}
 
-  if (!landmarks) {
-    joints = {};
-    selectedJoint = "nose";
-    statusText.textContent =
-      "No person found automatically. Place the joints by hand: click each one on the painting.";
-  } else {
-    joints = keyJointsFromPose({ landmarks, width: image.naturalWidth, height: image.naturalHeight });
-    statusText.textContent =
-      "Found a pose automatically. Check every dot is on the right body part and fix any that aren't.";
-  }
+/** A name-tag position just above the head, worked out from the joints. */
+function guessAnchor(joints: KeyJointPositions): { x: number; y: number } | null {
+  const nose = joints.nose;
+  const ls = joints.leftShoulder;
+  const rs = joints.rightShoulder;
+  if (!nose || !ls || !rs) return null;
+  const shoulderY = (ls[1] + rs[1]) / 2;
+  return { x: nose[0], y: Math.max(0.02, nose[1] - Math.max(0.04, 1.1 * (shoulderY - nose[1]))) };
+}
+
+async function detectAutomatically(): Promise<void> {
+  statusText.textContent = "Looking for people in the painting…";
+  const result = (await getLandmarker()).detect(image);
+  const found = result.landmarks
+    .map((landmarks) => keyJointsFromPose({ landmarks, width: image.naturalWidth, height: image.naturalHeight }))
+    .sort((a, b) => centreX(a) - centreX(b)); // left to right
+
+  figures.forEach((figure, i) => {
+    figure.joints = found[i] ?? {};
+    figure.anchor = guessAnchor(figure.joints);
+  });
+  statusText.textContent =
+    found.length === 0
+      ? "Nobody found automatically. Place the joints by hand: click each one on the painting."
+      : `Found ${found.length} ${found.length === 1 ? "person" : "people"} (left = Figure 1). Check every dot, the labels and the name-tag positions.`;
   redraw();
 }
 
@@ -110,73 +145,110 @@ async function loadPainting(id: string): Promise<void> {
   canvas.width = image.naturalWidth;
   canvas.height = image.naturalHeight;
 
-  if (painting.targetPose) {
-    // Show the pose saved in paintings.ts so it can be checked or fixed.
-    joints = keyJointsFromPose(painting.targetPose);
-    statusText.textContent =
-      'Showing the target pose saved in paintings.ts. Press "Detect automatically" to start again.';
-    redraw();
-  } else {
-    await detectAutomatically();
-  }
+  // Show the figures saved in paintings.ts so they can be checked or fixed.
+  figures = painting.figures.map((figure) => ({
+    label: figure.label,
+    joints: keyJointsFromPose(figure.targetPose),
+    anchor: { ...figure.anchor },
+  }));
+  figureCountSelect.value = String(figures.length);
+  current = 0;
+  statusText.textContent = 'Showing the figures saved in paintings.ts. Press "Detect automatically" to start again.';
+  redraw();
+}
+
+async function loadFile(file: File): Promise<void> {
+  await loadImage(URL.createObjectURL(file));
+  canvas.width = image.naturalWidth;
+  canvas.height = image.naturalHeight;
+  // A new image: start with fresh, empty figures.
+  figures = Array.from({ length: Number(figureCountSelect.value) }, () => ({ label: "", joints: {}, anchor: null }));
+  current = 0;
+  await detectAutomatically();
+}
+
+function setFigureCount(count: number): void {
+  while (figures.length < count) figures.push({ label: "", joints: {}, anchor: null });
+  figures.length = count;
+  current = Math.min(current, count - 1);
 }
 
 // --- Drawing ----------------------------------------------------------------------
-
-/** Blue for the person's left side, pink for the right, white for the nose. */
-function jointColour(name: KeyJointName): string {
-  if (name === "nose") return "#ffffff";
-  return name.startsWith("left") ? "#4fc3ff" : "#ff5fa2";
-}
 
 function redraw(): void {
   const w = canvas.width;
   const h = canvas.height;
   ctx.drawImage(image, 0, 0, w, h);
+  const unit = Math.max(w, h) / 200; // sizes relative to the image
 
-  // Sizes relative to the image so they look the same on big and small images.
-  const unit = Math.max(w, h) / 200;
+  figures.forEach((figure, f) => {
+    const colour = FIGURE_COLOURS[f];
+    const faded = f !== current;
+    ctx.globalAlpha = faded ? 0.45 : 1;
 
-  // Bones
-  ctx.lineWidth = unit * 0.8;
-  ctx.strokeStyle = "rgba(255, 213, 74, 0.9)";
-  for (const [a, b] of BONES) {
-    const pa = joints[a];
-    const pb = joints[b];
-    if (!pa || !pb) continue;
-    ctx.beginPath();
-    ctx.moveTo(pa[0] * w, pa[1] * h);
-    ctx.lineTo(pb[0] * w, pb[1] * h);
-    ctx.stroke();
-  }
-
-  // Joints, with a short label like "L elbow"
-  ctx.font = `bold ${unit * 3}px system-ui, sans-serif`;
-  for (const name of JOINT_NAMES) {
-    const p = joints[name];
-    if (!p) continue;
-    const x = p[0] * w;
-    const y = p[1] * h;
-
-    ctx.fillStyle = jointColour(name);
-    ctx.beginPath();
-    ctx.arc(x, y, unit * 1.5, 0, Math.PI * 2);
-    ctx.fill();
-
-    if (name === selectedJoint) {
-      ctx.strokeStyle = "#ffffff";
-      ctx.lineWidth = unit * 0.6;
+    // Bones
+    ctx.lineWidth = unit * 0.8;
+    ctx.strokeStyle = colour;
+    for (const [a, b] of BONES) {
+      const pa = figure.joints[a];
+      const pb = figure.joints[b];
+      if (!pa || !pb) continue;
       ctx.beginPath();
-      ctx.arc(x, y, unit * 3, 0, Math.PI * 2);
+      ctx.moveTo(pa[0] * w, pa[1] * h);
+      ctx.lineTo(pb[0] * w, pb[1] * h);
       ctx.stroke();
     }
 
-    ctx.lineWidth = unit * 0.6;
-    ctx.strokeStyle = "black";
-    ctx.strokeText(shortLabel(name), x + unit * 2.5, y - unit * 1.5);
-    ctx.fillText(shortLabel(name), x + unit * 2.5, y - unit * 1.5);
-  }
+    // Joints, with a short label like "L elbow"
+    ctx.font = `bold ${unit * 2.6}px system-ui, sans-serif`;
+    for (const name of JOINT_NAMES) {
+      const p = figure.joints[name];
+      if (!p) continue;
+      const x = p[0] * w;
+      const y = p[1] * h;
+      ctx.fillStyle = name === "nose" ? "#fff" : name.startsWith("left") ? "#4fc3ff" : "#ff5fa2";
+      ctx.beginPath();
+      ctx.arc(x, y, unit * 1.3, 0, Math.PI * 2);
+      ctx.fill();
+      if (!faded && name === selectedJoint && !placingAnchor) {
+        ctx.strokeStyle = "#fff";
+        ctx.lineWidth = unit * 0.5;
+        ctx.beginPath();
+        ctx.arc(x, y, unit * 2.8, 0, Math.PI * 2);
+        ctx.stroke();
+      }
+      if (!faded) {
+        ctx.lineWidth = unit * 0.5;
+        ctx.strokeStyle = "black";
+        ctx.strokeText(shortLabel(name), x + unit * 2.2, y - unit * 1.2);
+        ctx.fillStyle = "#fff";
+        ctx.fillText(shortLabel(name), x + unit * 2.2, y - unit * 1.2);
+      }
+    }
 
+    // Name-tag position: a little flag with the figure's label
+    if (figure.anchor) {
+      const x = figure.anchor.x * w;
+      const y = figure.anchor.y * h;
+      ctx.fillStyle = colour;
+      ctx.beginPath();
+      ctx.moveTo(x, y + unit * 2.5);
+      ctx.lineTo(x - unit * 1.5, y);
+      ctx.lineTo(x + unit * 1.5, y);
+      ctx.fill();
+      ctx.font = `bold ${unit * 3}px system-ui, sans-serif`;
+      ctx.textAlign = "center";
+      ctx.lineWidth = unit * 0.6;
+      ctx.strokeStyle = "black";
+      const text = figure.label || `Figure ${f + 1}`;
+      ctx.strokeText(text, x, y - unit);
+      ctx.fillText(text, x, y - unit);
+      ctx.textAlign = "start";
+    }
+  });
+  ctx.globalAlpha = 1;
+
+  updateTabs();
   updateJointList();
   updateOutput();
 }
@@ -188,16 +260,36 @@ function shortLabel(name: KeyJointName): string {
   return `${side} ${name.replace(/^(left|right)/, "").toLowerCase()}`;
 }
 
+function updateTabs(): void {
+  figureTabs.innerHTML = "";
+  figures.forEach((_, f) => {
+    const button = document.createElement("button");
+    const side = figures.length === 2 ? (f === 0 ? " (left)" : " (right)") : "";
+    button.textContent = `Figure ${f + 1}${side}`;
+    button.style.borderColor = FIGURE_COLOURS[f];
+    button.classList.toggle("selected", f === current);
+    button.addEventListener("click", () => {
+      current = f;
+      placingAnchor = false;
+      redraw();
+    });
+    figureTabs.appendChild(button);
+  });
+  labelInput.value = figures[current].label;
+  anchorButton.classList.toggle("selected", placingAnchor);
+}
+
 function updateJointList(): void {
+  const joints = figures[current].joints;
   jointList.innerHTML = "";
   for (const name of JOINT_NAMES) {
     const button = document.createElement("button");
     button.textContent = `${joints[name] ? "✓" : "–"} ${shortLabel(name)}`;
-    button.style.color = jointColour(name);
-    button.classList.toggle("selected", name === selectedJoint);
+    button.classList.toggle("selected", name === selectedJoint && !placingAnchor);
     button.classList.toggle("missing", !joints[name]);
     button.addEventListener("click", () => {
       selectedJoint = name;
+      placingAnchor = false;
       redraw();
     });
     const item = document.createElement("li");
@@ -209,14 +301,25 @@ function updateJointList(): void {
 /** Write the TypeScript snippet to paste into paintings.ts. */
 function updateOutput(): void {
   const round = (n: number) => Math.round(n * 1000) / 1000; // 3 decimal places is plenty
-  const lines = JOINT_NAMES.filter((name) => joints[name]).map((name) => {
-    const [x, y] = joints[name]!;
-    return `      ${name}: [${round(x)}, ${round(y)}],`;
+  const ids = figures.length === 1 ? ["main"] : ["left", "right"];
+  const blocks = figures.map((figure, f) => {
+    const lines = JOINT_NAMES.filter((name) => figure.joints[name]).map((name) => {
+      const [x, y] = figure.joints[name]!;
+      return `          ${name}: [${round(x)}, ${round(y)}],`;
+    });
+    const anchor = figure.anchor ?? guessAnchor(figure.joints) ?? { x: 0.5, y: 0.05 };
+    return [
+      "      {",
+      `        id: "${ids[f]}",`,
+      `        label: ${JSON.stringify(figure.label || `Figure ${f + 1}`)},`,
+      `        anchor: { x: ${round(anchor.x)}, y: ${round(anchor.y)} },`,
+      `        targetPose: poseFromKeyJoints(${image.naturalWidth}, ${image.naturalHeight}, {`,
+      ...lines,
+      "        }),",
+      "      },",
+    ].join("\n");
   });
-  output.value =
-    `    targetPose: poseFromKeyJoints(${image.naturalWidth}, ${image.naturalHeight}, {\n` +
-    lines.join("\n") +
-    `\n    }),`;
+  output.value = `    figures: [\n${blocks.join("\n")}\n    ],`;
 }
 
 // --- Clicking and buttons ----------------------------------------------------------
@@ -226,22 +329,43 @@ canvas.addEventListener("click", (event) => {
   // of the displayed size: these are exactly the 0..1 coordinates we need.
   const x = event.offsetX / canvas.clientWidth;
   const y = event.offsetY / canvas.clientHeight;
-  joints[selectedJoint] = [x, y];
+  const figure = figures[current];
 
-  // Move on to the next joint that hasn't been placed yet (handy when
-  // placing everything by hand).
-  const next = JOINT_NAMES.find((name) => !joints[name]);
-  if (next) selectedJoint = next;
+  if (placingAnchor) {
+    figure.anchor = { x, y };
+    placingAnchor = false;
+  } else {
+    figure.joints[selectedJoint] = [x, y];
+    // Move on to the next joint that hasn't been placed yet.
+    const next = JOINT_NAMES.find((name) => !figure.joints[name]);
+    if (next) selectedJoint = next;
+  }
+  redraw();
+});
+
+labelInput.addEventListener("input", () => {
+  figures[current].label = labelInput.value;
+  redraw();
+});
+
+anchorButton.addEventListener("click", () => {
+  placingAnchor = !placingAnchor;
+  statusText.textContent = placingAnchor ? "Click just above this figure's head to place its name tag." : "";
+  redraw();
+});
+
+figureCountSelect.addEventListener("change", () => {
+  setFigureCount(Number(figureCountSelect.value));
   redraw();
 });
 
 hideButton.addEventListener("click", () => {
-  delete joints[selectedJoint];
+  delete figures[current].joints[selectedJoint];
   redraw();
 });
 
 clearButton.addEventListener("click", () => {
-  joints = {};
+  figures[current].joints = {};
   selectedJoint = "nose";
   redraw();
 });
@@ -250,18 +374,14 @@ detectButton.addEventListener("click", () => detectAutomatically());
 
 copyButton.addEventListener("click", async () => {
   await navigator.clipboard.writeText(output.value);
-  statusText.textContent = "Copied! Paste it over the targetPose line in src/paintings.ts.";
+  statusText.textContent = "Copied! Paste it over the figures: [...] block in src/paintings.ts.";
 });
 
 paintingSelect.addEventListener("change", () => loadPainting(paintingSelect.value));
 
 fileInput.addEventListener("change", async () => {
   const file = fileInput.files?.[0];
-  if (!file) return;
-  await loadImage(URL.createObjectURL(file));
-  canvas.width = image.naturalWidth;
-  canvas.height = image.naturalHeight;
-  await detectAutomatically();
+  if (file) await loadFile(file);
 });
 
 // --- Start ---------------------------------------------------------------------------

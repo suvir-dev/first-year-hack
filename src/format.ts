@@ -20,3 +20,12 @@ export function formatScore(value: unknown): string {
 export function formatYear(year: number): string {
   return year < 0 ? `c. ${-year} BCE` : String(year);
 }
+
+/** A funny museum rank for a score. */
+export function rankFor(score: number): string {
+  const s = toScore(score);
+  if (s >= 90) return "Masterpiece, hang it in the Louvre";
+  if (s >= 70) return "Royal Academy material";
+  if (s >= 40) return "Promising apprentice";
+  return "Gift shop souvenir";
+}
