@@ -1317,7 +1317,11 @@ async function fillVoiceList(): Promise<void> {
   for (const voice of voices) {
     const option = document.createElement("option");
     option.value = voice.name;
-    option.textContent = `${voice.name} (${voice.lang})`;
+    // Label the default voice so the user knows which one will be used.
+    const isDefault = voice.name.trim().toLowerCase().includes("google uk english female");
+    option.textContent = isDefault
+      ? `${voice.name} (${voice.lang}) (default)`
+      : `${voice.name} (${voice.lang})`;
     select.appendChild(option);
   }
   select.value = preferredVoice();
@@ -1376,8 +1380,9 @@ byId("settings-button").addEventListener("click", () => {
 });
 
 byId<HTMLSelectElement>("voice-select").addEventListener("change", (event) => {
-  setPreferredVoice((event.target as HTMLSelectElement).value);
-  speakSample(); // let them hear it
+  const selected = (event.target as HTMLSelectElement).value;
+  setPreferredVoice(selected);
+  speakSample(selected || undefined); // let them hear the selected voice
 });
 
 musicButton.addEventListener("click", () => {
