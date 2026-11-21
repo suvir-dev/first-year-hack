@@ -2,13 +2,13 @@ import assert from 'node:assert/strict';
 import test from 'node:test';
 import { selectChallenger, startGame, trackKey, transition } from '../src/game.js';
 
-const track = (title, streams) => ({ title, artist: 'Test Artist', year: 2015, streams });
-const deck = [track('A', 100), track('B', 200), track('C', 150), track('D', 120), track('E', 110)];
+const track = (title, views, kind = 'music') => ({ id: title, title, artist: 'Test Artist', year: '2015', views, kind });
+const deck = [track('A', 100, 'art'), track('B', 200), track('C', 150, 'art'), track('D', 120), track('E', 110, 'art')];
 const zero = () => 0;
 const guess = (state, direction) =>
   transition(state, { type: 'guess', round: state.round, direction }, deck);
 const next = (state) => transition(state, { type: 'next', round: state.round, random: 0 }, deck);
-const actual = ({ left, right }) => right.streams > left.streams ? 'higher' : 'lower';
+const actual = ({ left, right }) => right.views > left.views ? 'higher' : 'lower';
 const wrong = (state) => actual(state) === 'higher' ? 'lower' : 'higher';
 
 test('higher and lower score correctly and promote the challenger after a correct or wrong guess', () => {
@@ -55,7 +55,12 @@ test('third miss ends the run and restart resets state and avoids the previous p
   assert.equal(state.result.correct, false);
   assert.equal(next(state), state);
   assert.equal(guess(state, wrong(state)), state);
-  const fresh = transition(state, { type: 'restart', draws: [0, 0] }, deck);
+  assert.equal(transition(state, { type: 'restart', draws: [0, 0] }, deck), state);
+  const results = transition(state, { type: 'show-results', round: state.round }, deck);
+  assert.equal(results.phase, 'results');
+  assert.equal(results.score, state.score);
+  assert.equal(transition(results, { type: 'show-results', round: state.round }, deck), results);
+  const fresh = transition(results, { type: 'restart', draws: [0, 0] }, deck);
   assert.deepEqual([fresh.phase, fresh.score, fresh.lives, fresh.difficulty, fresh.round, fresh.result], ['guess', 0, 3, 0, 1, null]);
   assert.notDeepEqual([...fresh.opening].sort(), [...opening.opening].sort());
   assert.deepEqual([...fresh.seen], fresh.opening);
@@ -63,7 +68,7 @@ test('third miss ends the run and restart resets state and avoids the previous p
 
 test('relative gaps get smaller by band and misses ease the requested band', () => {
   assert.deepEqual([0, 1, 2, 3].map((level) =>
-    selectChallenger(deck, deck[0], level, new Set(), zero).streams), [200, 150, 120, 110]);
+    selectChallenger([deck[0], track('Wide', 200), track('Medium', 150), track('Close', 120), track('Very close', 110)], deck[0], level, new Set(), zero).views), [200, 150, 120, 110]);
   let state = startGame(deck, zero);
   for (const level of [1, 2, 3, 3]) {
     state = guess(state, actual(state));
@@ -74,8 +79,9 @@ test('relative gaps get smaller by band and misses ease the requested band', () 
 });
 
 test('selection excludes ties, prefers unseen and falls back with a limited deck', () => {
-  const [anchor, wide, close] = deck;
-  const tie = track('Tie', anchor.streams);
+  const [anchor, wide] = deck;
+  const close = track('Close', 150);
+  const tie = track('Tie', anchor.views);
   const limited = [anchor, wide, close, tie];
   assert.equal(selectChallenger(limited, anchor, 0, new Set([trackKey(wide)]), zero), close);
   assert.equal(selectChallenger(limited, anchor, 0, new Set([trackKey(wide), trackKey(close)]), zero), wide);
@@ -85,4 +91,29 @@ test('selection excludes ties, prefers unseen and falls back with a limited deck
   const opening = startGame([anchor, wide], zero);
   const restart = startGame([anchor, wide], zero, opening.opening);
   assert.deepEqual(restart.opening, opening.opening);
+});
+
+test('four consecutive correct guesses mend one heart, capped at three lives', () => {
+  let state = startGame(deck, zero);
+  for (let index = 0; index < 4; index++) {
+    state = guess(state, actual(state));
+    assert.equal(state.result.restored, false);
+    assert.equal(state.lives, 3);
+    state = next(state);
+  }
+
+  state = next(guess(state, wrong(state)));
+  assert.equal(state.streak, 0);
+  for (let index = 0; index < 4; index++) {
+    state = guess(state, actual(state));
+    assert.equal(state.result.restored, index === 3);
+    assert.equal(state.lives, index === 3 ? 3 : 2);
+    state = next(state);
+  }
+  assert.equal(state.streak, 4);
+  assert.equal(state.mendedHearts, 1);
+  state = guess(state, wrong(state));
+  assert.equal(state.lives, 2);
+  assert.equal(state.mendedHearts, 0);
+  assert.equal(state.streak, 0);
 });

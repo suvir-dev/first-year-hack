@@ -1,39 +1,54 @@
+import { readFile, writeFile, mkdir, readdir, unlink, rename } from 'node:fs/promises';
 import { createHash } from 'node:crypto';
-import { readFile, writeFile, rename } from 'node:fs/promises';
-import { cleanData } from './clean-data.js';
+import { readSourceSongs } from './clean-data.js';
+import { trackKey } from '../src/game.js';
+import { buildWikiDeck } from './wiki-data.js';
 
-const readJson = async (path) => JSON.parse(await readFile(new URL(path, import.meta.url), 'utf8'));
-
-async function buildData(path) {
-  const bytes = await readFile(path);
-  const sha256 = createHash('sha256').update(bytes).digest('hex');
-  const sources = await readJson('../data/sources.json');
-  const source = sources[sha256];
-  const { tracks, inputRows, eligibleRows, dropped } = cleanData(
-    new TextDecoder('utf-8', { fatal: true }).decode(bytes), await readJson('../data/covers.json'),
-  );
-  const playable = source?.approved === true ? tracks : [];
-  const destination = new URL('../src/deck.json', import.meta.url);
-  const temp = new URL(`../src/deck.json.${process.pid}.tmp`, import.meta.url);
-  await writeFile(temp, `${JSON.stringify(playable)}\n`);
-  await rename(temp, destination);
-  console.log(JSON.stringify({
-    sha256, inputRows, eligibleRows, validatedCandidates: tracks.length,
-    playableTracks: playable.length, verifiedCovers: playable.filter(({ cover }) => cover).length,
-    sourceDecision: source?.reason ?? 'Unknown checksum. Review the source before approving it in data/sources.json.',
-    dropped,
-  }, null, 2));
+const readJson = async (path) => JSON.parse(await readFile(path, 'utf8'));
+const [csvPath = 'Spotify Dataset.csv'] = process.argv.slice(2);
+const snapshot = await readJson('data/wiki/views.json');
+snapshot.records = (await Promise.all(snapshot.recordFiles.map((file) => readJson('data/wiki/' + file)))).flat();
+const metadata = await readJson('data/wiki/metadata.json');
+const images = await readJson('data/wiki/images.json');
+const overrides = await readJson('data/wiki/display-overrides.json');
+const candidates = await readJson('data/wiki/music-candidates.json');
+const bytes = await readFile(csvPath);
+const checksum = createHash('sha256').update(bytes).digest('hex');
+if (checksum !== snapshot.csvSha256) throw new Error('CSV checksum differs from the collected source. Recollect metadata.');
+const csv = readSourceSongs(bytes);
+const membership = new Set(csv.songs.map(trackKey));
+for (const candidate of candidates) {
+  if (!membership.has(trackKey(candidate))) throw new Error('Song not in the source CSV: ' + candidate.title);
 }
-
-const [path, ...extra] = process.argv.slice(2);
-if (!path || extra.length) {
-  console.error('Usage: npm run data:build -- <path-to-csv>');
-  process.exitCode = 1;
-} else {
-  try {
-    await buildData(path);
-  } catch (error) {
-    console.error(`Data build failed. ${error.message}`);
-    process.exitCode = 1;
+for (const record of snapshot.records.filter(({ kind }) => kind === 'music')) {
+  const source = metadata.records.find(({ id }) => id === record.id);
+  if (!source || !membership.has(trackKey({ title: source.sourceTitle, artist: source.sourceArtist }))) {
+    throw new Error('Snapshot song is not linked to a verified CSV row: ' + record.id);
   }
 }
+const { deck, report } = buildWikiDeck(snapshot, images, overrides);
+await mkdir('public/art', { recursive: true });
+for (const item of deck.filter(({ kind }) => kind === 'art')) {
+  const image = images.find(({ id }) => id === item.id);
+  let bytes;
+  try { bytes = await readFile('.cache/art/' + item.image.split('/').at(-1)); } catch (error) {
+    if (error.code !== 'ENOENT') throw error;
+    bytes = await readFile('public' + item.image);
+  }
+  if (createHash('sha256').update(bytes).digest('hex') !== image.sha256) throw new Error('Image checksum mismatch: ' + item.id);
+  await writeFile('public' + item.image, bytes);
+}
+await writeFile('src/deck.json.tmp', JSON.stringify(deck) + '\n');
+await rename('src/deck.json.tmp', 'src/deck.json');
+const selectedAssets = new Set(deck.filter(({ kind }) => kind === 'art').map(({ image }) => image.split('/').at(-1)));
+const knownAssets = new Set(images.map(({ path }) => path.split('/').at(-1)));
+for (const file of await readdir('public/art')) {
+  if (knownAssets.has(file) && !selectedAssets.has(file)) await unlink('public/art/' + file);
+}
+await writeFile('data/wiki/report.json', JSON.stringify({
+  ...report, sourceCsvRows: csv.inputRows, csvSha256: checksum, metadataRetrieved: metadata.retrieved,
+  viewsRetrieved: snapshot.viewRetrieved, metric: 'Wikipedia article views', dates: snapshot.period,
+  source: 'Wikimedia Analytics API', access: snapshot.access, agent: snapshot.agent,
+  metadataExcluded: metadata.excluded,
+}, null, 2) + '\n');
+console.log(JSON.stringify(report, null, 2));

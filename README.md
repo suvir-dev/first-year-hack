@@ -1,10 +1,10 @@
-# Higher or Lower · 2010s
+# Art vs Music
 
-A static React and Vite game about stream counts for songs from the 2010s. The game opens at `/`. The production deck uses the supplied CSV for gameplay at the project owner’s direction. The game labels counts **Dataset streams**. The audit below documents the attribution issue. The deterministic browser playthrough uses test fixtures.
+A React and Vite Higher or Lower game comparing paintings and sculptures with songs from the supplied Spotify CSV. The score metric is **Wikipedia article views from January 1, 2016 through December 31, 2025**, summed across linked Wikipedia language editions and desktop/mobile access.
 
-## Run locally
+## Install and play
 
-Use Node.js 22.12 or newer and npm.
+Use Node.js 22.12 or newer and npm. The app opens at Vite’s root URL.
 
 ```sh
 npm ci
@@ -14,56 +14,93 @@ npm run build
 npm run preview
 ```
 
-Open the local URL printed by Vite. For browser tests, install Chromium with `npx playwright install chromium`, then run `npm run test:browser`. To use installed Google Chrome, run `PLAYWRIGHT_CHANNEL=chrome npm run test:browser`. The tests start their own Vite server on port 4173 and exercise the real entry point at desktop and mobile widths. Fixture counts are supplied by Playwright request interception.
+The repository includes the generated deck, the source snapshot, and local artwork assets. Players need no credentials or metadata API calls. Browser-local scores are stored under `art-vs-music.wikipedia-2016-2025.scores`, separate from the earlier song-stream game.
+
+Run browser verification with an installed Google Chrome.
+
+```sh
+PLAYWRIGHT_CHANNEL=chrome npm run test:browser -- --timeout=60000
+```
+
+Alternatively, run `npx playwright install chromium` and then `npm run test:browser -- --timeout=60000`.
 
 ## Rules
 
-The known track starts on the left and the challenger on the right. Guess whether the challenger has more or fewer **dataset streams**. A correct answer earns one point. A miss costs one of three lives. Each guess reveals the exact count. Select **Next round** to promote the challenger to the known position after either result. The third miss shows the final count and score. **Play again** resets the difficulty, score, lives, and track history and draws a different opening pair when possible.
+- Every run opens with art on the left and music on the right. The left count is known and the right count is hidden.
+- Guess whether the right item has higher or lower Wikipedia views. Correct guesses earn one point. Mistakes break one of three hearts.
+- After each reveal, **Next round** promotes the right item to the left after both correct and incorrect guesses. The new challenger comes from the opposite category, so art and music alternate sides.
+- The 🔥 counter tracks consecutive correct answers. Every fourth correct answer repairs one broken heart as ❤️‍🩹, up to three lives. Mistakes reset the streak.
+- The final mistake reveals the last count. **Show results** opens the leaderboard and username entry. Sample scores are marked. Saved scores remain in the current browser.
+- **Play again** resets score, hearts, difficulty, streak, and history. It avoids repeating the previous opening pair when alternatives exist.
+- The rules popup closes with ×, Escape, or a click outside it. The speaker icon toggles the original instrumental loop, which starts on the first click or keypress. Correct guesses play a short original chime.
+- Reduced motion shows final counts immediately and disables the slide/reveal animations.
 
-The selector compares `abs(log(challenger.streams / anchor.streams))`. The four difficulty bands correspond to larger-to-smaller count ratios of at least 1.8, 1.4 to under 1.8, 1.15 to under 1.4, and greater than 1 to under 1.15. Start at the widest band, move one band closer after success, and ease one band after a miss, bounded by the four levels. After excluding the anchor and tied counts, consider unseen tracks first and reuse tracks once no unseen option remains. Draw randomly in the requested band or among the candidates nearest to its boundaries.
+Difficulty uses `abs(log(challenger.views / anchor.views))`. The four ratio bands are at least 1.8, 1.4–under 1.8, 1.15–under 1.4, and greater than 1–under 1.15. Start at the widest band, move one band closer after success, and ease one band after a miss. Exclude same-category and equal-count items, prefer unseen eligible items, and randomly choose in the requested band. If it is empty, use the eligible items nearest its boundaries. Previously seen items cycle back once the unseen pool is exhausted.
 
-## Data audit
+## Data and provenance
 
-The attached file matches the published CSV byte for byte. It has 599 data rows, 25 headers, a UTF-8 BOM, CRLF line endings, and SHA-256 `982928c9d71a66f5e66ae378132df24cb0107107693f3f131f65c5185d34f131`. The publisher credits DataCamp Workspace and describes `Streams` as total streams. The CSV supplies no track IDs or count timestamps. `Popularity` and playlist and chart fields are separate. The decade filter uses the CSV year field, which contains some chart or listing years that differ from original release dates. An approved historical deck should document its count date, method, and coverage before publication. [Published repository](https://github.com/Demibolt007/Spotify-Streaming-Insights-2010-2019) · [Raw CSV](https://raw.githubusercontent.com/Demibolt007/Spotify-Streaming-Insights-2010-2019/main/Spotify%20Dataset.csv)
+The bundled snapshot was collected on November 21, 2026. It contains 100 artworks and 100 songs, with 100 local art images and 5,444 linked language-article series across 192 Wikipedia editions. Of those series, 115 had no recorded views for the requested window. Art totals range from 76,569 to 81,509,164, and song totals range from 125,600 to 8,639,524. The generated [audit report](data/wiki/report.json) lists the selection and exclusions.
 
-- A downloaded DataCamp-derived candidate metadata file had 603 rows and no stream-count field. A multiset comparison matched all 599 supplied `Song`, `Artist`, and `Year` triples after trimming, case-folding, and NFC normalization. DataCamp describes year-based top-song coverage. The exact process used to assemble the supplied CSV and append its counts remains unverified. [DataCamp dataset](https://www.datacamp.com/datalab/datasets/dataset-r-spotify-music) · [Candidate metadata CSV](https://raw.githubusercontent.com/sharbelxo/spotify-data-analysis/main/spotify_top_music.csv)
-- I downloaded the Kaggle archive and indexed its 953 rows by the exact `streams` string from `spotify-2023.csv` (SHA-256 `26fd1292465877c24a9f5bfc6bf933c0715356a9c7d3197f2c4bc8b1a668a215`). Looking up each supplied `Streams` string produced 593 row hits covering 589 distinct count strings. Only one hit shared the normalized song title, “Someone You Loved.” For example, 1,440,757,818 is assigned to “7 Years” by Lukas Graham in the supplied CSV and “Me Porto Bonito” by Chencho Corleone and Bad Bunny in the comparison file. The latter file assigns 665,765,558 to “jealousy, jealousy” by Olivia Rodrigo, while the supplied CSV assigns it to Beyoncé’s `43776`. This pattern indicates the supplied counts were reassigned across songs. It does not establish who reassigned them or how the comparison file obtained its own counts. [2023 comparison dataset](https://www.kaggle.com/datasets/nelgiriyewithana/top-spotify-songs-2023) · [Archive download](https://www.kaggle.com/api/v1/datasets/download/nelgiriyewithana/top-spotify-songs-2023)
-- `43776` is consistent with a spreadsheet date serial for 2019-11-07 in the Excel 1900 date system. Beyoncé has a track titled “7/11” on the 2014 platinum edition, but the row identity and count remain unresolved. Both “All I Ask” rows are quarantined because their years and counts conflict, and the album lists the song in 2015. Britney Spears’ “3” is a legitimate numeric title, with a documented 2009 release, so that specific row is outside the decade despite its supplied 2010 year. Other numeric titles pass the same rules as text titles. [Beyoncé release](https://music.apple.com/us/song/1309038037) · [Adele release](https://music.apple.com/us/song/1544494912) · [Britney Spears release](https://music.apple.com/us/song/337963631)
+The music candidate list in `data/wiki/music-candidates.json` comes from the original 120-track deck, with title and artist membership checked against the supplied 599-row CSV. That CSV’s SHA-256 is `982928c9d71a66f5e66ae378132df24cb0107107693f3f131f65c5185d34f131`. The parser handles the BOM, CRLF, quoted commas, blank lines, and duplicate titles/artists. It uses the source’s 2010–2019 year field for membership. Displayed release dates come from reviewed Wikipedia/Wikidata metadata and can differ from that field. [Original CSV](https://raw.githubusercontent.com/Demibolt007/Spotify-Streaming-Insights-2010-2019/main/Spotify%20Dataset.csv)
 
-The production deck contains **120 playable tracks and 0 verified covers**. Treat the counts as values from the supplied file, with the attribution limitations above.
+Songs must resolve to dedicated Wikipedia articles. Ambiguous pages, unrelated recordings, and remixes without separately verified coverage are excluded in the collector or display overrides. Radio-edit rows identify their underlying song article, and the game shows the base song title. Views measure the whole article. The original CSV’s stream, chart, playlist, and popularity columns do not contribute to the new game metric.
 
-## Regenerate the deck
+Art candidates in `data/wiki/art-candidates.json` cover historic paintings and sculptures, with individual article and image matching. Broader topics, artist pages, series without a single verified work, and uncleared artwork images are excluded. Art dates are labeled **Created**, with **Unveiled** for the documented public unveilings in the reviewed overrides. Approximate dates and ranges retain their uncertainty.
 
-Run the command with the attached CSV from the project folder. If you need a fresh copy, download the published CSV first.
+The collector resolves each candidate to a Wikidata ID and retrieves every Wikipedia language sitelink recognized by Wikimedia’s site matrix, including Simple English. It requests each linked article with `all-access`, `user`, and monthly granularity for the full 2016–2025 range. These are page views including repeat visits. The API’s human-classified traffic filter excludes recognized automated traffic. [Wikimedia metric definition](https://doc.wikimedia.org/generated-data-platform/aqs/analytics-api/concepts/page-views.html)
+
+The snapshot uses the **currently linked language article titles at collection time**. Historical views left under earlier titles after page moves, deleted/unlinked articles, and separate articles for the same work outside those sitelinks are not reconstructed. A language article created after 2016 contributes only its available history. Missing monthly buckets and explicit API no-data responses contribute zero recorded views and are retained in the audit snapshot. HTTP errors and unexpected response schemas stop collection. [Wikimedia API reference](https://doc.wikimedia.org/generated-data-platform/aqs/analytics-api/reference/page-views.html)
+
+Each candidate needs at least 10,000 views over the period. For each category, the builder sorts by descending total views and Wikidata ID, then selects 100 evenly spaced positions through that ordering. This includes major headliners and quieter works. It verifies every total against all 120 monthly buckets for every linked language, checks CSV membership and image checksums, and rejects a deck unable to supply a non-tied cross-category matchup.
+
+The authoritative collection dates, row counts, view ranges, exclusions, and selected IDs are generated into `data/wiki/report.json`. The metadata and monthly data are in `metadata.json`, the `views.json` manifest, and its smaller `views-*.json` record files. Only the compact `src/deck.json` enters the JavaScript bundle. Wikimedia statistics are CC0. [Wikimedia access policy](https://doc.wikimedia.org/generated-data-platform/aqs/analytics-api/documentation/access-policy.html)
+
+## Regenerate or update the snapshot
+
+The source CSV is already in the original project folder. On a fresh checkout, download it first.
 
 ```sh
 curl -fL 'https://raw.githubusercontent.com/Demibolt007/Spotify-Streaming-Insights-2010-2019/main/Spotify%20Dataset.csv' -o 'Spotify Dataset.csv'
+```
+
+From the project root, rebuild the same deck offline from the committed source snapshot.
+
+```sh
 npm run data:build -- 'Spotify Dataset.csv'
 ```
 
-The parser handles UTF-8 BOMs, CRLF, blank lines and CSV quoting. It requires exactly one `Song`, `Artist`, `Year`, and `Streams` header. It trims text, requires song and artist, checks four-digit years, and parses positive safe integers with optional valid thousands grouping. It compares titles and artists with NFC normalization, collapsed whitespace, and lowercasing, preserving the selected row’s display text and any edition or remix wording. Where normalized keys share the same year and count it keeps the first row. Conflicting years or counts quarantine the whole group. It applies the two documented track-specific metadata exclusions and filters years to 2010–2019.
+To collect a fresh snapshot, run these stages in order. They require internet access and can take time across thousands of language articles. Successful JSON responses are cached under ignored `.cache/wiki/`; rerunning a failed stage resumes from those cached responses.
 
-It ranks the remaining tracks by descending stream count, breaking ties by normalized key, and takes at most 120. It checks for at least two distinct totals and compares each candidate count against its original CSV field as a `BigInt`. The CLI reports reasons by logical CSV record number, including the header as record 1 and skipping blank lines.
+```sh
+npm run data:collect -- 'Spotify Dataset.csv' metadata
+npm run data:collect -- 'Spotify Dataset.csv' images
+npm run data:collect -- 'Spotify Dataset.csv' views
+npm run data:build -- 'Spotify Dataset.csv'
+npm test
+npm run build
+```
 
-For the supplied file, 26 rows were quarantined as conflicting duplicates and two for the documented track-specific issues. Of the remaining 571, 451 were below the cutoff and 120 passed structural validation and exact count checks. The supplied checksum is enabled for gameplay in `data/sources.json`, so the CLI writes those 120 candidates to `src/deck.json`. After auditing a replacement with the same required columns, add its exact SHA-256 to `data/sources.json` with `"approved": true` and a reason that cites the supporting evidence, then regenerate and review `src/deck.json`. The raw CSV stays outside the browser build.
+To refresh data that is already cached, move `.cache/wiki/` aside before recollecting. Review the updated metadata, view ranges, and image licenses before committing. Edit candidate article mappings to resolve identity problems. Use `data/wiki/display-overrides.json` for reviewed names, date ranges, or exclusions, with the canonical English article as the key. Its source reference is the corresponding article URL recorded in the deck.
 
-### Cover mappings
+## Artwork
 
-Use a release image licensed for use in this game and verify the song, artist, and edition against its release listing. For each approved image, save it under `public/covers/` and add an entry to `data/covers.json`. The key is the JSON-encoded normalized title and artist as returned by `trackKey` in `src/game.js`, for example `["example title","example artist"]`. Set `path` to `/covers/example.webp` or a permitted static HTTPS image URL, and add `credit` text when required. Record the release URL, rights basis, and any required link in the entry as `source`, `license`, and `creditUrl`. Regenerate the deck after changing a mapping. Missing or broken images use the record placeholder. The Spotify Developer Policy prohibits games using its platform, so artwork from that platform was excluded. [Spotify Developer Policy](https://developer.spotify.com/policy)
+Music cards use original vinyl sleeves with stable per-song colors and patterns. Art cards load local files from `public/art/`, preserving the full painting or sculpture image with `object-fit: contain`.
+
+Commons records in `data/wiki/images.json` preserve the file source URL, creator/photographer attribution, license and license URL when provided, and SHA-256. Expand **Image credit** under an art card for attribution and its Commons source link. Images are unmodified downloaded thumbnails. The snapshot accepts public-domain, CC0, CC BY, and CC BY-SA images. An unavailable image displays a designed fallback with the work’s metadata.
 
 ## Review and push
 
-The game is at the root of the original IntelliJ project checkout. Run these commands from that folder on `high_low_game`, which tracks `origin/high_low_game`. The path list scopes staging, review, and the commit to the feature files so any pre-existing staged edits stay separate.
+The app lives in the original IntelliJ project folder on `high_low_game`, tracking `origin/high_low_game`. Existing edits to `ideas.txt` or `tasks.txt` can be staged independently. Review the feature files in IntelliJ or scope the Git commands to them.
 
 ```sh
 git branch --show-current
 git status --short
-feature_paths=(.gitignore README.md index.html package.json package-lock.json playwright.config.js data scripts src test)
-git add -- "${feature_paths[@]}"
-git diff --cached --check -- "${feature_paths[@]}"
-git diff --cached -- "${feature_paths[@]}"
-git commit --only -m "Implement 2010s Higher or Lower game" -- "${feature_paths[@]}"
+feature_files=(.gitignore README.md index.html package.json package-lock.json playwright.config.js data scripts src test public/art)
+git add -A -- "${feature_files[@]}"
+git diff --cached --check -- "${feature_files[@]}"
+git diff --cached --stat -- "${feature_files[@]}"
+git commit --only -m "Build Art vs Music Wikipedia views game" -- "${feature_files[@]}"
 git push origin high_low_game
 ```
 
-Original repository contributor: Swarit Kapoor.
+Created by Swarit Kapoor.

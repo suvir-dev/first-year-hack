@@ -4,3 +4,7 @@ test-results/
 playwright-report/
 Spotify Dataset.csv
 src/deck.json.*.tmp
+src/deck.json.tmp
+
+.cache/
+data/wiki/*.tmp

@@ -1,5 +1,5 @@
 {
-  "name": "higher-lower-2010s",
+  "name": "art-vs-music",
   "version": "1.0.0",
   "private": true,
   "type": "module",
@@ -12,7 +12,8 @@
     "preview": "vite preview",
     "data:build": "node scripts/build-data.js",
     "test": "node --test test/*.test.js",
-    "test:browser": "playwright test"
+    "test:browser": "playwright test",
+    "data:collect": "node scripts/collect-wiki.js"
   },
   "dependencies": {
     "react": "^19.3.1",

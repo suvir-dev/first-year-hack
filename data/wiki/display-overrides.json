@@ -1,0 +1,384 @@
+{
+  "music": {
+    "Rude (song)": {
+      "year": "2013"
+    },
+    "Girls Like You": {
+      "exclude": true,
+      "reason": "CSV identifies the Cardi B remix; the article combines original and remix coverage"
+    },
+    "Maps (Maroon 5 song)": {
+      "year": "2014"
+    },
+    "I Don't Wanna Live Forever": {
+      "title": "I Don’t Wanna Live Forever",
+      "artist": "ZAYN, Taylor Swift"
+    },
+    "Señorita (Shawn Mendes and Camila Cabello song)": {
+      "artist": "Shawn Mendes, Camila Cabello"
+    },
+    "Happier (Marshmello and Bastille song)": {
+      "artist": "Marshmello, Bastille"
+    },
+    "I Like It (Cardi B, Bad Bunny and J Balvin song)": {
+      "artist": "Cardi B, Bad Bunny, J Balvin"
+    },
+    "Starboy (song)": {
+      "artist": "The Weeknd, Daft Punk"
+    },
+    "Wolves (Selena Gomez and Marshmello song)": {
+      "artist": "Selena Gomez, Marshmello"
+    },
+    "Dusk Till Dawn (Zayn song)": {
+      "artist": "ZAYN, Sia"
+    },
+    "Takeaway (song)": {
+      "artist": "The Chainsmokers, Illenium, Lennon Stella"
+    },
+    "Love the Way You Lie": {
+      "artist": "Eminem, Rihanna"
+    },
+    "Uptown Funk": {
+      "artist": "Mark Ronson, Bruno Mars"
+    },
+    "Let Me Love You (DJ Snake song)": {
+      "artist": "DJ Snake, Justin Bieber"
+    },
+    "Silence (Marshmello song)": {
+      "artist": "Marshmello, Khalid"
+    },
+    "Don't Let Me Down (The Chainsmokers song)": {
+      "artist": "The Chainsmokers, Daya"
+    },
+    "In the Name of Love (Martin Garrix and Bebe Rexha song)": {
+      "artist": "Martin Garrix, Bebe Rexha"
+    },
+    "I Feel It Coming": {
+      "artist": "The Weeknd, Daft Punk"
+    },
+    "Call You Mine (The Chainsmokers song)": {
+      "artist": "The Chainsmokers, Bebe Rexha"
+    },
+    "Hall of Fame (song)": {
+      "artist": "The Script, will.i.am"
+    },
+    "FourFiveSeconds": {
+      "artist": "Rihanna, Kanye West, Paul McCartney"
+    },
+    "This Is What You Came For": {
+      "artist": "Calvin Harris, Rihanna"
+    },
+    "Side to Side": {
+      "artist": "Ariana Grande, Nicki Minaj"
+    },
+    "Stay (Zedd and Alessia Cara song)": {
+      "artist": "Zedd, Alessia Cara"
+    },
+    "Shallow (Lady Gaga and Bradley Cooper song)": {
+      "artist": "Lady Gaga, Bradley Cooper"
+    },
+    "These Days (Rudimental song)": {
+      "artist": "Rudimental, Jess Glynne, Macklemore, Dan Caplen"
+    },
+    "Give Me Everything": {
+      "artist": "Pitbull, Ne-Yo, Afrojack, Nayer"
+    },
+    "Payphone (song)": {
+      "artist": "Maroon 5, Wiz Khalifa"
+    },
+    "Don't You Worry Child": {
+      "artist": "Swedish House Mafia, John Martin"
+    },
+    "Dark Horse (Katy Perry song)": {
+      "artist": "Katy Perry, Juicy J"
+    },
+    "Work (Rihanna song)": {
+      "artist": "Rihanna, Drake"
+    },
+    "Me, Myself & I (G-Eazy and Bebe Rexha song)": {
+      "artist": "G-Eazy, Bebe Rexha"
+    },
+    "Starving (song)": {
+      "artist": "Hailee Steinfeld, Grey, Zedd"
+    },
+    "Something Just like This": {
+      "artist": "The Chainsmokers, Coldplay"
+    },
+    "Something Just Like This": {
+      "artist": "The Chainsmokers, Coldplay"
+    },
+    "I Took a Pill in Ibiza": {
+      "exclude": true,
+      "reason": "CSV identifies the Seeb remix; the article combines original and remix coverage"
+    }
+  },
+  "art": {
+    "The Last Supper (Leonardo)": {
+      "year": "1495–1498"
+    },
+    "The Birth of Venus": {
+      "year": "c. 1484–1486"
+    },
+    "The School of Athens": {
+      "year": "1509–1511"
+    },
+    "The Creation of Adam": {
+      "year": "c. 1511"
+    },
+    "The Garden of Earthly Delights": {
+      "year": "c. 1490–1510"
+    },
+    "The Kiss (Klimt)": {
+      "year": "1907–1908"
+    },
+    "A Sunday Afternoon on the Island of La Grande Jatte": {
+      "year": "1884–1886"
+    },
+    "Wanderer above the Sea of Fog": {
+      "title": "Wanderer above the Sea of Fog",
+      "year": "c. 1818"
+    },
+    "The Swing (Fragonard)": {
+      "year": "c. 1767"
+    },
+    "Luncheon of the Boating Party": {
+      "year": "1880–1881"
+    },
+    "The Angelus (painting)": {
+      "year": "1857–1859"
+    },
+    "The Milkmaid (Vermeer)": {
+      "year": "c. 1658–1660"
+    },
+    "View of Delft": {
+      "year": "c. 1659–1661"
+    },
+    "The Art of Painting": {
+      "year": "c. 1666–1668"
+    },
+    "The Jewish Bride": {
+      "year": "c. 1665–1669"
+    },
+    "The Return of the Prodigal Son (Rembrandt)": {
+      "year": "c. 1668–1669"
+    },
+    "The Calling of Saint Matthew": {
+      "year": "1599–1600"
+    },
+    "Judith Beheading Holofernes (Caravaggio)": {
+      "year": "c. 1599–1602"
+    },
+    "Bacchus (Caravaggio)": {
+      "year": "c. 1596"
+    },
+    "The Cardsharps": {
+      "year": "c. 1594–1597"
+    },
+    "Primavera (Botticelli)": {
+      "year": "c. 1477–1482"
+    },
+    "Lady with an Ermine": {
+      "year": "c. 1489–1491"
+    },
+    "Ginevra de' Benci": {
+      "year": "c. 1474–1478"
+    },
+    "Salvator Mundi (Leonardo)": {
+      "year": "c. 1499–1510",
+      "artist": "Attributed to Leonardo da Vinci"
+    },
+    "The Last Judgment (Michelangelo)": {
+      "year": "1536–1541"
+    },
+    "Sistine Madonna": {
+      "year": "1512–1513"
+    },
+    "The Entombment of Christ (Caravaggio)": {
+      "year": "1602–1604"
+    },
+    "Assumption of the Virgin (Titian)": {
+      "year": "1516–1518"
+    },
+    "The Rape of Europa (Titian)": {
+      "year": "c. 1560–1562"
+    },
+    "Netherlandish Proverbs": {
+      "year": "1559"
+    },
+    "Mr and Mrs Andrews": {
+      "year": "c. 1750"
+    },
+    "The Coronation of Napoleon": {
+      "year": "1805–1807"
+    },
+    "David (Michelangelo)": {
+      "year": "1501–1504"
+    },
+    "The Thinker": {
+      "year": "1880–1904",
+      "artist": "Auguste Rodin"
+    },
+    "Venus de Milo": {
+      "year": "c. 160–110 BCE",
+      "artist": "Attributed to Alexandros of Antioch"
+    },
+    "Winged Victory of Samothrace": {
+      "year": "c. 190 BCE",
+      "artist": "Unknown Greek sculptor"
+    },
+    "Laocoön and His Sons": {
+      "year": "c. 1st century BCE–1st century CE"
+    },
+    "Discobolus": {
+      "year": "c. 460–450 BCE",
+      "artist": "After Myron"
+    },
+    "Augustus of Prima Porta": {
+      "year": "1st century CE",
+      "artist": "Unknown Roman sculptor"
+    },
+    "The Kiss (Rodin sculpture)": {
+      "year": "1882",
+      "artist": "Auguste Rodin"
+    },
+    "The Burghers of Calais": {
+      "year": "1895",
+      "dateLabel": "Unveiled"
+    },
+    "The Gates of Hell": {
+      "year": "1880–1917"
+    },
+    "Christ the Redeemer (statue)": {
+      "year": "1931",
+      "dateLabel": "Unveiled",
+      "artist": "Paul Landowski, Heitor da Silva Costa"
+    },
+    "Statue of Liberty": {
+      "year": "1886",
+      "dateLabel": "Unveiled",
+      "artist": "Frédéric Auguste Bartholdi"
+    },
+    "Great Sphinx of Giza": {
+      "year": "c. 26th century BCE",
+      "artist": "Unknown ancient Egyptian sculptors"
+    },
+    "Nefertiti Bust": {
+      "year": "c. 1345 BCE",
+      "artist": "Attributed to Thutmose"
+    },
+    "Venus of Willendorf": {
+      "year": "c. 28,000–25,000 BCE",
+      "artist": "Unknown"
+    },
+    "Lion Capital of Ashoka": {
+      "year": "c. 250 BCE",
+      "artist": "Unknown Mauryan sculptors"
+    },
+    "Leshan Giant Buddha": {
+      "year": "c. 713–803",
+      "artist": "Tang-dynasty sculptors"
+    },
+    "Along the River During the Qingming Festival": {
+      "year": "early 12th century"
+    },
+    "Dwelling in the Fuchun Mountains": {
+      "year": "1348–1350"
+    },
+    "Wind God and Thunder God (Kōrin)": {
+      "year": "c. 1710–1716"
+    },
+    "The Lady of Shalott (1888 painting)": {
+      "year": "1888",
+      "artist": "John William Waterhouse"
+    },
+    "Almond Blossom": {
+      "year": "1890",
+      "artist": "Vincent van Gogh"
+    },
+    "Dancing Girl (Mohenjo-daro)": {
+      "year": "c. 2500 BCE",
+      "artist": "Unknown Harappan sculptor"
+    },
+    "The Accolade (painting)": {
+      "year": "1901"
+    },
+    "Dancing Girl (prehistoric sculpture)": {
+      "year": "c. 2500–1750 BCE",
+      "artist": "Unknown Harappan sculptor"
+    },
+    "Carnation, Lily, Lily, Rose": {
+      "year": "1885–1886",
+      "artist": "John Singer Sargent"
+    },
+    "The Daughters of Edward Darley Boit": {
+      "year": "1882",
+      "artist": "John Singer Sargent"
+    },
+    "Supper at Emmaus (Caravaggio, London)": {
+      "year": "1601"
+    },
+    "Transfiguration (Raphael)": {
+      "year": "1516–1520"
+    },
+    "Sleeping Venus (Giorgione)": {
+      "year": "c. 1510"
+    },
+    "Ophelia (Millais)": {
+      "year": "1851–1852"
+    },
+    "David (Donatello, bronze)": {
+      "year": "c. 1440s"
+    },
+    "Diana and Actaeon (Titian)": {
+      "year": "1556–1559"
+    },
+    "Rokeby Venus": {
+      "year": "c. 1647–1651"
+    },
+    "The Surrender of Breda": {
+      "year": "1634–1635"
+    },
+    "A Burial at Ornans": {
+      "year": "1849–1850"
+    },
+    "The Umbrellas (Renoir)": {
+      "year": "c. 1881–1886"
+    },
+    "Barge Haulers on the Volga": {
+      "year": "1870–1873"
+    },
+    "Reply of the Zaporozhian Cossacks": {
+      "year": "1880–1891"
+    },
+    "Ivan the Terrible and His Son Ivan": {
+      "year": "1883–1885"
+    },
+    "The Fairy Feller's Master-Stroke": {
+      "year": "1855–1864"
+    },
+    "The Fighting Cocks": {
+      "exclude": true,
+      "reason": "Article and image resolve to a pub rather than the painting"
+    },
+    "Venus and Adonis (Titian)": {
+      "exclude": true,
+      "reason": "Article covers multiple versions instead of one verified painting"
+    },
+    "Portrait of Dr. Gachet": {
+      "exclude": true,
+      "reason": "Article covers multiple portraits instead of one painting"
+    },
+    "The Lady of Shalott": {
+      "exclude": true,
+      "reason": "Article covers multiple paintings"
+    },
+    "Salvator Mundi (painting)": {
+      "year": "c. 1499–1510",
+      "artist": "Attributed to Leonardo da Vinci"
+    },
+    "Wanderer Above the Sea of Fog": {
+      "title": "Wanderer Above the Sea of Fog",
+      "year": "c. 1818"
+    }
+  }
+}
