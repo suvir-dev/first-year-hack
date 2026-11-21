@@ -1,0 +1,8 @@
+We have a grand platform which combines multiple feature such as all the below ones
+Higher or lower game but for monthly listeners on spotify
+User inputs various things like fav song, fav art, and we recommend movies
+Upload an art painting, and it returns the story and history behind it
+Make a poor website, and the user can provide comments on how to improve it. AI will judge and improve the feedback of the user. Thus, this teacher user to be better at UI/UX design.
+Tinder for paintings: swipe left and right on paintings and get suggestions for more. We can even implement Augmented Reality and see the paintings IRL and then judge it.
+
+
