@@ -36,36 +36,53 @@ Other commands:
 
 ## What works so far
 
-- [x] Gallery: pick a painting (plain buttons for now)
+- [x] Museum-style gallery of 6 public-domain paintings with full-body poses
 - [x] Webcam starts, PoseLandmarker runs on every frame, skeleton drawn on the video
 - [x] Pose scoring by joint angles: big live score, limbs coloured green / amber / red
-- [x] Flow through all four screens: gallery → challenge → countdown → result
-- [x] Painting images (4 public-domain paintings, sources in `public/paintings/README.md`)
-- [ ] Target poses for each painting (for now: press **T** on the challenge
-      screen to use your current pose as the target)
-- [ ] 3-2-1 countdown
-- [ ] Background removal + gilt frame (`src/composite.ts` only writes the caption)
+- [x] A target pose for every painting (made with the pose picker, see below)
+- [x] 3-2-1 countdown, then a webcam snapshot
+- [x] Background removal, ornate gold frame, brass plaque with the score
+- [x] Download the framed portrait as a PNG, then "Try another"
 
 ## Project structure
 
 ```
-index.html            The page: one <section> per screen
+index.html            The game page: one <section> per screen
 src/
   main.ts             App shell: switches screens, runs the camera loop, draws the skeleton
   camera.ts           startCamera(video) / stopCamera(video)
-  pose.ts             loadPoseModel() and detect(videoFrame) using PoseLandmarker
+  pose.ts             loadPoseModel(), detect(videoFrame), poseFromKeyJoints()
   scoring.ts          scorePose(player, target) → overall + per-joint scores
   scoring.test.ts     Sanity checks for scoring (npm test)
-  paintings.ts        The list of paintings: { id, title, artist, imageUrl, targetPose }
-  composite.ts        createFramedResult(photo, painting) → canvas  (stub)
+  paintings.ts        The 6 paintings: { id, title, artist, year, imageUrl, targetPose }
+  composite.ts        Background removal + gold frame + plaque → canvas
   config.ts           All MediaPipe WASM/model URLs in one place
   style.css           Styling
 public/
   paintings/          Painting images (served as /paintings/...)
+tools/
+  pose-picker.html    Developer tool for making target poses (not part of the game)
+  pose-picker.ts
 ```
 
-Search the code for `TODO` to find what's left to do. Each TODO says who it
-belongs to.
+## Making a target pose (the pose picker)
+
+Each painting in `src/paintings.ts` has a `targetPose`: where its person's
+shoulders, elbows, wrists, hips, knees and ankles are, from 0 to 1 across and
+down the image. To add a painting or fix a pose:
+
+1. Put the image in `public/paintings/` and add an entry to `src/paintings.ts`
+   (`targetPose: null` for now).
+2. With `npm run dev` running, open http://localhost:5173/tools/pose-picker.html
+   and choose the painting.
+3. It tries to find the pose automatically. On paintings this often fails or
+   gets some joints wrong (it worked on 2 of our 6). Fix a joint by clicking
+   its name on the right, then clicking where it belongs. If a joint is hidden
+   in the painting, select it and press "Selected joint isn't visible".
+   "Left" and "right" mean the person's own left and right.
+4. Press **Copy** and paste over the `targetPose` line in `src/paintings.ts`.
+
+Joints you leave out are simply skipped when scoring.
 
 ## How the score works
 
@@ -99,10 +116,10 @@ you keep the signatures the same, the other person's code keeps working:
 | Function / type                                        | File          | Used by                  |
 | ------------------------------------------------------ | ------------- | ------------------------ |
 | `startCamera(video)`, `stopCamera(video)`              | camera.ts     | main.ts                  |
-| `loadPoseModel()`, `detect(video)`, `DetectedPose`     | pose.ts       | main.ts, scoring.ts, paintings.ts |
+| `loadPoseModel()`, `detect(video)`, `DetectedPose`, `poseFromKeyJoints()` | pose.ts | main.ts, scoring.ts, paintings.ts, pose picker |
 | `scorePose(player, target): PoseScore`, `ScoreSmoother`, `JOINTS` | scoring.ts | main.ts         |
 | `paintings`, `Painting`                                | paintings.ts  | main.ts, composite.ts    |
-| `createFramedResult(photo, painting)`                  | composite.ts  | main.ts                  |
+| `loadSegmenter()`, `createFramedResult(photo, painting, score)` | composite.ts | main.ts         |
 
 `main.ts` already calls `scorePose()` every frame, so Person A never needs to
 edit `main.ts` to get the score on screen. If you need to change a shared

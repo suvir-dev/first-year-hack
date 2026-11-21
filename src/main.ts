@@ -4,7 +4,7 @@
 //
 //   gallery  ->  pose challenge  ->  countdown  ->  result
 //   (pick a      (webcam, skeleton,  (3, 2, 1,      (framed photo,
-//    painting)    live score)          snapshot)      play again)
+//    painting)    live score)          snapshot)      download, try another)
 //
 // All the clever work happens in the other modules; this file just connects
 // them to the page.
@@ -18,7 +18,7 @@ import { JOINTS, scorePose, ScoreSmoother } from "./scoring";
 import type { PoseScore } from "./scoring";
 import { paintings } from "./paintings";
 import type { Painting } from "./paintings";
-import { createFramedResult } from "./composite";
+import { createFramedResult, loadSegmenter } from "./composite";
 
 // --- Grab the HTML elements we need (they are defined in index.html) --------
 
@@ -45,7 +45,9 @@ const statusText = byId("status");
 const countdownText = byId("countdown");
 const readyButton = byId<HTMLButtonElement>("ready-button");
 const backButton = byId<HTMLButtonElement>("back-button");
+const resultStatus = byId("result-status");
 const resultHolder = byId("result-holder");
+const downloadButton = byId<HTMLButtonElement>("download-button");
 const againButton = byId<HTMLButtonElement>("again-button");
 
 // --- App state ---------------------------------------------------------------
@@ -54,10 +56,14 @@ const againButton = byId<HTMLButtonElement>("again-button");
 let currentPainting: Painting | null = null;
 /** The id of the running animation frame loop, so we can stop it. */
 let loopId: number | null = null;
-/** The most recent pose seen on the webcam (used by the T key, see below). */
-let latestPose: DetectedPose | null = null;
 /** Averages the last 10 scores so the big number doesn't flicker. */
 const smoother = new ScoreSmoother(10);
+/** The score currently on screen (this is what goes on the plaque). */
+let currentScore: number | null = null;
+/** The finished framed picture, kept for the Download button. */
+let resultCanvas: HTMLCanvasElement | null = null;
+
+const COUNTDOWN_SECONDS = 3;
 
 // Colours for the score and the skeleton's limbs.
 const GOOD = "#2ecc71"; // green
@@ -77,20 +83,48 @@ function showScreen(name: keyof typeof screens): void {
   for (const [screenName, element] of Object.entries(screens)) {
     element.hidden = screenName !== name;
   }
+  window.scrollTo(0, 0);
+}
+
+/** Wait for some milliseconds (use with await). */
+function wait(ms: number): Promise<void> {
+  return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
 // =============================================================================
 // Screen 1: gallery
 // =============================================================================
 
+/** Build one framed card per painting. Clicking a card starts the challenge. */
 function showGallery(): void {
-  // TODO (Person B): show thumbnails of the paintings instead of plain buttons.
   paintingList.innerHTML = "";
+
   for (const painting of paintings) {
-    const button = document.createElement("button");
-    button.textContent = `${painting.title} (${painting.artist})`;
-    button.addEventListener("click", () => startChallenge(painting));
-    paintingList.appendChild(button);
+    // <button class="card">
+    //   <div class="gilt"><img></div>
+    //   <div class="label"><strong>Title</strong><span>Artist, year</span></div>
+    // </button>
+    const card = document.createElement("button");
+    card.className = "card";
+
+    const frame = document.createElement("div");
+    frame.className = "gilt";
+    const image = document.createElement("img");
+    image.src = painting.imageUrl;
+    image.alt = `${painting.title} by ${painting.artist}`;
+    frame.appendChild(image);
+
+    const label = document.createElement("div");
+    label.className = "label";
+    const title = document.createElement("strong");
+    title.textContent = painting.title;
+    const artist = document.createElement("span");
+    artist.textContent = `${painting.artist}, ${painting.year}`;
+    label.append(title, artist);
+
+    card.append(frame, label);
+    card.addEventListener("click", () => startChallenge(painting));
+    paintingList.appendChild(card);
   }
   showScreen("gallery");
 }
@@ -103,10 +137,9 @@ async function startChallenge(painting: Painting): Promise<void> {
   currentPainting = painting;
   paintingImage.src = painting.imageUrl;
   paintingImage.alt = `${painting.title} by ${painting.artist}`;
-  paintingCaption.textContent = `${painting.title}, ${painting.artist}`;
+  paintingCaption.textContent = `${painting.title}, ${painting.artist} (${painting.year})`;
   showScore(null);
   smoother.reset();
-  latestPose = null;
   readyButton.disabled = true;
   showScreen("challenge");
 
@@ -125,9 +158,14 @@ async function startChallenge(painting: Painting): Promise<void> {
     return;
   }
   statusText.textContent = painting.targetPose
-    ? "Copy the pose!"
-    : "This painting has no target pose yet. Strike the pose and press T to record one.";
+    ? 'Copy the pose! When the score is high, press "Take my portrait".'
+    : "This painting has no target pose yet (see tools/pose-picker.html).";
   readyButton.disabled = false;
+
+  // Start downloading the background-removal model now, while the player
+  // is posing, so the result appears quickly. If it fails, composite.ts
+  // simply keeps the background.
+  loadSegmenter().catch((error) => console.warn("Could not load the segmenter yet.", error));
 
   // Make the canvas the same size as the camera image.
   cameraCanvas.width = video.videoWidth;
@@ -148,7 +186,6 @@ function runCameraLoop(): void {
     if (video.currentTime !== lastVideoTime) {
       lastVideoTime = video.currentTime;
       pose = detect(video);
-      latestPose = pose;
       poseScore = null;
 
       if (pose && currentPainting?.targetPose) {
@@ -169,6 +206,7 @@ function runCameraLoop(): void {
 
 /** Show the big score number (or a dash if there is no score). */
 function showScore(score: number | null): void {
+  currentScore = score;
   scoreText.textContent = score === null ? "–" : String(score);
   scoreText.style.color = score === null ? "" : scoreColour(score);
 }
@@ -248,19 +286,27 @@ function drawSkeleton(
 // =============================================================================
 
 async function startCountdown(): Promise<void> {
+  // No leaving or restarting while counting down.
   readyButton.disabled = true;
+  backButton.disabled = true;
 
-  // TODO (Person B): count down 3, 2, 1 (one second each) in countdownText,
-  // maybe with a sound, before taking the photo. For now we wait one second.
+  // 3... 2... 1... shown big on top of the camera. The camera loop keeps
+  // running underneath, so the player can still adjust and the score updates.
   countdownText.hidden = false;
-  countdownText.textContent = "📸";
-  await new Promise((resolve) => setTimeout(resolve, 1000));
+  for (let n = COUNTDOWN_SECONDS; n > 0; n--) {
+    countdownText.textContent = String(n);
+    await wait(1000);
+  }
   countdownText.hidden = true;
 
+  // Snap! Remember the score at this exact moment for the plaque.
+  const finalScore = currentScore;
   const photo = takeSnapshot();
   stopCameraLoop();
   stopCamera(video);
-  await showResult(photo);
+  backButton.disabled = false;
+
+  await showResult(photo, finalScore);
 }
 
 /** Copy the current camera image (mirrored, without the skeleton) into a new canvas. */
@@ -279,14 +325,32 @@ function takeSnapshot(): HTMLCanvasElement {
 // Screen 4: result
 // =============================================================================
 
-async function showResult(photo: HTMLCanvasElement): Promise<void> {
+async function showResult(photo: HTMLCanvasElement, score: number | null): Promise<void> {
   if (!currentPainting) return;
-  const framed = await createFramedResult(photo, currentPainting);
 
-  // TODO (Person B): add a "Download" button (framed.toDataURL("image/png")).
+  // Show the screen straight away with a message, because removing the
+  // background takes a moment.
   resultHolder.innerHTML = "";
-  resultHolder.appendChild(framed);
+  resultCanvas = null;
+  downloadButton.disabled = true;
+  resultStatus.textContent = "Framing your portrait…";
   showScreen("result");
+
+  resultCanvas = await createFramedResult(photo, currentPainting, score);
+  resultHolder.appendChild(resultCanvas);
+  resultStatus.textContent = "";
+  downloadButton.disabled = false;
+}
+
+/** Save the framed picture as a PNG file. */
+function downloadResult(): void {
+  if (!resultCanvas || !currentPainting) return;
+  // A temporary link with the "download" attribute makes the browser save
+  // the file instead of opening it.
+  const link = document.createElement("a");
+  link.download = `you-after-${currentPainting.id}.png`;
+  link.href = resultCanvas.toDataURL("image/png");
+  link.click();
 }
 
 // --- Buttons -----------------------------------------------------------------
@@ -299,24 +363,9 @@ backButton.addEventListener("click", () => {
   showGallery();
 });
 
+downloadButton.addEventListener("click", () => downloadResult());
+
 againButton.addEventListener("click", () => showGallery());
-
-// Developer shortcut: on the challenge screen, press T to save your current
-// pose as this painting's target. It is printed in the console (F12) so you
-// can paste it into paintings.ts and keep it. Until then it is forgotten when
-// the page reloads.
-document.addEventListener("keydown", (event) => {
-  if (event.key.toLowerCase() !== "t") return;
-  if (screens.challenge.hidden || !currentPainting || !latestPose) return;
-
-  currentPainting.targetPose = latestPose;
-  smoother.reset();
-  statusText.textContent = "Target pose recorded! Now try to match it.";
-  console.log(
-    `targetPose for "${currentPainting.id}" (paste into paintings.ts):\n` +
-      JSON.stringify(latestPose),
-  );
-});
 
 // --- Start the app -----------------------------------------------------------
 showGallery();

@@ -33,6 +33,60 @@ export interface DetectedPose {
   aspectRatio: number;
 }
 
+/**
+ * The 12 body points the score uses, and their MediaPipe landmark numbers.
+ * "left" and "right" mean the PERSON's left and right: for someone facing
+ * you, their left shoulder is on YOUR right.
+ */
+export const KEY_JOINTS = {
+  leftShoulder: 11,
+  rightShoulder: 12,
+  leftElbow: 13,
+  rightElbow: 14,
+  leftWrist: 15,
+  rightWrist: 16,
+  leftHip: 23,
+  rightHip: 24,
+  leftKnee: 25,
+  rightKnee: 26,
+  leftAnkle: 27,
+  rightAnkle: 28,
+} as const;
+
+export type KeyJointName = keyof typeof KEY_JOINTS;
+
+/** Positions of some key joints, each [x, y] from 0 to 1. Leave out joints you can't see. */
+export type KeyJointPositions = Partial<Record<KeyJointName, [x: number, y: number]>>;
+
+/**
+ * Build a full 33-landmark pose from just the key joints. This is how the
+ * paintings' target poses are written in paintings.ts (tools/pose-picker.html
+ * makes them for you).
+ *
+ * Every landmark that isn't given gets visibility 0, so scoring.ts ignores it.
+ *
+ * @param aspectRatio the painting image's width ÷ height
+ * @param joints      where each visible key joint is
+ */
+export function poseFromKeyJoints(aspectRatio: number, joints: KeyJointPositions): DetectedPose {
+  // Start with 33 "unknown" landmarks...
+  const landmarks: PoseLandmarks = Array.from({ length: 33 }, () => ({
+    x: 0,
+    y: 0,
+    z: 0,
+    visibility: 0,
+  }));
+
+  // ...then fill in the ones we know, fully visible.
+  for (const name of Object.keys(KEY_JOINTS) as KeyJointName[]) {
+    const position = joints[name];
+    if (position) {
+      landmarks[KEY_JOINTS[name]] = { x: position[0], y: position[1], z: 0, visibility: 1 };
+    }
+  }
+  return { landmarks, aspectRatio };
+}
+
 /** Pairs of landmark indexes to join with lines when drawing a skeleton. */
 export const POSE_CONNECTIONS = PoseLandmarker.POSE_CONNECTIONS;
 
@@ -90,11 +144,18 @@ export function detect(videoFrame: HTMLVideoElement): DetectedPose | null {
   };
 }
 
-// TODO (Person A): the paintings need target poses. One option is a
-// detectImage(img: HTMLImageElement) function that switches the landmarker to
-// runningMode "IMAGE" with landmarker.setOptions(...), runs .detect(img), and
-// switches back to "VIDEO". Paintings are not photos, so check the result
-// visually. For some paintings it is easier to pose like the painting
-// yourself: on the challenge screen, press T to record your current pose as
-// the target (main.ts logs it to the console so it can be pasted into
-// paintings.ts).
+/**
+ * Read the key joints back out of a detected pose (the opposite of
+ * poseFromKeyJoints). Joints with low visibility are left out.
+ * Used by tools/pose-picker.html.
+ */
+export function keyJointsFromPose(pose: DetectedPose, minVisibility = 0.5): KeyJointPositions {
+  const joints: KeyJointPositions = {};
+  for (const name of Object.keys(KEY_JOINTS) as KeyJointName[]) {
+    const landmark = pose.landmarks[KEY_JOINTS[name]];
+    if (landmark && landmark.visibility >= minVisibility) {
+      joints[name] = [landmark.x, landmark.y];
+    }
+  }
+  return joints;
+}

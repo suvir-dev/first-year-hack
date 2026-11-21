@@ -3,40 +3,55 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <!-- No icon file: this empty one stops the browser asking for favicon.ico -->
+    <link rel="icon" href="data:," />
     <title>Strike a Pose, Old Masters</title>
   </head>
   <body>
-    <!-- Screen 1: pick a painting -->
+    <!-- Screen 1: the gallery. main.ts fills #painting-list with cards. -->
     <section id="screen-gallery">
-      <h1>Strike a Pose, Old Masters</h1>
-      <p>Pick a painting, then copy the pose in front of your webcam.</p>
-      <div id="painting-list"></div>
+      <header class="museum-header">
+        <p class="eyebrow">The Gallery of</p>
+        <h1>Strike a Pose, Old Masters</h1>
+        <p class="tagline">Choose a masterpiece. Copy the pose. Become the art.</p>
+      </header>
+      <div id="painting-list" class="gallery"></div>
     </section>
 
-    <!-- Screen 2 + 3: copy the pose, then the countdown -->
+    <!-- Screen 2 + 3: copy the pose, then the 3-2-1 countdown -->
     <section id="screen-challenge" hidden>
       <div class="side-by-side">
-        <figure>
-          <img id="painting-image" alt="" />
-          <figcaption id="painting-caption"></figcaption>
+        <figure class="exhibit">
+          <div class="gilt"><img id="painting-image" alt="" /></div>
+          <figcaption id="painting-caption" class="label"></figcaption>
         </figure>
-        <div class="camera">
-          <canvas id="camera-canvas"></canvas>
-          <div id="countdown" hidden></div>
-        </div>
+        <figure class="exhibit">
+          <div class="gilt camera">
+            <canvas id="camera-canvas"></canvas>
+            <div id="countdown" hidden></div>
+          </div>
+          <figcaption class="label">You, live</figcaption>
+        </figure>
       </div>
       <div class="score-box">
         <span id="score">–</span><span class="score-out-of">/ 100</span>
       </div>
-      <p id="status"></p>
-      <button id="ready-button">I'm ready!</button>
-      <button id="back-button">Back to gallery</button>
+      <p id="status" class="status"></p>
+      <div class="buttons">
+        <button id="ready-button" class="brass">Take my portrait</button>
+        <button id="back-button" class="plain">Back to gallery</button>
+      </div>
     </section>
 
     <!-- Screen 4: the framed photo -->
     <section id="screen-result" hidden>
+      <h2 class="screen-title">Your masterpiece</h2>
+      <p id="result-status" class="status"></p>
       <div id="result-holder"></div>
-      <button id="again-button">Play again</button>
+      <div class="buttons">
+        <button id="download-button" class="brass">Download</button>
+        <button id="again-button" class="plain">Try another</button>
+      </div>
     </section>
 
     <!-- The webcam plays here. It is kept out of sight because we draw it
