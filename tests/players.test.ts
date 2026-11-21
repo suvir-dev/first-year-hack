@@ -1,8 +1,8 @@
 // players.test.ts: sanity checks for 2-player mode. Run with: npm test
 
 import { describe, expect, it } from "vitest";
-import type { DetectedPose } from "./pose";
-import { pickWinner, PlayerTracker, screenX } from "./players";
+import type { DetectedPose } from "../src/landmarks";
+import { pickWinner, PlayerTracker, screenX } from "../src/players";
 
 /**
  * A fake pose standing at camera-image position x (0..1). The screen is
@@ -10,7 +10,7 @@ import { pickWinner, PlayerTracker, screenX } from "./players";
  */
 function personAtCameraX(x: number): DetectedPose {
   const landmarks = Array.from({ length: 33 }, () => ({ x, y: 0.5, z: 0, visibility: 1 }));
-  return { landmarks, aspectRatio: 16 / 9 };
+  return { landmarks, width: 1280, height: 720 };
 }
 
 /** A fake pose that appears at screen position x. */

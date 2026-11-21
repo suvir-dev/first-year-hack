@@ -47,3 +47,12 @@ export const POSE_MODEL_URL = USE_LOCAL_FILES ? LOCAL_POSE_MODEL : CDN_POSE_MODE
 
 /** Selfie segmentation model: separates the person from the background. */
 export const SELFIE_MODEL_URL = USE_LOCAL_FILES ? LOCAL_SELFIE_MODEL : CDN_SELFIE_MODEL;
+
+// --- Webcam view ------------------------------------------------------------
+
+/**
+ * Show the webcam like a mirror (selfie view): raise your right hand and the
+ * hand on the right of the screen goes up. Drawing, the 2-player left/right
+ * order and the hints all follow this setting.
+ */
+export const MIRROR_WEBCAM = true;

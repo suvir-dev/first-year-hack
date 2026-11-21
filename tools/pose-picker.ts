@@ -13,8 +13,8 @@
 
 import { FilesetResolver, PoseLandmarker } from "@mediapipe/tasks-vision";
 import { POSE_MODEL_URL, WASM_FOLDER_URL } from "../src/config";
-import { KEY_JOINTS, keyJointsFromPose } from "../src/pose";
-import type { KeyJointName, KeyJointPositions } from "../src/pose";
+import { KEY_JOINTS, keyJointsFromPose } from "../src/landmarks";
+import type { KeyJointName, KeyJointPositions } from "../src/landmarks";
 import { paintings } from "../src/paintings";
 
 // --- Page elements ------------------------------------------------------------
@@ -43,7 +43,7 @@ let image = new Image();
 /** Where each joint is (0..1). Missing = not placed / not visible. */
 let joints: KeyJointPositions = {};
 /** The joint that the next click on the painting will move. */
-let selectedJoint: KeyJointName = "leftShoulder";
+let selectedJoint: KeyJointName = "nose";
 
 // Lines to draw between joints, so the dots look like a skeleton.
 const BONES: [KeyJointName, KeyJointName][] = [
@@ -81,11 +81,11 @@ async function detectAutomatically(): Promise<void> {
 
   if (!landmarks) {
     joints = {};
-    selectedJoint = "leftShoulder";
+    selectedJoint = "nose";
     statusText.textContent =
       "No person found automatically. Place the joints by hand: click each one on the painting.";
   } else {
-    joints = keyJointsFromPose({ landmarks, aspectRatio: aspectRatio() });
+    joints = keyJointsFromPose({ landmarks, width: image.naturalWidth, height: image.naturalHeight });
     statusText.textContent =
       "Found a pose automatically. Check every dot is on the right body part and fix any that aren't.";
   }
@@ -123,12 +123,9 @@ async function loadPainting(id: string): Promise<void> {
 
 // --- Drawing ----------------------------------------------------------------------
 
-function aspectRatio(): number {
-  return image.naturalWidth / image.naturalHeight;
-}
-
-/** Blue for the person's left side, pink for the right. */
+/** Blue for the person's left side, pink for the right, white for the nose. */
 function jointColour(name: KeyJointName): string {
+  if (name === "nose") return "#ffffff";
   return name.startsWith("left") ? "#4fc3ff" : "#ff5fa2";
 }
 
@@ -186,6 +183,7 @@ function redraw(): void {
 
 /** "leftElbow" -> "L elbow" */
 function shortLabel(name: KeyJointName): string {
+  if (name === "nose") return "nose";
   const side = name.startsWith("left") ? "L" : "R";
   return `${side} ${name.replace(/^(left|right)/, "").toLowerCase()}`;
 }
@@ -216,7 +214,7 @@ function updateOutput(): void {
     return `      ${name}: [${round(x)}, ${round(y)}],`;
   });
   output.value =
-    `    targetPose: poseFromKeyJoints(${round(aspectRatio())}, {\n` +
+    `    targetPose: poseFromKeyJoints(${image.naturalWidth}, ${image.naturalHeight}, {\n` +
     lines.join("\n") +
     `\n    }),`;
 }
@@ -244,7 +242,7 @@ hideButton.addEventListener("click", () => {
 
 clearButton.addEventListener("click", () => {
   joints = {};
-  selectedJoint = "leftShoulder";
+  selectedJoint = "nose";
   redraw();
 });
 

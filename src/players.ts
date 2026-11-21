@@ -13,7 +13,8 @@
 //      labels stay stuck to the right person, even if they step around.
 // ---------------------------------------------------------------------------
 
-import type { DetectedPose } from "./pose";
+import { MIRROR_WEBCAM } from "./config";
+import type { DetectedPose } from "./landmarks";
 
 export interface Player {
   name: string;
@@ -31,13 +32,13 @@ const BODY_CENTRE_POINTS = [11, 12, 23, 24];
  * Where a person is across the screen, from 0 (left edge) to 1 (right edge),
  * using the average x of their visible shoulders and hips.
  *
- * The webcam picture is shown mirrored (like a mirror), so a point at x on
+ * When the webcam is shown like a mirror (MIRROR_WEBCAM), a point at x on
  * the camera image appears at 1 - x on screen.
  */
 export function screenX(pose: DetectedPose): number | null {
   const xs = BODY_CENTRE_POINTS.map((index) => pose.landmarks[index])
     .filter((landmark) => landmark && landmark.visibility > 0.5)
-    .map((landmark) => 1 - landmark.x);
+    .map((landmark) => (MIRROR_WEBCAM ? 1 - landmark.x : landmark.x));
   if (xs.length === 0) return null;
   return xs.reduce((sum, x) => sum + x, 0) / xs.length;
 }

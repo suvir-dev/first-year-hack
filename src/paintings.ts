@@ -8,8 +8,9 @@
 //   http://localhost:5173/tools/pose-picker.html
 // ---------------------------------------------------------------------------
 
-import { poseFromKeyJoints } from "./pose";
-import type { DetectedPose } from "./pose";
+import { poseFromKeyJoints } from "./landmarks";
+import type { DetectedPose } from "./landmarks";
+import type { FeatureName } from "./scoring";
 
 export interface Painting {
   /** Short unique name, also used as the image file name. */
@@ -25,6 +26,10 @@ export interface Painting {
    * Only these are used in Gallery Tour mode (crowd scenes are confusing).
    */
   onePerson: boolean;
+  /** Leave the legs out of the score (e.g. riding a horse, sitting in a boat). */
+  upperBodyOnly?: boolean;
+  /** The limbs that make this pose famous: they count double in the score. */
+  signatureJoints?: FeatureName[];
   /**
    * The pose to copy: positions of the key joints (0..1 across and down the
    * image) plus the image's width ÷ height. null = not recorded yet, so the
@@ -41,8 +46,13 @@ export const paintings: Painting[] = [
     year: 1801,
     imageUrl: "/paintings/napoleon-crossing-the-alps.jpg",
     onePerson: true,
+    // He is riding a horse: nobody can copy that standing up, so only the
+    // upper body counts. The pointing arm is what makes the painting famous.
+    upperBodyOnly: true,
+    signatureJoints: ["rightUpperArm", "rightForearm"],
     // Placed by hand. The left leg is hidden behind the horse.
-    targetPose: poseFromKeyJoints(0.821, {
+    targetPose: poseFromKeyJoints(1280, 1559, {
+      nose: [0.63, 0.21],
       leftShoulder: [0.726, 0.24],
       rightShoulder: [0.61, 0.235],
       leftElbow: [0.698, 0.353],
@@ -62,8 +72,10 @@ export const paintings: Painting[] = [
     year: 1830,
     imageUrl: "/paintings/liberty-leading-the-people.jpg",
     onePerson: false,
+    signatureJoints: ["rightUpperArm", "rightForearm"], // the arm raising the flag
     // Placed by hand. The left leg is hidden under her dress.
-    targetPose: poseFromKeyJoints(1.246, {
+    targetPose: poseFromKeyJoints(1280, 1027, {
+      nose: [0.58, 0.16],
       leftShoulder: [0.651, 0.223],
       rightShoulder: [0.59, 0.204],
       leftElbow: [0.666, 0.313],
@@ -83,8 +95,10 @@ export const paintings: Painting[] = [
     year: 1512,
     imageUrl: "/paintings/the-creation-of-adam.jpg",
     onePerson: false,
+    signatureJoints: ["leftUpperArm", "leftForearm"], // the arm reaching for God
     // Placed by hand (automatic detection mixed up Adam's legs).
-    targetPose: poseFromKeyJoints(2.203, {
+    targetPose: poseFromKeyJoints(1280, 581, {
+      nose: [0.118, 0.411],
       leftShoulder: [0.158, 0.488],
       rightShoulder: [0.027, 0.488],
       leftElbow: [0.252, 0.473],
@@ -106,8 +120,12 @@ export const paintings: Painting[] = [
     year: 1851,
     imageUrl: "/paintings/washington-crossing-the-delaware.jpg",
     onePerson: false,
+    // His raised knee (foot up on the boat) is what makes the pose: without
+    // it, just standing still would already score very high.
+    signatureJoints: ["rightThigh"],
     // Placed by hand. His left arm and leg are hidden by the cloak and sword.
-    targetPose: poseFromKeyJoints(1.561, {
+    targetPose: poseFromKeyJoints(1280, 820, {
+      nose: [0.325, 0.348],
       leftShoulder: [0.358, 0.382],
       rightShoulder: [0.315, 0.385],
       rightElbow: [0.296, 0.486],
@@ -125,8 +143,10 @@ export const paintings: Painting[] = [
     year: 1784,
     imageUrl: "/paintings/oath-of-the-horatii.jpg",
     onePerson: false,
+    signatureJoints: ["leftForearm", "rightForearm"], // both arms raising the swords
     // Placed by hand: the father raising the swords, on the right.
-    targetPose: poseFromKeyJoints(1.298, {
+    targetPose: poseFromKeyJoints(1280, 986, {
+      nose: [0.552, 0.442],
       leftShoulder: [0.548, 0.494],
       rightShoulder: [0.53, 0.502],
       leftElbow: [0.512, 0.486],
@@ -148,9 +168,11 @@ export const paintings: Painting[] = [
     year: 1818,
     imageUrl: "/paintings/wanderer-above-the-sea-of-fog.jpg",
     onePerson: true,
+    signatureJoints: ["torso"], // standing upright, facing the view
     // Found automatically. Seen from behind, so his left side is on the left.
     // His arms are mostly hidden under the coat.
-    targetPose: poseFromKeyJoints(0.781, {
+    targetPose: poseFromKeyJoints(1280, 1639, {
+      nose: [0.494, 0.37],
       leftShoulder: [0.452, 0.416],
       rightShoulder: [0.555, 0.415],
       leftElbow: [0.448, 0.486],
@@ -169,8 +191,10 @@ export const paintings: Painting[] = [
     year: 1866,
     imageUrl: "/paintings/the-fifer.jpg",
     onePerson: true,
+    signatureJoints: ["leftForearm", "rightForearm"], // both hands up at the fife
     // Found automatically by the pose picker.
-    targetPose: poseFromKeyJoints(0.586, {
+    targetPose: poseFromKeyJoints(1280, 2184, {
+      nose: [0.511, 0.227],
       leftShoulder: [0.6, 0.301],
       rightShoulder: [0.342, 0.291],
       leftElbow: [0.558, 0.4],
@@ -192,8 +216,10 @@ export const paintings: Painting[] = [
     year: 1770,
     imageUrl: "/paintings/the-blue-boy.jpg",
     onePerson: true,
+    signatureJoints: ["leftUpperArm", "leftForearm"], // hand on the hip
     // Found automatically by the pose picker.
-    targetPose: poseFromKeyJoints(0.687, {
+    targetPose: poseFromKeyJoints(1280, 1862, {
+      nose: [0.448, 0.179],
       leftShoulder: [0.573, 0.255],
       rightShoulder: [0.364, 0.271],
       leftElbow: [0.684, 0.347],
@@ -215,8 +241,10 @@ export const paintings: Painting[] = [
     year: 1701,
     imageUrl: "/paintings/louis-xiv.jpg",
     onePerson: true,
+    signatureJoints: ["rightUpperArm", "rightForearm"], // arm out on the cane
     // Found automatically by the pose picker.
-    targetPose: poseFromKeyJoints(0.688, {
+    targetPose: poseFromKeyJoints(1280, 1860, {
+      nose: [0.421, 0.222],
       leftShoulder: [0.561, 0.311],
       rightShoulder: [0.376, 0.319],
       leftElbow: [0.675, 0.394],
@@ -238,8 +266,10 @@ export const paintings: Painting[] = [
     year: 1812,
     imageUrl: "/paintings/napoleon-in-his-study.jpg",
     onePerson: true,
+    signatureJoints: ["rightForearm"], // the famous hand in the waistcoat
     // Found automatically by the pose picker.
-    targetPose: poseFromKeyJoints(0.6, {
+    targetPose: poseFromKeyJoints(1280, 2135, {
+      nose: [0.482, 0.172],
       leftShoulder: [0.64, 0.255],
       rightShoulder: [0.443, 0.253],
       leftElbow: [0.662, 0.394],

@@ -520,3 +520,36 @@ button.big {
   font-size: 22px;
   color: var(--gold-light);
 }
+
+/* ---------- Scoring feedback ---------- */
+
+.best-hold {
+  margin-top: 6px;
+  font-size: 16px;
+  color: var(--text-dim);
+}
+
+/* One plain-words tip, e.g. "Raise your right arm higher" */
+.hint {
+  min-height: 1.6em;
+  margin: 10px 0 0;
+  font-size: 24px;
+  color: var(--gold-light);
+}
+
+/* Debug overlay (press S) */
+.debug {
+  position: fixed;
+  left: 8px;
+  top: 8px;
+  z-index: 30;
+  max-height: calc(100vh - 16px);
+  overflow: auto;
+  margin: 0;
+  padding: 10px 12px;
+  font: 12px/1.35 ui-monospace, Menlo, monospace;
+  text-align: left;
+  color: #b8ffb8;
+  background: rgba(0, 0, 0, 0.82);
+  pointer-events: none;
+}

@@ -8,84 +8,13 @@
 // ---------------------------------------------------------------------------
 
 import { FilesetResolver, PoseLandmarker } from "@mediapipe/tasks-vision";
-import type { NormalizedLandmark } from "@mediapipe/tasks-vision";
 import { POSE_MODEL_URL, WASM_FOLDER_URL } from "./config";
+import type { DetectedPose } from "./landmarks";
 
-/**
- * One detected body: an array of 33 landmarks.
- * Each landmark has x and y between 0 and 1 (fractions of the image width and
- * height, measured from the top-left corner), a depth z, and a `visibility`
- * score between 0 and 1.
- */
-export type PoseLandmarks = NormalizedLandmark[];
-
-/**
- * A pose together with the shape of the image it was found in.
- *
- * Why the shape matters: x is a fraction of the image WIDTH and y is a
- * fraction of the image HEIGHT. On a 16:9 webcam those are different
- * lengths, so a 45° arm would look like a 29° arm if we used x and y
- * directly. scoring.ts multiplies x by aspectRatio to undo this.
- */
-export interface DetectedPose {
-  landmarks: PoseLandmarks;
-  /** Image width divided by image height, e.g. 1280 / 720 = 1.78. */
-  aspectRatio: number;
-}
-
-/**
- * The 12 body points the score uses, and their MediaPipe landmark numbers.
- * "left" and "right" mean the PERSON's left and right: for someone facing
- * you, their left shoulder is on YOUR right.
- */
-export const KEY_JOINTS = {
-  leftShoulder: 11,
-  rightShoulder: 12,
-  leftElbow: 13,
-  rightElbow: 14,
-  leftWrist: 15,
-  rightWrist: 16,
-  leftHip: 23,
-  rightHip: 24,
-  leftKnee: 25,
-  rightKnee: 26,
-  leftAnkle: 27,
-  rightAnkle: 28,
-} as const;
-
-export type KeyJointName = keyof typeof KEY_JOINTS;
-
-/** Positions of some key joints, each [x, y] from 0 to 1. Leave out joints you can't see. */
-export type KeyJointPositions = Partial<Record<KeyJointName, [x: number, y: number]>>;
-
-/**
- * Build a full 33-landmark pose from just the key joints. This is how the
- * paintings' target poses are written in paintings.ts (tools/pose-picker.html
- * makes them for you).
- *
- * Every landmark that isn't given gets visibility 0, so scoring.ts ignores it.
- *
- * @param aspectRatio the painting image's width ÷ height
- * @param joints      where each visible key joint is
- */
-export function poseFromKeyJoints(aspectRatio: number, joints: KeyJointPositions): DetectedPose {
-  // Start with 33 "unknown" landmarks...
-  const landmarks: PoseLandmarks = Array.from({ length: 33 }, () => ({
-    x: 0,
-    y: 0,
-    z: 0,
-    visibility: 0,
-  }));
-
-  // ...then fill in the ones we know, fully visible.
-  for (const name of Object.keys(KEY_JOINTS) as KeyJointName[]) {
-    const position = joints[name];
-    if (position) {
-      landmarks[KEY_JOINTS[name]] = { x: position[0], y: position[1], z: 0, visibility: 1 };
-    }
-  }
-  return { landmarks, aspectRatio };
-}
+// The pose data types and helpers (DetectedPose, KEY_JOINTS, mirrorPose...)
+// live in landmarks.ts. Re-export them so other files can keep importing
+// them from "./pose".
+export * from "./landmarks";
 
 /** Pairs of landmark indexes to join with lines when drawing a skeleton. */
 export const POSE_CONNECTIONS = PoseLandmarker.POSE_CONNECTIONS;
@@ -150,28 +79,16 @@ export function detectAll(videoFrame: HTMLVideoElement): DetectedPose[] {
   // In VIDEO mode MediaPipe needs a timestamp (in ms) that always increases.
   const result = landmarker.detectForVideo(videoFrame, performance.now());
 
-  // result.landmarks has one entry per person found.
-  const aspectRatio = videoFrame.videoWidth / videoFrame.videoHeight;
-  return result.landmarks.map((landmarks) => ({ landmarks, aspectRatio }));
+  // result.landmarks has one entry per person found. Remember the video's
+  // size in pixels so scoring can convert the 0–1 numbers to real pixels.
+  return result.landmarks.map((landmarks) => ({
+    landmarks,
+    width: videoFrame.videoWidth,
+    height: videoFrame.videoHeight,
+  }));
 }
 
 /** Find one person's pose (the first one found), or null. */
 export function detect(videoFrame: HTMLVideoElement): DetectedPose | null {
   return detectAll(videoFrame)[0] ?? null;
-}
-
-/**
- * Read the key joints back out of a detected pose (the opposite of
- * poseFromKeyJoints). Joints with low visibility are left out.
- * Used by tools/pose-picker.html.
- */
-export function keyJointsFromPose(pose: DetectedPose, minVisibility = 0.5): KeyJointPositions {
-  const joints: KeyJointPositions = {};
-  for (const name of Object.keys(KEY_JOINTS) as KeyJointName[]) {
-    const landmark = pose.landmarks[KEY_JOINTS[name]];
-    if (landmark && landmark.visibility >= minVisibility) {
-      joints[name] = [landmark.x, landmark.y];
-    }
-  }
-  return joints;
 }

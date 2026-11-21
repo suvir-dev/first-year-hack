@@ -53,6 +53,13 @@
           </span>
         </fieldset>
 
+        <fieldset class="choice">
+          <legend>Difficulty</legend>
+          <label><input type="radio" name="difficulty" value="easy" /> Easy</label>
+          <label><input type="radio" name="difficulty" value="medium" checked /> Medium</label>
+          <label><input type="radio" name="difficulty" value="hard" /> Hard</label>
+        </fieldset>
+
         <div class="camera-row">
           <label class="field">
             Camera
@@ -93,14 +100,19 @@
       <div class="score-box">
         <div id="score-one"><span id="score">–</span><span class="score-out-of">/ 100</span></div>
         <div id="score-two" class="score-two" hidden></div>
+        <div id="best-hold" class="best-hold"></div>
         <div id="timer" class="timer" hidden></div>
       </div>
+      <p id="hint" class="hint"></p>
       <p id="status" class="status"></p>
       <div class="buttons">
         <button id="ready-button" class="brass">Take my portrait</button>
         <button id="back-button" class="plain">Back to start</button>
       </div>
     </section>
+
+    <!-- Debug overlay: press S during a round to see every feature's numbers -->
+    <pre id="debug" class="debug" hidden></pre>
 
     <!-- Screen 3: short break between Gallery Tour rounds -->
     <section id="screen-break" class="break-screen" hidden>

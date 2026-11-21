@@ -15,10 +15,13 @@
 
 import "./style.css";
 import { activeCameraId, listCameras, startCamera, watchCameras } from "./camera";
+import { MIRROR_WEBCAM } from "./config";
 import { detectAll, loadPoseModel, POSE_CONNECTIONS, setMaxPeople } from "./pose";
 import type { DetectedPose } from "./pose";
-import { JOINTS, scorePose, ScoreSmoother } from "./scoring";
-import type { PoseScore } from "./scoring";
+import { prepareTarget, scorePose, TOLERANCE_DEGREES } from "./scoring";
+import type { Difficulty, PoseScore, PreparedTarget } from "./scoring";
+import { BestHold, LandmarkSmoother, LiveScore } from "./smoothing";
+import { hintFor } from "./hints";
 import { paintings } from "./paintings";
 import type { Painting } from "./paintings";
 import { createFramedResult, loadSegmenter } from "./composite";
@@ -62,6 +65,9 @@ const ctx = cameraCanvas.getContext("2d")!;
 const scoreOne = byId("score-one");
 const scoreText = byId("score");
 const scoreTwo = byId("score-two");
+const bestHoldText = byId("best-hold");
+const hintText = byId("hint");
+const debugPanel = byId("debug");
 const timerText = byId("timer");
 const waitingText = byId("waiting");
 const statusText = byId("status");
@@ -93,10 +99,27 @@ let players: Player[] = [];
 let currentPainting: Painting | null = null;
 /** The id of the running animation frame loop, so we can stop it. */
 let loopId: number | null = null;
-/** One score smoother per player, so the numbers don't flicker. */
-const smoothers = [new ScoreSmoother(10), new ScoreSmoother(10)];
-/** Each player's score currently on screen (null = not seen yet). */
+/** The painting's pose, measured once when the round starts. */
+let target: PreparedTarget | null = null;
+/** How forgiving the scoring is (chosen on the start screen). */
+let difficulty: Difficulty = "medium";
+
+// Per player (index 0 = Player 1, index 1 = Player 2):
+/** Smooths each player's body points before scoring (removes jitter). */
+const landmarkSmoothers = [new LandmarkSmoother(), new LandmarkSmoother()];
+/** The live score on screen = average of the last 0.5 s. */
+const liveScores = [new LiveScore(), new LiveScore()];
+/** The final round score = best average over any 1 continuous second. */
+const bestHolds = [new BestHold(), new BestHold()];
+/** Each player's live score currently on screen (null = not seen yet). */
 let currentScores: (number | null)[] = [null, null];
+/** The latest detailed score (every feature) for each player. */
+let latestScores: (PoseScore | null)[] = [null, null];
+/** When the hint text last changed (it changes at most once a second). */
+let lastHintTime = 0;
+const HINT_INTERVAL_MS = 1000;
+/** The debug overlay (press S) is showing. */
+let debugOn = false;
 /** Decides which body is Player 1 and which is Player 2. */
 const tracker = new PlayerTracker();
 /** Lets the buttons finish or quit the round that is running. */
@@ -107,15 +130,15 @@ let resultCanvas: HTMLCanvasElement | null = null;
 const COUNTDOWN_SECONDS = 3;
 
 // Colours for the score and the skeleton's limbs.
-const GOOD = "#2ecc71"; // green
-const CLOSE = "#f39c12"; // amber
-const OFF = "#e74c3c"; // red
+const GOOD = "#2ecc71"; // green: 80 or more
+const CLOSE = "#f39c12"; // amber: 50 to 79
+const OFF = "#e74c3c"; // red: below 50
 const NOT_SCORED = "#f5d76e"; // gold: limbs that aren't part of the score
 
 /** Pick green / amber / red for a score out of 100. */
 function scoreColour(score: number): string {
-  if (score >= 70) return GOOD;
-  if (score >= 40) return CLOSE;
+  if (score >= 80) return GOOD;
+  if (score >= 50) return CLOSE;
   return OFF;
 }
 
@@ -239,6 +262,11 @@ function selectedMode(): "single" | "tour" {
     : "single";
 }
 
+function selectedDifficulty(): Difficulty {
+  const value = document.querySelector<HTMLInputElement>('input[name="difficulty"]:checked')?.value;
+  return value === "easy" || value === "hard" ? value : "medium";
+}
+
 function selectedPlayerCount(): 1 | 2 {
   return document.querySelector<HTMLInputElement>('input[name="players"]:checked')?.value === "2"
     ? 2
@@ -349,10 +377,28 @@ async function playRound(painting: Painting, options: RoundOptions): Promise<Rou
   countdownText.hidden = true;
 
   // Fresh scores for everyone.
+  difficulty = selectedDifficulty();
   currentScores = [null, null];
-  smoothers.forEach((smoother) => smoother.reset());
+  latestScores = [null, null];
+  landmarkSmoothers.forEach((smoother) => smoother.reset());
+  liveScores.forEach((live) => live.reset());
+  bestHolds.forEach((hold) => hold.reset());
   tracker.reset();
+  hintText.textContent = "";
   updateScoreDisplay();
+
+  // Measure the painting's pose ONCE (not every frame), in real pixels of
+  // the painting image as it actually loaded.
+  target = null;
+  if (painting.targetPose) {
+    await paintingImage.decode().catch(() => undefined);
+    target = prepareTarget(painting.targetPose, {
+      width: paintingImage.naturalWidth || painting.targetPose.width,
+      height: paintingImage.naturalHeight || painting.targetPose.height,
+      upperBodyOnly: painting.upperBodyOnly,
+      signatureJoints: painting.signatureJoints,
+    });
+  }
 
   readyButton.disabled = true;
   backButton.disabled = false;
@@ -401,15 +447,27 @@ async function playRound(painting: Painting, options: RoundOptions): Promise<Rou
       }
       countdownText.hidden = true;
 
-      // Snap! Remember the scores at this exact moment.
-      const scores = currentScores.slice(0, players.length);
+      // Snap! Each player's final score is their best 1-second hold
+      // (null if we never saw their whole pose for a full second).
+      const scores = bestHolds.slice(0, players.length).map((hold) => hold.best());
       const photo = takeSnapshot();
       stopCameraLoop();
       backButton.disabled = false;
       resolve({ painting, photo, scores });
     };
 
-    roundControl = { takePhoto: () => finish(true), quit: () => finish(false) };
+    roundControl = {
+      takePhoto: () => {
+        // No score without a properly visible pose: wait until we've seen
+        // every player for at least one full second.
+        if (bestHolds.slice(0, players.length).every((hold) => hold.best() === null)) {
+          showNotice("Step back so we can see your whole pose for a second, then try again.");
+          return;
+        }
+        finish(true);
+      },
+      quit: () => finish(false),
+    };
 
     // Gallery Tour: count down the seconds, then take the photo automatically.
     if (options.timeLimit !== null) {
@@ -429,7 +487,6 @@ function startCameraLoop(): void {
   stopCameraLoop();
   let lastVideoTime = -1;
   let shownPoses: (DetectedPose | null)[] = [];
-  let poseScores: (PoseScore | null)[] = [];
 
   const tick = () => {
     // After switching cameras the picture size may change: follow it.
@@ -442,26 +499,41 @@ function startCameraLoop(): void {
     // Only run pose detection when there is a new camera frame.
     if (video.currentTime !== lastVideoTime) {
       lastVideoTime = video.currentTime;
+      const now = performance.now();
       const poses = detectAll(video);
 
       // 1 player: just take the first person. 2 players: left = Player 1.
-      shownPoses = players.length === 2 ? tracker.assign(poses) : [poses[0] ?? null];
+      const assigned = players.length === 2 ? tracker.assign(poses) : [poses[0] ?? null];
 
-      poseScores = shownPoses.map((pose, i) => {
-        if (!pose || !currentPainting?.targetPose) return null;
-        const result = scorePose(pose, currentPainting.targetPose);
-        // If no joint could be compared (e.g. you're out of shot), keep
-        // showing the last score instead of jumping around. A player who
-        // isn't detected at all keeps their last score too ("paused").
-        if (result.overall !== null) currentScores[i] = smoothers[i].add(result.overall);
+      // Smooth each player's points to remove jitter.
+      shownPoses = assigned.map((pose, i) => {
+        if (!pose) {
+          // Not in the picture: their score pauses, their "continuous
+          // second" is broken, and smoothing starts fresh when they return.
+          landmarkSmoothers[i].reset();
+          bestHolds[i].add(null, now);
+          return null;
+        }
+        return landmarkSmoothers[i].smooth(pose);
+      });
+
+      latestScores = shownPoses.map((pose, i) => {
+        if (!pose || !target) return null;
+        const result = scorePose(pose, target, { difficulty });
+        currentScores[i] = liveScores[i].add(result.overall, now);
+        // Only frames where we can see (most of) the body count towards the
+        // final score.
+        bestHolds[i].add(result.inFrame ? result.overall : null, now);
         return result;
       });
 
-      updateWaitingMessage(poses.length, shownPoses);
+      updateMessages(poses.length, shownPoses);
+      updateHints(now);
       updateScoreDisplay();
+      if (debugOn) updateDebug();
     }
 
-    drawFrame(shownPoses, poseScores);
+    drawFrame(shownPoses, latestScores);
     loopId = requestAnimationFrame(tick);
   };
   tick();
@@ -472,15 +544,42 @@ function stopCameraLoop(): void {
   loopId = null;
 }
 
-/** 2-player mode: say who we're waiting for if someone is missing. */
-function updateWaitingMessage(peopleFound: number, shownPoses: (DetectedPose | null)[]): void {
-  if (players.length < 2 || peopleFound === 0) {
-    waitingText.hidden = true;
-    return;
+/**
+ * The message across the bottom of the camera picture: who we're waiting
+ * for (2 players), or "step back" when too much of a body is hidden.
+ */
+function updateMessages(peopleFound: number, shownPoses: (DetectedPose | null)[]): void {
+  let message = "";
+  if (peopleFound === 0) {
+    message = "Step into the picture so we can see you";
+  } else if (players.length === 2 && shownPoses.includes(null)) {
+    message = `Waiting for ${players[shownPoses.indexOf(null)].name}…`;
+  } else {
+    const hidden = latestScores.findIndex((score) => score !== null && !score.inFrame);
+    if (hidden !== -1) {
+      message =
+        players.length === 2
+          ? `Step back, ${players[hidden].name}: we can't see your whole pose`
+          : "Step back: we can't see your whole pose";
+    }
   }
-  const missing = shownPoses.findIndex((pose) => pose === null);
-  waitingText.hidden = missing === -1;
-  if (missing !== -1) waitingText.textContent = `Waiting for ${players[missing].name}…`;
+  waitingText.hidden = message === "";
+  waitingText.textContent = message;
+}
+
+/** One tip per player for their worst limb, updated at most once a second. */
+function updateHints(now: number): void {
+  if (now - lastHintTime < HINT_INTERVAL_MS) return;
+  lastHintTime = now;
+  const tips = latestScores
+    .slice(0, players.length)
+    .map((score, i) => {
+      if (!score) return "";
+      const tip = hintFor(score);
+      return players.length === 2 ? `${players[i].name}: ${tip}` : tip;
+    })
+    .filter((tip) => tip !== "");
+  hintText.textContent = tips.length > 0 ? `💡 ${tips.join("   ·   ")}` : "";
 }
 
 /** Show the big score (1 player) or both players' scores (2 players). */
@@ -488,6 +587,11 @@ function updateScoreDisplay(): void {
   const two = players.length === 2;
   scoreOne.hidden = two;
   scoreTwo.hidden = !two;
+
+  // The final score is the best 1-second hold, so show that too.
+  bestHoldText.textContent = two
+    ? `Best 1-second hold: ${players.map((player, i) => `${player.name} ${bestHolds[i].best() ?? "–"}`).join(" · ")}`
+    : `Best 1-second hold: ${bestHolds[0].best() ?? "–"} (this is your final score)`;
 
   if (!two) {
     const score = currentScores[0];
@@ -516,19 +620,21 @@ function drawFrame(shownPoses: (DetectedPose | null)[], poseScores: (PoseScore |
   if (width === 0) return;
 
   ctx.save();
-  // Flip horizontally so it looks like a mirror (raise your right hand and
-  // the hand on the right of the screen goes up). Everything drawn until
-  // ctx.restore() is flipped, so the skeleton stays lined up with the video.
-  ctx.translate(width, 0);
-  ctx.scale(-1, 1);
+  if (MIRROR_WEBCAM) {
+    // Flip horizontally so it looks like a mirror (raise your right hand and
+    // the hand on the right of the screen goes up). Everything drawn until
+    // ctx.restore() is flipped, so the skeleton stays lined up with the video.
+    ctx.translate(width, 0);
+    ctx.scale(-1, 1);
+  }
 
   ctx.drawImage(video, 0, 0, width, height);
   shownPoses.forEach((pose, i) => {
     if (!pose) return;
-    // 1 player: limbs coloured by how well they match. 2 players: each
-    // player in their own colour so you can tell them apart.
-    const colour = players.length === 2 ? players[i].colour : null;
-    drawSkeleton(pose.landmarks, poseScores[i], width, height, colour);
+    // 2 players: an outline in each player's own colour, so you can tell
+    // the two skeletons apart. The limbs themselves show how well they match.
+    const outline = players.length === 2 ? players[i].colour : null;
+    drawSkeleton(pose.landmarks, poseScores[i], width, height, outline);
   });
 
   ctx.restore();
@@ -541,50 +647,68 @@ function drawFrame(shownPoses: (DetectedPose | null)[], poseScores: (PoseScore |
   }
 }
 
+/** "11-13": the same name for a bone whichever end comes first. */
+function boneKey(a: number, b: number): string {
+  return a < b ? `${a}-${b}` : `${b}-${a}`;
+}
+
 /**
- * Draw lines between joints, then a dot on each joint.
- * @param colour one colour for the whole skeleton, or null to colour each
- *               limb by how well it matches the painting
+ * The score of each limb (bone), from the per-feature results: e.g. the
+ * upper arm bone gets the upper arm direction's score, and the 4 sides of
+ * the torso get the torso's score.
+ */
+function limbScores(poseScore: PoseScore | null): Map<string, number> {
+  const scores = new Map<string, number>();
+  for (const feature of poseScore?.features ?? []) {
+    const [a, b, c, d] = feature.playerPoints;
+    if (feature.name === "torso") {
+      // points = hips (a, b) and shoulders (c, d)
+      for (const [x, y] of [[a, b], [c, d], [a, c], [b, d]]) scores.set(boneKey(x, y), feature.score);
+    } else if (/UpperArm|Forearm|Thigh|Shin/.test(feature.name)) {
+      scores.set(boneKey(a, b), feature.score);
+    }
+  }
+  return scores;
+}
+
+/**
+ * Draw lines between joints, then a dot on each joint. Each limb is green
+ * (80+), amber (50-79) or red (below 50); limbs that aren't scored are gold.
+ * @param outline (2 players) the player's colour drawn around each limb
  */
 function drawSkeleton(
   landmarks: DetectedPose["landmarks"],
   poseScore: PoseScore | null,
   width: number,
   height: number,
-  colour: string | null,
+  outline: string | null,
 ): void {
   // Landmarks are 0..1, so multiply by the canvas size to get pixels.
   const isVisible = (index: number) => (landmarks[index]?.visibility ?? 0) > 0.5;
+  const scores = limbScores(poseScore);
+  const bones = POSE_CONNECTIONS.filter(({ start, end }) => isVisible(start) && isVisible(end));
 
-  // Which landmark has which score? e.g. landmark 13 (left elbow) gets the
-  // left elbow's score. Landmarks that aren't scored joints are left out.
-  const scoreAtLandmark = new Map<number, number>();
-  for (const joint of JOINTS) {
-    const score = poseScore?.joints[joint.name];
-    if (score !== undefined) scoreAtLandmark.set(joint.points[1], score);
-  }
-
-  ctx.lineWidth = 6;
-  for (const { start, end } of POSE_CONNECTIONS) {
-    if (!isVisible(start) || !isVisible(end)) continue;
-
-    if (colour) {
-      ctx.strokeStyle = colour;
-    } else {
-      // A bone gets the colour of the WORSE of the joints at its two ends,
-      // e.g. the upper arm is red if either the shoulder or the elbow is off.
-      const endScores = [scoreAtLandmark.get(start), scoreAtLandmark.get(end)]
-        .filter((score) => score !== undefined);
-      ctx.strokeStyle = endScores.length > 0 ? scoreColour(Math.min(...endScores)) : NOT_SCORED;
-    }
-
+  const line = (start: number, end: number) => {
     ctx.beginPath();
     ctx.moveTo(landmarks[start].x * width, landmarks[start].y * height);
     ctx.lineTo(landmarks[end].x * width, landmarks[end].y * height);
     ctx.stroke();
+  };
+
+  if (outline) {
+    ctx.lineWidth = 14;
+    ctx.strokeStyle = outline;
+    for (const { start, end } of bones) line(start, end);
   }
 
-  ctx.fillStyle = "#ffffff"; // white joints
+  ctx.lineWidth = 6;
+  for (const { start, end } of bones) {
+    const score = scores.get(boneKey(start, end));
+    ctx.strokeStyle = score === undefined ? NOT_SCORED : scoreColour(score);
+    line(start, end);
+  }
+
+  ctx.fillStyle = outline ?? "#ffffff";
   for (let i = 0; i < landmarks.length; i++) {
     if (!isVisible(i)) continue;
     ctx.beginPath();
@@ -602,8 +726,8 @@ function drawNameTag(
   height: number,
 ): void {
   const nose = pose.landmarks[0];
-  // The picture is mirrored on screen, so x becomes (1 - x).
-  const x = (1 - nose.x) * width;
+  // If the picture is mirrored on screen, x becomes (1 - x).
+  const x = (MIRROR_WEBCAM ? 1 - nose.x : nose.x) * width;
   const y = Math.max(40, nose.y * height - 90);
   const text = `${player.name} ${score ?? "–"}`;
 
@@ -616,17 +740,56 @@ function drawNameTag(
   ctx.fillText(text, x, y);
 }
 
-/** Copy the current camera image (mirrored, without the skeleton) into a new canvas. */
+/** Copy the current camera image (as shown on screen, without the skeleton) into a new canvas. */
 function takeSnapshot(): HTMLCanvasElement {
   const snapshot = document.createElement("canvas");
   snapshot.width = video.videoWidth;
   snapshot.height = video.videoHeight;
   const snapshotCtx = snapshot.getContext("2d")!;
-  snapshotCtx.translate(snapshot.width, 0);
-  snapshotCtx.scale(-1, 1);
+  if (MIRROR_WEBCAM) {
+    snapshotCtx.translate(snapshot.width, 0);
+    snapshotCtx.scale(-1, 1);
+  }
   snapshotCtx.drawImage(video, 0, 0);
   return snapshot;
 }
+
+// =============================================================================
+// Debug overlay (press S): every feature's numbers
+// =============================================================================
+
+function updateDebug(): void {
+  const degrees = (n: number | null) => (n === null ? "–" : `${Math.round(n)}°`).padStart(7);
+  const lines: string[] = [`difficulty ${difficulty} (tolerance ${TOLERANCE_DEGREES[difficulty]}°)`, ""];
+  players.forEach((player, i) => {
+    const score = latestScores[i];
+    if (!score) {
+      lines.push(`${player.name}: not detected`, "");
+      return;
+    }
+    lines.push(
+      `${player.name}: overall ${score.overall}  live ${currentScores[i] ?? "–"}  best hold ${bestHolds[i].best() ?? "–"}`,
+      `mirrored version used: ${score.mirrored ? "yes" : "no"}   seen ${Math.round(score.seenFraction * 100)}%${score.inFrame ? "" : "  (STEP BACK)"}`,
+      "feature          target  player    diff  score  weight",
+    );
+    for (const f of score.features) {
+      lines.push(
+        `${f.name.padEnd(15)}${degrees(f.targetAngle)}${degrees(f.playerAngle)}${f.seen ? degrees(f.diff) : " unseen"}${String(f.score).padStart(7)}${f.weight.toFixed(1).padStart(8)}`,
+      );
+    }
+    lines.push("");
+  });
+  debugPanel.textContent = lines.join("\n");
+}
+
+document.addEventListener("keydown", (event) => {
+  // Don't react while someone is typing a name.
+  if (event.target instanceof HTMLInputElement || event.target instanceof HTMLSelectElement) return;
+  if (event.key.toLowerCase() !== "s") return;
+  debugOn = !debugOn;
+  debugPanel.hidden = !debugOn;
+  if (debugOn) updateDebug();
+});
 
 // =============================================================================
 // After a round
