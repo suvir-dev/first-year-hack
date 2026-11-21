@@ -1,0 +1,46 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Strike a Pose, Old Masters</title>
+  </head>
+  <body>
+    <!-- Screen 1: pick a painting -->
+    <section id="screen-gallery">
+      <h1>Strike a Pose, Old Masters</h1>
+      <p>Pick a painting, then copy the pose in front of your webcam.</p>
+      <div id="painting-list"></div>
+    </section>
+
+    <!-- Screen 2 + 3: copy the pose, then the countdown -->
+    <section id="screen-challenge" hidden>
+      <div class="side-by-side">
+        <figure>
+          <img id="painting-image" alt="" />
+          <figcaption id="painting-caption"></figcaption>
+        </figure>
+        <div class="camera">
+          <canvas id="camera-canvas"></canvas>
+          <div id="countdown" hidden></div>
+        </div>
+      </div>
+      <p id="score">Score: –</p>
+      <p id="status"></p>
+      <button id="ready-button">I'm ready!</button>
+      <button id="back-button">Back to gallery</button>
+    </section>
+
+    <!-- Screen 4: the framed photo -->
+    <section id="screen-result" hidden>
+      <div id="result-holder"></div>
+      <button id="again-button">Play again</button>
+    </section>
+
+    <!-- The webcam plays here. It is kept out of sight because we draw it
+         onto the canvas instead (see main.ts). -->
+    <video id="video" class="offscreen" playsinline muted></video>
+
+    <script type="module" src="/src/main.ts"></script>
+  </body>
+</html>
