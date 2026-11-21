@@ -116,10 +116,15 @@
       <div id="painting-list" class="gallery"></div>
     </section>
 
-    <!-- Screen 2: copy the pose (one round) -->
-    <section id="screen-challenge" hidden>
-      <p id="round-label" class="round-label" hidden></p>
-      <div class="side-by-side">
+    <!-- Screen 2: copy the pose (one round). Laid out in four zones that
+         never overlap: top bar, main area, subtitles, bottom control bar. -->
+    <section id="screen-challenge" class="challenge" hidden>
+      <header class="top-bar">
+        <p id="round-label" class="round-label" hidden></p>
+        <p id="status" class="status"></p>
+      </header>
+
+      <div class="main-area">
         <!-- The painting under a warm spotlight, with its museum placard -->
         <div class="painting-wall">
           <figure class="exhibit">
@@ -139,43 +144,44 @@
             <div id="countdown" hidden></div>
             <div id="flash" class="flash"></div>
           </div>
-          <figcaption class="label">You, live</figcaption>
         </figure>
       </div>
-      <div class="score-box">
-        <!-- The score inside two rings: the outer gold ring is the time left,
-             the inner green ring fills while you "Hold it!" -->
-        <div class="score-ring">
-          <svg viewBox="0 0 120 120" aria-hidden="true">
-            <circle class="ring-track" cx="60" cy="60" r="54" />
-            <circle id="time-ring" class="ring-time" cx="60" cy="60" r="54" />
-            <circle id="hold-ring" class="ring-hold" cx="60" cy="60" r="46" />
-          </svg>
-          <div class="ring-centre">
-            <div id="score-one"><span id="score">0</span></div>
-            <div id="score-two" class="score-two" hidden></div>
-            <div id="timer" class="timer"></div>
+
+      <!-- Subtitles of the narrator (their own strip: never over buttons) -->
+      <div class="subtitle-row">
+        <div id="subtitles" class="subtitles" hidden></div>
+      </div>
+
+      <footer class="control-bar">
+        <button id="back-button" class="plain">← Back to start</button>
+        <div class="score-box">
+          <!-- The score inside two rings: the outer gold ring is the time left,
+               the inner green ring fills while you "Hold it!" -->
+          <div class="score-ring">
+            <svg viewBox="0 0 120 120" aria-hidden="true">
+              <circle class="ring-track" cx="60" cy="60" r="54" />
+              <circle id="time-ring" class="ring-time" cx="60" cy="60" r="54" />
+              <circle id="hold-ring" class="ring-hold" cx="60" cy="60" r="46" />
+            </svg>
+            <div class="ring-centre">
+              <div id="score-one"><span id="score">0</span></div>
+              <div id="score-two" class="score-two" hidden></div>
+              <div id="timer" class="timer"></div>
+            </div>
+          </div>
+          <div class="score-side">
+            <div id="hold-label" class="hold-label" hidden>Hold it!</div>
+            <p id="hint" class="hint"></p>
+            <div id="best-hold" class="best-hold"></div>
           </div>
         </div>
-        <div class="score-side">
-          <div id="hold-label" class="hold-label" hidden>Hold it!</div>
-          <div id="best-hold" class="best-hold"></div>
-        </div>
-      </div>
-      <p id="hint" class="hint"></p>
-      <p id="status" class="status"></p>
-      <div class="buttons">
         <button id="ready-button" class="plain">📸 Snap now</button>
-        <button id="back-button" class="plain">Back to start</button>
-      </div>
+      </footer>
     </section>
 
     <!-- Spotlight sweep when a round starts: the screen dims and a spotlight
          moves onto the painting -->
     <div id="sweep" class="sweep" hidden></div>
-
-    <!-- Subtitles of the narrator, current sentence highlighted -->
-    <div id="subtitles" class="subtitles" hidden></div>
 
     <!-- Debug overlay: press S during a round to see every feature's numbers -->
     <pre id="debug" class="debug" hidden></pre>
