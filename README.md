@@ -8,6 +8,25 @@ Everything runs in the browser: no backend, no API keys. Pose detection and
 background removal use Google's [MediaPipe](https://ai.google.dev/edge/mediapipe/solutions/vision/pose_landmarker)
 (`@mediapipe/tasks-vision`), and everything is drawn on an HTML `<canvas>`.
 
+
+## The site: two games in one
+
+Open the site and press "Enter the gallery" to reach the **hub**, then choose:
+
+- **Strike a Pose** (`#/pose`): copy famous artworks with your body (the
+  camera only runs while this game is open).
+- **Art vs Music: Higher or Lower** (`#/higher-lower`, by Swarit): which is
+  more famous on Wikipedia, the masterpiece or the hit song?
+
+The nav bar at the top works everywhere: the title goes home, "Switch game"
+jumps to the other game, 🎵 music, 🔊 sound effects, 🗣️ narration, ⚙️ settings.
+Both games share one theme (`src/shared/theme.css`) and one audio system
+(`src/audio.ts`); the music keeps playing when you switch.
+
+| Command | What it does |
+| ------- | ------------ |
+| `npm run test:all` | All tests: Vitest (pose game, router) + Higher or Lower's Node tests |
+
 ## Running it
 
 You need [Node.js](https://nodejs.org) version 20.19 or newer (the "LTS"
