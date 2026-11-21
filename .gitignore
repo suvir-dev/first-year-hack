@@ -30,3 +30,12 @@ public/mediapipe/
 tools/.venv/
 tools/piper-voices/
 tools/narration.json
+
+# Higher or Lower (Art vs Music) data tools
+test-results/
+playwright-report/
+Spotify Dataset.csv
+src/games/higher-lower/deck.json.*.tmp
+src/games/higher-lower/deck.json.tmp
+.cache/
+data/wiki/*.tmp

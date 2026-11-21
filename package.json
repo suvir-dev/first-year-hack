@@ -9,14 +9,23 @@
     "preview": "vite preview",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
-    "narration": "node tools/export-narration.mjs && tools/.venv/bin/python tools/generate_narration.py"
+    "narration": "node tools/export-narration.mjs && tools/.venv/bin/python tools/generate_narration.py",
+    "test:higher-lower": "node --test tests/higher-lower/*.test.js",
+    "test:all": "vitest run && npm run test:higher-lower",
+    "test:browser": "playwright test",
+    "data:build": "node scripts/higher-lower/build-data.js",
+    "data:collect": "node scripts/higher-lower/collect-wiki.js"
   },
   "devDependencies": {
+    "@playwright/test": "^1.65.1",
+    "csv-parse": "^7.0.3",
     "typescript": "~7.0.2",
     "vite": "^8.3.8",
     "vitest": "^5.1.1"
   },
   "dependencies": {
-    "@mediapipe/tasks-vision": "1.2.3"
+    "@mediapipe/tasks-vision": "1.2.3",
+    "react": "^19.3.1",
+    "react-dom": "^19.3.1"
   }
 }

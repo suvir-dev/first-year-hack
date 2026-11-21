@@ -1,0 +1,434 @@
+{
+  "candidates": 256,
+  "eligibleArt": 138,
+  "eligibleMusic": 112,
+  "artworks": 100,
+  "songs": 100,
+  "languageArticles": 5444,
+  "wikipediaEditions": 192,
+  "noDataLanguageArticles": 115,
+  "artRange": [
+    76569,
+    81509164
+  ],
+  "musicRange": [
+    125600,
+    8639524
+  ],
+  "excluded": [
+    {
+      "id": "Q41642884",
+      "title": "Girls Like You",
+      "reason": "CSV identifies the Cardi B remix; the article combines original and remix coverage"
+    },
+    {
+      "id": "Q21198255",
+      "title": "I Took A Pill In Ibiza - Seeb Remix",
+      "reason": "CSV identifies the Seeb remix; the article combines original and remix coverage"
+    },
+    {
+      "id": "Q17023954",
+      "title": "Portrait of Dr. Gachet",
+      "reason": "Article covers multiple portraits instead of one painting"
+    },
+    {
+      "id": "Q79961",
+      "title": "Christ the Redeemer",
+      "reason": "No approved image"
+    },
+    {
+      "id": "Q58177931",
+      "title": "Venus and Adonis",
+      "reason": "Article covers multiple versions instead of one verified painting"
+    },
+    {
+      "id": "Q60733399",
+      "title": "The Fighting Cocks",
+      "reason": "Article and image resolve to a pub rather than the painting"
+    }
+  ],
+  "selected": [
+    "Q12418",
+    "Q9202",
+    "Q45585",
+    "Q179900",
+    "Q185372",
+    "Q130958",
+    "Q500242",
+    "Q151047",
+    "Q186953",
+    "Q151952",
+    "Q29530",
+    "Q18003128",
+    "Q216402",
+    "Q567861",
+    "Q698487",
+    "Q219831",
+    "Q474338",
+    "Q212616",
+    "Q465762",
+    "Q328523",
+    "Q549847",
+    "Q220859",
+    "Q636537",
+    "Q1091086",
+    "Q4195595",
+    "Q478271",
+    "Q328079",
+    "Q1025704",
+    "Q154469",
+    "Q1892745",
+    "Q1231009",
+    "Q476458",
+    "Q133732",
+    "Q2003287",
+    "Q59201",
+    "Q167605",
+    "Q205131",
+    "Q661378",
+    "Q3595955",
+    "Q667124",
+    "Q1368055",
+    "Q634122",
+    "Q687182",
+    "Q2246489",
+    "Q683274",
+    "Q978987",
+    "Q714802",
+    "Q512755",
+    "Q1167907",
+    "Q1217213",
+    "Q2282256",
+    "Q533619",
+    "Q644856",
+    "Q13726073",
+    "Q735085",
+    "Q2666439",
+    "Q2418237",
+    "Q175628",
+    "Q2344437",
+    "Q500985",
+    "Q1133420",
+    "Q2571560",
+    "Q1070896",
+    "Q1926628",
+    "Q1213151",
+    "Q588695",
+    "Q604761",
+    "Q2395218",
+    "Q2366825",
+    "Q2011510",
+    "Q318947",
+    "Q523974",
+    "Q2914912",
+    "Q4068125",
+    "Q2200610",
+    "Q984058",
+    "Q603751",
+    "Q663133",
+    "Q1216387",
+    "Q18002417",
+    "Q1219263",
+    "Q706846",
+    "Q548141",
+    "Q1560719",
+    "Q2528177",
+    "Q1213936",
+    "Q644106",
+    "Q1619527",
+    "Q931407",
+    "Q1114571",
+    "Q40432",
+    "Q334604",
+    "Q17008494",
+    "Q1118456",
+    "Q3172226",
+    "Q5966403",
+    "Q4657050",
+    "Q140077274",
+    "Q48389324",
+    "Q15876324",
+    "Q21172725",
+    "Q56770393",
+    "Q28132505",
+    "Q18220127",
+    "Q18559542",
+    "Q35282195",
+    "Q15275920",
+    "Q21198638",
+    "Q153064",
+    "Q26257738",
+    "Q155006",
+    "Q21427193",
+    "Q15427702",
+    "Q17544624",
+    "Q17332468",
+    "Q60768202",
+    "Q21504121",
+    "Q24032253",
+    "Q27000439",
+    "Q23936576",
+    "Q164100",
+    "Q166904",
+    "Q18758167",
+    "Q27644281",
+    "Q68015646",
+    "Q26250171",
+    "Q14927695",
+    "Q27979",
+    "Q14559271",
+    "Q26254088",
+    "Q23013594",
+    "Q54805365",
+    "Q52003303",
+    "Q27934809",
+    "Q38913315",
+    "Q28824109",
+    "Q27988136",
+    "Q18889059",
+    "Q3811491",
+    "Q15063163",
+    "Q16326586",
+    "Q26764060",
+    "Q2468250",
+    "Q57655857",
+    "Q24026109",
+    "Q71445696",
+    "Q29581389",
+    "Q20648823",
+    "Q63602156",
+    "Q28790224",
+    "Q25562",
+    "Q1416004",
+    "Q23034430",
+    "Q15221456",
+    "Q17111037",
+    "Q65034919",
+    "Q738895",
+    "Q32455",
+    "Q18786541",
+    "Q29871694",
+    "Q32870049",
+    "Q33084333",
+    "Q21427772",
+    "Q23308018",
+    "Q18009351",
+    "Q42311248",
+    "Q535566",
+    "Q26627758",
+    "Q47166251",
+    "Q1242395",
+    "Q29998244",
+    "Q606884",
+    "Q15982968",
+    "Q28842326",
+    "Q27499098",
+    "Q20203901",
+    "Q82123",
+    "Q51010649",
+    "Q23010728",
+    "Q47007915",
+    "Q15311277",
+    "Q38517064",
+    "Q26907194",
+    "Q64731233",
+    "Q26971594",
+    "Q65683513",
+    "Q56570915",
+    "Q62994807",
+    "Q35266003",
+    "Q64772336",
+    "Q61829799",
+    "Q38754015",
+    "Q47491146",
+    "Q51546867",
+    "Q24278887",
+    "Q60629015",
+    "Q65072748",
+    "Q65929559",
+    "Q64221018",
+    "Q65538237"
+  ],
+  "sourceCsvRows": 599,
+  "csvSha256": "982928c9d71a66f5e66ae378132df24cb0107107693f3f131f65c5185d34f131",
+  "metadataRetrieved": "2026-11-21T16:02:23.887Z",
+  "viewsRetrieved": "2026-11-21T16:37:03.724Z",
+  "metric": "Wikipedia article views",
+  "dates": [
+    "2016-01-01",
+    "2025-12-31"
+  ],
+  "source": "Wikimedia Analytics API",
+  "access": "all-access",
+  "agent": "user",
+  "metadataExcluded": [
+    {
+      "title": "Trampoline (with ZAYN)",
+      "reason": "Edition has no separately verified dedicated Wikipedia article"
+    },
+    {
+      "title": "Good as Hell (feat. Ariana Grande) - Remix",
+      "reason": "Edition has no separately verified dedicated Wikipedia article"
+    },
+    {
+      "title": "Higher Love",
+      "reason": "Edition has no separately verified dedicated Wikipedia article"
+    },
+    {
+      "title": "All Around The World (La La La)",
+      "reason": "Edition has no separately verified dedicated Wikipedia article"
+    },
+    {
+      "title": "Finesse - Remix; feat. Cardi B",
+      "reason": "Edition has no separately verified dedicated Wikipedia article"
+    },
+    {
+      "title": "Perfect Duet (Ed Sheeran & Beyoncé)",
+      "reason": "Edition has no separately verified dedicated Wikipedia article"
+    },
+    {
+      "title": "The Persistence of Memory",
+      "reason": "Series, broader topic, print/drawing, or artwork rights/edition not cleared for this deck"
+    },
+    {
+      "title": "Guernica (Picasso)",
+      "reason": "Series, broader topic, print/drawing, or artwork rights/edition not cleared for this deck"
+    },
+    {
+      "title": "The Great Wave off Kanagawa",
+      "reason": "Series, broader topic, print/drawing, or artwork rights/edition not cleared for this deck"
+    },
+    {
+      "title": "The Son of Man",
+      "reason": "Series, broader topic, print/drawing, or artwork rights/edition not cleared for this deck"
+    },
+    {
+      "title": "Nighthawks (painting)",
+      "reason": "Series, broader topic, print/drawing, or artwork rights/edition not cleared for this deck"
+    },
+    {
+      "title": "Almond Blossoms",
+      "reason": "Series, broader topic, print/drawing, or artwork rights/edition not cleared for this deck"
+    },
+    {
+      "title": "Vitruvian Man",
+      "reason": "Series, broader topic, print/drawing, or artwork rights/edition not cleared for this deck"
+    },
+    {
+      "title": "Christina's World",
+      "reason": "Series, broader topic, print/drawing, or artwork rights/edition not cleared for this deck"
+    },
+    {
+      "title": "The Lady of Shalott (painting)",
+      "reason": "Series, broader topic, print/drawing, or artwork rights/edition not cleared for this deck"
+    },
+    {
+      "title": "The Little Mermaid (statue)",
+      "reason": "Series, broader topic, print/drawing, or artwork rights/edition not cleared for this deck"
+    },
+    {
+      "title": "Nataraja",
+      "reason": "Series, broader topic, print/drawing, or artwork rights/edition not cleared for this deck"
+    },
+    {
+      "title": "Terracotta Army",
+      "reason": "Series, broader topic, print/drawing, or artwork rights/edition not cleared for this deck"
+    },
+    {
+      "title": "Great Buddha of Kamakura",
+      "reason": "Series, broader topic, print/drawing, or artwork rights/edition not cleared for this deck"
+    },
+    {
+      "title": "A Thousand Li of Rivers and Mountains",
+      "reason": "Series, broader topic, print/drawing, or artwork rights/edition not cleared for this deck"
+    },
+    {
+      "title": "The Course of Empire (paintings)",
+      "reason": "Series, broader topic, print/drawing, or artwork rights/edition not cleared for this deck"
+    },
+    {
+      "title": "Young Hare",
+      "reason": "Series, broader topic, print/drawing, or artwork rights/edition not cleared for this deck"
+    },
+    {
+      "title": "The Bedroom",
+      "reason": "Missing dedicated article or disambiguation"
+    },
+    {
+      "title": "The Supper at Emmaus (Caravaggio, London)",
+      "reason": "Missing dedicated article or disambiguation"
+    },
+    {
+      "title": "The Annunciation (Leonardo)",
+      "reason": "Missing dedicated article or disambiguation"
+    },
+    {
+      "title": "The Transfiguration (Raphael)",
+      "reason": "Missing dedicated article or disambiguation"
+    },
+    {
+      "title": "The Sleeping Venus",
+      "reason": "Missing dedicated article or disambiguation"
+    },
+    {
+      "title": "Ophelia (painting)",
+      "reason": "Missing dedicated article or disambiguation"
+    },
+    {
+      "title": "The Accolade",
+      "reason": "Missing dedicated article or disambiguation"
+    },
+    {
+      "title": "David (Donatello)",
+      "reason": "Missing dedicated article or disambiguation"
+    },
+    {
+      "title": "Dancing Girl (sculpture)",
+      "reason": "Missing dedicated article or disambiguation"
+    },
+    {
+      "title": "Fūjin and Raijin",
+      "reason": "Missing dedicated article or disambiguation"
+    },
+    {
+      "title": "The Lady of Shalott (1888 painting)",
+      "reason": "Missing dedicated article or disambiguation"
+    },
+    {
+      "title": "Almond Blossom",
+      "reason": "Missing dedicated article or disambiguation"
+    },
+    {
+      "title": "The Spinners (Velázquez)",
+      "reason": "Missing dedicated article or disambiguation"
+    },
+    {
+      "title": "The Desperate Man",
+      "reason": "Missing dedicated article or disambiguation"
+    },
+    {
+      "title": "The Origin of the World",
+      "reason": "Missing dedicated article or disambiguation"
+    },
+    {
+      "title": "Self-Portrait at the Age of Twenty Eight",
+      "reason": "Missing dedicated article or disambiguation"
+    },
+    {
+      "title": "Madame X (painting)",
+      "reason": "Missing dedicated article or disambiguation"
+    },
+    {
+      "title": "The Rooks Have Come",
+      "reason": "Missing dedicated article or disambiguation"
+    },
+    {
+      "title": "The Absinthe Drinker",
+      "reason": "Missing dedicated article or disambiguation"
+    },
+    {
+      "title": "The Boulevard Montmartre at Night",
+      "reason": "Missing dedicated article or disambiguation"
+    }
+  ]
+}
