@@ -29,6 +29,7 @@ Other commands:
 
 | Command             | What it does                                         |
 | ------------------- | ---------------------------------------------------- |
+| `npm test`          | Runs the scoring sanity checks (`src/scoring.test.ts`) |
 | `npm run typecheck` | Checks the TypeScript for errors without building     |
 | `npm run build`     | Type-checks, then builds the final site into `dist/`  |
 | `npm run preview`   | Serves the built `dist/` folder locally               |
@@ -37,10 +38,11 @@ Other commands:
 
 - [x] Gallery: pick a painting (plain buttons for now)
 - [x] Webcam starts, PoseLandmarker runs on every frame, skeleton drawn on the video
+- [x] Pose scoring by joint angles: big live score, limbs coloured green / amber / red
 - [x] Flow through all four screens: gallery → challenge → countdown → result
-- [ ] Painting images (see `public/paintings/README.md`)
-- [ ] Target poses for each painting
-- [ ] Pose scoring (`src/scoring.ts` returns 0)
+- [x] Painting images (4 public-domain paintings, sources in `public/paintings/README.md`)
+- [ ] Target poses for each painting (for now: press **T** on the challenge
+      screen to use your current pose as the target)
 - [ ] 3-2-1 countdown
 - [ ] Background removal + gilt frame (`src/composite.ts` only writes the caption)
 
@@ -52,7 +54,8 @@ src/
   main.ts             App shell: switches screens, runs the camera loop, draws the skeleton
   camera.ts           startCamera(video) / stopCamera(video)
   pose.ts             loadPoseModel() and detect(videoFrame) using PoseLandmarker
-  scoring.ts          scorePose(player, target) → 0..100            (stub)
+  scoring.ts          scorePose(player, target) → overall + per-joint scores
+  scoring.test.ts     Sanity checks for scoring (npm test)
   paintings.ts        The list of paintings: { id, title, artist, imageUrl, targetPose }
   composite.ts        createFramedResult(photo, painting) → canvas  (stub)
   config.ts           All MediaPipe WASM/model URLs in one place
@@ -63,6 +66,25 @@ public/
 
 Search the code for `TODO` to find what's left to do. Each TODO says who it
 belongs to.
+
+## How the score works
+
+We compare **joint angles**, not positions, so it doesn't matter how far
+you stand from the camera or where you are in the picture.
+
+1. For 8 joints (both elbows, shoulders, hips and knees) we measure the angle
+   at the joint from three landmarks, e.g. shoulder → elbow → wrist.
+2. Each joint scores **100** if your angle equals the painting's, falling in
+   a straight line to **0** at 60° or more off.
+3. The score is the average of the joints we can see clearly (visibility ≥ 0.5),
+   so a portrait without legs is scored on the arms only.
+4. We also try the pose mirrored (left ↔ right) and keep the better score.
+5. The number on screen is the average of the last 10 frames, so it doesn't
+   flicker.
+
+Each limb is drawn green (≥ 70), amber (40–69) or red (< 40) using the
+worse of the two joints at its ends. The details are in the comments in
+`src/scoring.ts`.
 
 ## Who works on what
 
@@ -77,8 +99,8 @@ you keep the signatures the same, the other person's code keeps working:
 | Function / type                                        | File          | Used by                  |
 | ------------------------------------------------------ | ------------- | ------------------------ |
 | `startCamera(video)`, `stopCamera(video)`              | camera.ts     | main.ts                  |
-| `loadPoseModel()`, `detect(video)`, `PoseLandmarks`    | pose.ts       | main.ts, scoring.ts, paintings.ts |
-| `scorePose(player, target): number`                    | scoring.ts    | main.ts                  |
+| `loadPoseModel()`, `detect(video)`, `DetectedPose`     | pose.ts       | main.ts, scoring.ts, paintings.ts |
+| `scorePose(player, target): PoseScore`, `ScoreSmoother`, `JOINTS` | scoring.ts | main.ts         |
 | `paintings`, `Painting`                                | paintings.ts  | main.ts, composite.ts    |
 | `createFramedResult(photo, painting)`                  | composite.ts  | main.ts                  |
 

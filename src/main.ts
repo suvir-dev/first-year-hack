@@ -13,8 +13,9 @@
 import "./style.css";
 import { startCamera, stopCamera } from "./camera";
 import { detect, loadPoseModel, POSE_CONNECTIONS } from "./pose";
-import type { PoseLandmarks } from "./pose";
-import { scorePose } from "./scoring";
+import type { DetectedPose } from "./pose";
+import { JOINTS, scorePose, ScoreSmoother } from "./scoring";
+import type { PoseScore } from "./scoring";
 import { paintings } from "./paintings";
 import type { Painting } from "./paintings";
 import { createFramedResult } from "./composite";
@@ -53,6 +54,23 @@ const againButton = byId<HTMLButtonElement>("again-button");
 let currentPainting: Painting | null = null;
 /** The id of the running animation frame loop, so we can stop it. */
 let loopId: number | null = null;
+/** The most recent pose seen on the webcam (used by the T key, see below). */
+let latestPose: DetectedPose | null = null;
+/** Averages the last 10 scores so the big number doesn't flicker. */
+const smoother = new ScoreSmoother(10);
+
+// Colours for the score and the skeleton's limbs.
+const GOOD = "#2ecc71"; // green
+const CLOSE = "#f39c12"; // amber
+const OFF = "#e74c3c"; // red
+const NOT_SCORED = "#f5d76e"; // gold: limbs that aren't part of the score
+
+/** Pick green / amber / red for a score out of 100. */
+function scoreColour(score: number): string {
+  if (score >= 70) return GOOD;
+  if (score >= 40) return CLOSE;
+  return OFF;
+}
 
 /** Show one screen and hide the others. */
 function showScreen(name: keyof typeof screens): void {
@@ -86,7 +104,9 @@ async function startChallenge(painting: Painting): Promise<void> {
   paintingImage.src = painting.imageUrl;
   paintingImage.alt = `${painting.title} by ${painting.artist}`;
   paintingCaption.textContent = `${painting.title}, ${painting.artist}`;
-  scoreText.textContent = "Score: –";
+  showScore(null);
+  smoother.reset();
+  latestPose = null;
   readyButton.disabled = true;
   showScreen("challenge");
 
@@ -104,7 +124,9 @@ async function startChallenge(painting: Painting): Promise<void> {
     stopCamera(video);
     return;
   }
-  statusText.textContent = "Copy the pose!";
+  statusText.textContent = painting.targetPose
+    ? "Copy the pose!"
+    : "This painting has no target pose yet. Strike the pose and press T to record one.";
   readyButton.disabled = false;
 
   // Make the canvas the same size as the camera image.
@@ -117,25 +139,38 @@ async function startChallenge(painting: Painting): Promise<void> {
 /** Runs once per screen refresh (about 60 times a second). */
 function runCameraLoop(): void {
   let lastVideoTime = -1;
-  let landmarks: PoseLandmarks | null = null;
+  let pose: DetectedPose | null = null;
+  let poseScore: PoseScore | null = null;
 
   const tick = () => {
     // The screen refreshes faster than the camera delivers new pictures.
     // Only run pose detection when there is a new camera frame.
     if (video.currentTime !== lastVideoTime) {
       lastVideoTime = video.currentTime;
-      landmarks = detect(video);
+      pose = detect(video);
+      latestPose = pose;
+      poseScore = null;
 
-      if (landmarks && currentPainting?.targetPose) {
-        const score = scorePose(landmarks, currentPainting.targetPose);
-        scoreText.textContent = `Score: ${score} / 100`;
+      if (pose && currentPainting?.targetPose) {
+        poseScore = scorePose(pose, currentPainting.targetPose);
+        // If no joint could be compared (e.g. you're out of shot), keep
+        // showing the last score instead of jumping around.
+        if (poseScore.overall !== null) {
+          showScore(smoother.add(poseScore.overall));
+        }
       }
     }
 
-    drawFrame(landmarks);
+    drawFrame(pose, poseScore);
     loopId = requestAnimationFrame(tick);
   };
   tick();
+}
+
+/** Show the big score number (or a dash if there is no score). */
+function showScore(score: number | null): void {
+  scoreText.textContent = score === null ? "–" : String(score);
+  scoreText.style.color = score === null ? "" : scoreColour(score);
 }
 
 function stopCameraLoop(): void {
@@ -144,7 +179,7 @@ function stopCameraLoop(): void {
 }
 
 /** Draw the camera image and the skeleton on top of it. */
-function drawFrame(landmarks: PoseLandmarks | null): void {
+function drawFrame(pose: DetectedPose | null, poseScore: PoseScore | null): void {
   const width = cameraCanvas.width;
   const height = cameraCanvas.height;
 
@@ -156,27 +191,50 @@ function drawFrame(landmarks: PoseLandmarks | null): void {
   ctx.scale(-1, 1);
 
   ctx.drawImage(video, 0, 0, width, height);
-  if (landmarks) drawSkeleton(landmarks, width, height);
+  if (pose) drawSkeleton(pose.landmarks, poseScore, width, height);
 
   ctx.restore();
 }
 
-/** Draw lines between joints, then a dot on each joint. */
-function drawSkeleton(landmarks: PoseLandmarks, width: number, height: number): void {
+/**
+ * Draw lines between joints (coloured by how well each limb matches the
+ * painting), then a dot on each joint.
+ */
+function drawSkeleton(
+  landmarks: DetectedPose["landmarks"],
+  poseScore: PoseScore | null,
+  width: number,
+  height: number,
+): void {
   // Landmarks are 0..1, so multiply by the canvas size to get pixels.
   const isVisible = (index: number) => (landmarks[index]?.visibility ?? 0) > 0.5;
 
-  ctx.strokeStyle = "#f5d76e"; // gold lines
-  ctx.lineWidth = 4;
+  // Which landmark has which score? e.g. landmark 13 (left elbow) gets the
+  // left elbow's score. Landmarks that aren't scored joints are left out.
+  const scoreAtLandmark = new Map<number, number>();
+  for (const joint of JOINTS) {
+    const score = poseScore?.joints[joint.name];
+    if (score !== undefined) scoreAtLandmark.set(joint.points[1], score);
+  }
+
+  ctx.lineWidth = 6;
   for (const { start, end } of POSE_CONNECTIONS) {
     if (!isVisible(start) || !isVisible(end)) continue;
+
+    // A bone gets the colour of the WORSE of the joints at its two ends,
+    // e.g. the upper arm is red if either the shoulder or the elbow is off.
+    const endScores = [scoreAtLandmark.get(start), scoreAtLandmark.get(end)]
+      .filter((score) => score !== undefined);
+    ctx.strokeStyle =
+      endScores.length > 0 ? scoreColour(Math.min(...endScores)) : NOT_SCORED;
+
     ctx.beginPath();
     ctx.moveTo(landmarks[start].x * width, landmarks[start].y * height);
     ctx.lineTo(landmarks[end].x * width, landmarks[end].y * height);
     ctx.stroke();
   }
 
-  ctx.fillStyle = "#c0392b"; // red joints
+  ctx.fillStyle = "#ffffff"; // white joints
   for (let i = 0; i < landmarks.length; i++) {
     if (!isVisible(i)) continue;
     ctx.beginPath();
@@ -242,6 +300,23 @@ backButton.addEventListener("click", () => {
 });
 
 againButton.addEventListener("click", () => showGallery());
+
+// Developer shortcut: on the challenge screen, press T to save your current
+// pose as this painting's target. It is printed in the console (F12) so you
+// can paste it into paintings.ts and keep it. Until then it is forgotten when
+// the page reloads.
+document.addEventListener("keydown", (event) => {
+  if (event.key.toLowerCase() !== "t") return;
+  if (screens.challenge.hidden || !currentPainting || !latestPose) return;
+
+  currentPainting.targetPose = latestPose;
+  smoother.reset();
+  statusText.textContent = "Target pose recorded! Now try to match it.";
+  console.log(
+    `targetPose for "${currentPainting.id}" (paste into paintings.ts):\n` +
+      JSON.stringify(latestPose),
+  );
+});
 
 // --- Start the app -----------------------------------------------------------
 showGallery();

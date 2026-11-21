@@ -63,8 +63,24 @@ figure {
   font-size: 120px;
 }
 
+/* The big live score under the pictures. */
+.score-box {
+  margin: 12px 0;
+}
+
 #score {
+  font-size: 96px;
+  font-weight: bold;
+  line-height: 1;
+  /* Every digit is the same width, so the number doesn't wobble as it changes. */
+  font-variant-numeric: tabular-nums;
+  transition: color 0.3s;
+}
+
+.score-out-of {
   font-size: 32px;
+  margin-left: 8px;
+  opacity: 0.7;
 }
 
 /* Keeps the <video> playing but invisible (display: none can pause it in some browsers). */
