@@ -93,6 +93,10 @@ const bestHoldText = byId("best-hold");
 const hintText = byId("hint");
 const debugPanel = byId("debug");
 const timerText = byId("timer");
+const timeRing = document.getElementById("time-ring") as unknown as SVGCircleElement;
+const holdRing = document.getElementById("hold-ring") as unknown as SVGCircleElement;
+const holdLabel = byId("hold-label");
+const flash = byId("flash");
 const waitingText = byId("waiting");
 const statusText = byId("status");
 const countdownText = byId("countdown");
@@ -154,6 +158,9 @@ let roundControl: { takePhoto: () => void; quit: () => void } | null = null;
 let resultCanvas: HTMLCanvasElement | null = null;
 
 const COUNTDOWN_SECONDS = 3;
+/** "Hold it!": stay at or above this score for HOLD_SECONDS to lock in early. */
+const HOLD_SCORE = 80;
+const HOLD_SECONDS = 3;
 
 // Colours for the score and the skeleton's limbs.
 const GOOD = "#2ecc71"; // green: 80 or more
@@ -362,8 +369,8 @@ function showStart(): void {
 
 async function playSinglePainting(painting: Painting): Promise<void> {
   players = readPlayers();
-  // No time limit: the player presses "Take my portrait" when ready.
-  const result = await playRound(painting, { timeLimit: null, label: null });
+  // The same timed round as the Gallery Tour: the photo is taken automatically.
+  const result = await playRound(painting, { timeLimit: ROUND_SECONDS, label: null });
   if (result) await showResult(result);
 }
 
@@ -382,8 +389,8 @@ async function playGalleryTour(): Promise<void> {
 // =============================================================================
 
 interface RoundOptions {
-  /** Seconds before the snapshot is taken automatically (null = no limit). */
-  timeLimit: number | null;
+  /** Seconds before the photo is taken automatically. */
+  timeLimit: number;
   /** Text at the top of the screen, e.g. "Round 2 of 5" (null = none). */
   label: string | null;
   /**
@@ -408,8 +415,7 @@ async function playRound(painting: Painting, options: RoundOptions): Promise<Rou
   placardFact.textContent = painting.funFact;
   roundLabel.textContent = options.label ?? "";
   roundLabel.hidden = !options.label;
-  timerText.hidden = options.timeLimit === null;
-  timerText.textContent = "";
+  timerText.textContent = `${options.timeLimit}s`;
   waitingText.hidden = true;
   countdownText.hidden = true;
 
@@ -464,20 +470,21 @@ async function playRound(painting: Painting, options: RoundOptions): Promise<Rou
   statusText.textContent =
     players.length === 2
       ? "Both copy the same figure! Player 1 stands on the left."
-      : 'Copy the pose! When the score is high, press "Take my portrait".';
+      : `Copy the pose! Stay above ${HOLD_SCORE} for ${HOLD_SECONDS} seconds to lock it in early.`;
   readyButton.disabled = false;
 
   return new Promise((resolve) => {
     let finished = false;
-    let timerId = 0;
+    let tickerId = 0;
 
     const finish = async (takePhoto: boolean) => {
       if (finished) return;
       finished = true;
-      clearInterval(timerId);
+      clearInterval(tickerId);
       stopNarrating(); // the round is over: stop talking
       roundControl = null;
       readyButton.disabled = true;
+      holdLabel.hidden = true;
 
       if (!takePhoto) {
         stopCameraLoop();
@@ -485,46 +492,78 @@ async function playRound(painting: Painting, options: RoundOptions): Promise<Rou
         return;
       }
 
-      // 3... 2... 1... shown big on top of the camera. The camera loop keeps
-      // running underneath, so players can still adjust and the score updates.
+      // "Hold still… 3, 2, 1" big on top of the camera. The camera loop keeps
+      // running underneath, so the score keeps updating.
       backButton.disabled = true;
       countdownText.hidden = false;
+      countdownText.textContent = "Hold still…";
+      await wait(900);
       for (let n = COUNTDOWN_SECONDS; n > 0; n--) {
         countdownText.textContent = String(n);
         await wait(1000);
       }
       countdownText.hidden = true;
 
-      // Snap! Each player's final score is their best 1-second hold, or
-      // their live score if they never held a full second. Always 0..100.
+      // Snap! A camera flash, and each player's final score is their best
+      // 1-second hold (or their live score if they never held a full
+      // second). Always a whole number 0..100.
+      cameraFlash();
       const scores = bestHolds
         .slice(0, players.length)
         .map((hold, i) => toScore(hold.best() ?? currentScores[i]));
       const photo = takeSnapshot();
+      await wait(400); // let the flash be seen
       stopCameraLoop();
       backButton.disabled = false;
       resolve({ painting, photo, scores });
     };
 
     roundControl = {
-      takePhoto: () => finish(true),
+      takePhoto: () => finish(true), // the optional "Snap now" button
       quit: () => finish(false),
     };
 
     // The museum guide tells the painting's story while you pose.
     if (options.narrate !== false) startNarration(painting.history);
 
-    // Gallery Tour: count down the seconds, then take the photo automatically.
-    if (options.timeLimit !== null) {
-      let secondsLeft = options.timeLimit;
-      timerText.textContent = `${secondsLeft}s`;
-      timerId = window.setInterval(() => {
-        secondsLeft--;
-        timerText.textContent = `${secondsLeft}s`;
-        if (secondsLeft <= 0) finish(true);
-      }, 1000);
-    }
+    // Every 0.1 s: update the countdown ring, and check the "Hold it!" rule.
+    const startedAt = performance.now();
+    let holdingSince: number | null = null;
+    setRing(timeRing, 1);
+    setRing(holdRing, 0);
+    tickerId = window.setInterval(() => {
+      const now = performance.now();
+      const secondsLeft = Math.max(0, options.timeLimit - (now - startedAt) / 1000);
+      setRing(timeRing, secondsLeft / options.timeLimit);
+      timerText.textContent = `${Math.ceil(secondsLeft)}s`;
+
+      // "Hold it!": every player above HOLD_SCORE for HOLD_SECONDS in a row
+      // locks in early.
+      const everyoneHolding = players.every(
+        (_, i) => latestScores[i] !== null && toScore(currentScores[i]) >= HOLD_SCORE,
+      );
+      holdingSince = everyoneHolding ? (holdingSince ?? now) : null;
+      const held = holdingSince === null ? 0 : (now - holdingSince) / (HOLD_SECONDS * 1000);
+      setRing(holdRing, Math.min(1, held));
+      holdLabel.hidden = holdingSince === null;
+
+      if (held >= 1 || secondsLeft <= 0) finish(true);
+    }, 100);
   });
+}
+
+/** Fill a progress ring (an SVG circle) to a fraction 0..1. */
+function setRing(ring: SVGCircleElement, fraction: number): void {
+  const length = 2 * Math.PI * ring.r.baseVal.value; // the circle's circumference
+  ring.style.strokeDasharray = String(length);
+  ring.style.strokeDashoffset = String(length * (1 - fraction));
+}
+
+/** A white camera flash over the webcam picture. */
+function cameraFlash(): void {
+  flash.classList.remove("go");
+  void flash.offsetWidth; // restart the CSS animation
+  flash.classList.add("go");
 }
 
 /** Runs once per screen refresh (about 60 times a second). */
