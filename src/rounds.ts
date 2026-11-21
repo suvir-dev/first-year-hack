@@ -20,8 +20,8 @@ export interface RoundResult {
   painting: Painting;
   /** The webcam snapshot taken at the end of the round. */
   photo: HTMLCanvasElement;
-  /** Each player's score at the moment of the snapshot (null = never seen). */
-  scores: (number | null)[];
+  /** Each player's final score: always a whole number 0..100. */
+  scores: number[];
 }
 
 /** The things main.ts must provide so a tour can run. */
@@ -76,6 +76,7 @@ export function tourTotals(results: RoundResult[], playerCount: number): { total
   const totals = [];
   for (let player = 0; player < playerCount; player++) {
     const total = results.reduce((sum, round) => sum + (round.scores[player] ?? 0), 0);
+    // (?? not ||, so a real score of 0 stays 0)
     totals.push({ total, average: Math.round(total / Math.max(1, results.length)) });
   }
   return totals;

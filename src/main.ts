@@ -22,6 +22,7 @@ import { prepareTarget, scorePose, TOLERANCE_DEGREES } from "./scoring";
 import type { Difficulty, PoseScore, PreparedTarget } from "./scoring";
 import { BestHold, LandmarkSmoother, LiveScore } from "./smoothing";
 import { hintFor } from "./hints";
+import { formatScore, toScore } from "./format";
 import { duckMusic, isMuted, playChime, playGuideChime, setMuted, startMusic } from "./audio";
 import {
   isNarrationOn,
@@ -491,9 +492,11 @@ async function playRound(painting: Painting, options: RoundOptions): Promise<Rou
       }
       countdownText.hidden = true;
 
-      // Snap! Each player's final score is their best 1-second hold
-      // (null if we never saw their whole pose for a full second).
-      const scores = bestHolds.slice(0, players.length).map((hold) => hold.best());
+      // Snap! Each player's final score is their best 1-second hold, or
+      // their live score if they never held a full second. Always 0..100.
+      const scores = bestHolds
+        .slice(0, players.length)
+        .map((hold, i) => toScore(hold.best() ?? currentScores[i]));
       const photo = takeSnapshot();
       stopCameraLoop();
       backButton.disabled = false;
@@ -551,6 +554,8 @@ function startCameraLoop(): void {
 
       // 1 player: just take the first person. 2 players: left = Player 1.
       const assigned = players.length === 2 ? tracker.assign(poses) : [poses[0] ?? null];
+      // Nobody in the picture at all: the live score is 0 (shown with a message).
+      if (poses.length === 0) currentScores = currentScores.map(() => 0);
 
       // Smooth each player's points to remove jitter.
       shownPoses = assigned.map((pose, i) => {
@@ -603,7 +608,7 @@ function stopCameraLoop(): void {
 function updateMessages(peopleFound: number, shownPoses: (DetectedPose | null)[]): void {
   let message = "";
   if (peopleFound === 0) {
-    message = "Step into the picture so we can see you";
+    message = "We can't see you yet: step into the picture";
   } else if (players.length === 2 && shownPoses.includes(null)) {
     message = `Waiting for ${players[shownPoses.indexOf(null)].name}…`;
   } else {
@@ -642,13 +647,13 @@ function updateScoreDisplay(): void {
 
   // The final score is the best 1-second hold, so show that too.
   bestHoldText.textContent = two
-    ? `Best 1-second hold: ${players.map((player, i) => `${player.name} ${bestHolds[i].best() ?? "–"}`).join(" · ")}`
-    : `Best 1-second hold: ${bestHolds[0].best() ?? "–"} (this is your final score)`;
+    ? `Best 1-second hold: ${players.map((player, i) => `${player.name} ${formatScore(bestHolds[i].best())}`).join(" · ")}`
+    : `Best 1-second hold: ${formatScore(bestHolds[0].best())} (this is your final score)`;
 
   if (!two) {
     const score = currentScores[0];
-    scoreText.textContent = score === null ? "–" : String(score);
-    scoreText.style.color = score === null ? "" : scoreColour(score);
+    scoreText.textContent = formatScore(score);
+    scoreText.style.color = scoreColour(toScore(score));
     return;
   }
 
@@ -656,7 +661,7 @@ function updateScoreDisplay(): void {
   players.forEach((player, i) => {
     const item = document.createElement("span");
     item.style.color = player.colour;
-    item.textContent = `${player.name}: ${currentScores[i] ?? "–"}`;
+    item.textContent = `${player.name}: ${formatScore(currentScores[i])}`;
     scoreTwo.appendChild(item);
   });
 }
@@ -781,7 +786,7 @@ function drawNameTag(
   // If the picture is mirrored on screen, x becomes (1 - x).
   const x = (MIRROR_WEBCAM ? 1 - nose.x : nose.x) * width;
   const y = Math.max(40, nose.y * height - 90);
-  const text = `${player.name} ${score ?? "–"}`;
+  const text = `${player.name} ${formatScore(score)}`;
 
   ctx.font = "bold 36px Georgia, serif";
   ctx.textAlign = "center";
@@ -820,7 +825,7 @@ function updateDebug(): void {
       return;
     }
     lines.push(
-      `${player.name}: overall ${score.overall}  live ${currentScores[i] ?? "–"}  best hold ${bestHolds[i].best() ?? "–"}`,
+      `${player.name}: overall ${score.overall}  live ${formatScore(currentScores[i])}  best hold ${formatScore(bestHolds[i].best())}`,
       `mirrored version used: ${score.mirrored ? "yes" : "no"}   seen ${Math.round(score.seenFraction * 100)}%${score.inFrame ? "" : "  (STEP BACK)"}`,
       "feature          target  player    diff  score  weight",
     );
@@ -849,7 +854,7 @@ document.addEventListener("keydown", (event) => {
 
 /** "Ana 81 · Ben 77" */
 function scoresLine(scores: (number | null)[]): string {
-  return players.map((player, i) => `${player.name} ${scores[i] ?? "–"}`).join(" · ");
+  return players.map((player, i) => `${player.name} ${formatScore(scores[i])}`).join(" · ");
 }
 
 /** Gallery Tour: the 3-second "Next painting…" break between rounds. */
@@ -858,7 +863,7 @@ async function showBreak(result: RoundResult, round: number, total: number): Pro
   breakScore.textContent =
     players.length === 2
       ? `${scoresLine(result.scores)} — ${winnerText(players, result.scores)}`
-      : `Score: ${result.scores[0] ?? "–"} / 100`;
+      : `Score: ${formatScore(result.scores[0])} / 100`;
   showScreen("break");
   await wait(BREAK_SECONDS * 1000);
 }
@@ -899,7 +904,7 @@ function showSummary(results: RoundResult[]): void {
     const title = document.createElement("strong");
     title.textContent = `${i + 1}. ${result.painting.title}`;
     const score = document.createElement("span");
-    score.textContent = players.length === 2 ? scoresLine(result.scores) : `${result.scores[0] ?? "–"} / 100`;
+    score.textContent = players.length === 2 ? scoresLine(result.scores) : `${formatScore(result.scores[0])} / 100`;
     caption.append(title, score);
     item.append(thumbnail, caption);
     summaryList.appendChild(item);
