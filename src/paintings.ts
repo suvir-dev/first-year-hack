@@ -22,8 +22,9 @@ export interface Painting {
   /** One interesting line for the museum placard next to the painting. */
   funFact: string;
   /**
-   * 2–3 short sentences the narrator reads while you pose (about 10–12
-   * seconds spoken, so it finishes inside a 15-second round).
+   * 2–3 short sentences in a calm audio-guide tone ("Before you stands…"),
+   * read while you pose. Keep it under ~25 words so it finishes well inside
+   * a 15-second round at the narrator's slow pace.
    */
   history: string;
   /** Path to the image. "/paintings/x.jpg" means the file public/paintings/x.jpg. */
@@ -55,7 +56,7 @@ export const paintings: Painting[] = [
     funFact: "The rocks are carved with the names of Hannibal and Charlemagne, who crossed the Alps before him.",
     // TODO: fact-check
     history:
-      "Jacques-Louis David painted this in 1801. Napoleon refused to pose, and asked to look calm on a fiery horse. In real life, he crossed the Alps on a mule.",
+      "Before you rides Napoleon, painted by David in 1801. Notice his calm face on a wild, rearing horse. In truth, he crossed on a mule.",
     imageUrl: "/paintings/napoleon-crossing-the-alps.jpg",
     onePerson: true,
     // He is riding a horse: nobody can copy that standing up, so only the
@@ -86,7 +87,7 @@ export const paintings: Painting[] = [
     funFact: "The boy with two pistols is said to have inspired Gavroche in Victor Hugo's Les Misérables.",
     // TODO: fact-check
     history:
-      "Eugène Delacroix painted this after the July Revolution of 1830 in Paris. Liberty leads the people over the barricade, holding the French flag high. It now hangs in the Louvre.",
+      "Before you, Liberty leads the people of Paris, painted by Delacroix in 1830. Notice the flag held high above the smoke of revolution.",
     imageUrl: "/paintings/liberty-leading-the-people.jpg",
     onePerson: false,
     signatureJoints: ["rightUpperArm", "rightForearm"], // the arm raising the flag
@@ -114,7 +115,7 @@ export const paintings: Painting[] = [
     funFact: "Some doctors think the red cloak around God is shaped like a human brain.",
     // TODO: fact-check
     history:
-      "Michelangelo painted this on the Sistine Chapel ceiling in the Vatican, around 1512. God reaches out to give life to Adam. Their almost-touching fingers are copied all over the world.",
+      "High on the Sistine Chapel ceiling, Michelangelo painted God giving life to Adam. Notice how their fingers almost, but not quite, touch.",
     imageUrl: "/paintings/the-creation-of-adam.jpg",
     onePerson: false,
     signatureJoints: ["leftUpperArm", "leftForearm"], // the arm reaching for God
@@ -144,7 +145,7 @@ export const paintings: Painting[] = [
     funFact: "The flag is a mistake: the Stars and Stripes wasn't adopted until 1777.",
     // TODO: fact-check
     history:
-      "Emanuel Leutze painted this in Germany in 1851. It shows George Washington crossing the icy Delaware River on Christmas night, 1776, before a surprise attack at Trenton.",
+      "Before you, George Washington crosses the icy Delaware on Christmas night, 1776. Leutze painted the scene in Germany, in 1851.",
     imageUrl: "/paintings/washington-crossing-the-delaware.jpg",
     onePerson: false,
     // His raised knee (foot up on the boat) is what makes the pose: without
@@ -172,7 +173,7 @@ export const paintings: Painting[] = [
     funFact: "The oath scene isn't in the old Roman story: David invented it.",
     // TODO: fact-check
     history:
-      "Jacques-Louis David painted this in 1784. Three Roman brothers swear to fight for their city, while their father holds up their swords. It was a sensation in Paris.",
+      "Before you, three Roman brothers swear to fight for their city, painted by David in 1784. Notice their father, raising the swords.",
     imageUrl: "/paintings/oath-of-the-horatii.jpg",
     onePerson: false,
     signatureJoints: ["leftForearm", "rightForearm"], // both arms raising the swords
@@ -202,7 +203,7 @@ export const paintings: Painting[] = [
     funFact: "We never see his face: Friedrich often painted people from behind, so we share their view.",
     // TODO: fact-check
     history:
-      "Caspar David Friedrich painted this around 1818. A lone traveller stands on a rocky peak, gazing over a sea of fog. It has become a symbol of German Romanticism.",
+      "Before you stands a lone traveller above a sea of fog, painted by Friedrich around 1818. Notice how we share his view.",
     imageUrl: "/paintings/wanderer-above-the-sea-of-fog.jpg",
     onePerson: true,
     signatureJoints: ["torso"], // standing upright, facing the view
@@ -230,7 +231,7 @@ export const paintings: Painting[] = [
     funFact: "Manet admired the Spanish painter Velázquez, who also painted figures against plain backgrounds.",
     // TODO: fact-check
     history:
-      "Édouard Manet painted this young military musician in 1866. The flat grey background was so daring that the Paris Salon rejected it. Today it hangs in the Musée d'Orsay.",
+      "Before you stands a young army musician, painted by Manet in 1866. Notice the plain grey background: so daring, the Paris Salon rejected it.",
     imageUrl: "/paintings/the-fifer.jpg",
     onePerson: true,
     signatureJoints: ["leftForearm", "rightForearm"], // both hands up at the fife
@@ -260,7 +261,7 @@ export const paintings: Painting[] = [
     funFact: "Before it left for America in 1922, huge crowds came to say goodbye to it in London.",
     // TODO: fact-check
     history:
-      "Thomas Gainsborough painted this around 1770, dressing the boy in an old-fashioned blue silk costume. In the 1920s it was sold to an American collector, and it now hangs in California.",
+      "Before you stands Gainsborough's Blue Boy, painted around 1770. Notice the shimmering blue silk, a costume already old-fashioned in his day.",
     imageUrl: "/paintings/the-blue-boy.jpg",
     onePerson: true,
     signatureJoints: ["leftUpperArm", "leftForearm"], // hand on the hip
@@ -290,7 +291,7 @@ export const paintings: Painting[] = [
     funFact: "Louis loved ballet, and he shows off his legs like a dancer, even at 63.",
     // TODO: fact-check
     history:
-      "Hyacinthe Rigaud painted King Louis the Fourteenth in 1701. It was meant as a gift for Spain, but the king loved it so much that he kept it.",
+      "Before you stands King Louis the Fourteenth, painted by Rigaud in 1701. It was meant as a gift for Spain, but the king kept it.",
     imageUrl: "/paintings/louis-xiv.jpg",
     onePerson: true,
     signatureJoints: ["rightUpperArm", "rightForearm"], // arm out on the cane
@@ -320,7 +321,7 @@ export const paintings: Painting[] = [
     funFact: "The hand tucked into the waistcoat was a classic pose for gentlemen at the time.",
     // TODO: fact-check
     history:
-      "Jacques-Louis David painted this in 1812. The clock shows thirteen minutes past four in the morning, and the candles have burned low: Napoleon has worked all night.",
+      "Before you, Napoleon stands in his study, painted by David in 1812. Notice the clock: past four in the morning. He has worked all night.",
     imageUrl: "/paintings/napoleon-in-his-study.jpg",
     onePerson: true,
     signatureJoints: ["rightForearm"], // the famous hand in the waistcoat

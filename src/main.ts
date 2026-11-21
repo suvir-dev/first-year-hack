@@ -22,8 +22,18 @@ import { prepareTarget, scorePose, TOLERANCE_DEGREES } from "./scoring";
 import type { Difficulty, PoseScore, PreparedTarget } from "./scoring";
 import { BestHold, LandmarkSmoother, LiveScore } from "./smoothing";
 import { hintFor } from "./hints";
-import { duckMusic, isMuted, playChime, setMuted, startMusic } from "./audio";
-import { isNarrationOn, narrate, setNarrationOn, splitSentences, stopNarration } from "./narrator";
+import { duckMusic, isMuted, playChime, playGuideChime, setMuted, startMusic } from "./audio";
+import {
+  isNarrationOn,
+  listEnglishVoices,
+  narrate,
+  preferredVoice,
+  setNarrationOn,
+  setPreferredVoice,
+  speakSample,
+  splitSentences,
+  stopNarration,
+} from "./narrator";
 // The text of CREDITS.md, bundled into the app by Vite ("?raw" = as plain text).
 import creditsMarkdown from "../CREDITS.md?raw";
 import { paintings } from "./paintings";
@@ -965,8 +975,12 @@ function startNarration(text: string): void {
   }
 
   narrate(text, {
+    onStart: () => {
+      // A soft audio-guide "ding", and the music fades down to 25%.
+      playGuideChime();
+      duckMusic(true);
+    },
     onSentence: (index) => {
-      if (index === 0) duckMusic(true);
       subtitles.hidden = false;
       [...subtitles.children].forEach((span, i) => span.classList.toggle("current", i === index));
     },
@@ -984,6 +998,25 @@ function endNarration(): void {
 function stopNarrating(): void {
   stopNarration();
   endNarration();
+}
+
+/** Fill the "Narrator voice" dropdown in Settings with the English voices. */
+async function fillVoiceList(): Promise<void> {
+  const select = byId<HTMLSelectElement>("voice-select");
+  const voices = await listEnglishVoices();
+  select.innerHTML = "";
+  const automatic = document.createElement("option");
+  automatic.value = "";
+  automatic.textContent = voices[0] ? `Automatic (${voices[0].name})` : "Automatic";
+  select.appendChild(automatic);
+  for (const voice of voices) {
+    const option = document.createElement("option");
+    option.value = voice.name;
+    option.textContent = `${voice.name} (${voice.lang})`;
+    select.appendChild(option);
+  }
+  select.value = preferredVoice();
+  select.disabled = voices.length === 0;
 }
 
 /** Show the music and narration buttons' current state. */
@@ -1018,7 +1051,15 @@ for (const select of cameraSelects) {
   select.addEventListener("change", () => switchCamera(select.value));
 }
 
-byId("settings-button").addEventListener("click", () => settingsDialog.showModal());
+byId("settings-button").addEventListener("click", () => {
+  fillVoiceList();
+  settingsDialog.showModal();
+});
+
+byId<HTMLSelectElement>("voice-select").addEventListener("change", (event) => {
+  setPreferredVoice((event.target as HTMLSelectElement).value);
+  speakSample(); // let them hear it
+});
 
 musicButton.addEventListener("click", () => {
   setMuted(!isMuted());

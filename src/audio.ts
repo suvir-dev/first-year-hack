@@ -17,7 +17,7 @@ const MUSIC_URL = "/audio/gallery.mp3";
 /** Normal music volume (0..1). Quiet: it's background music. */
 const MUSIC_VOLUME = 0.3;
 /** While the narrator speaks, the music plays at this fraction of normal. */
-const DUCKED_FRACTION = 0.3;
+const DUCKED_FRACTION = 0.25;
 /** Seconds to fade in/out. */
 const FADE_SECONDS = 1;
 const STORAGE_KEY = "strike-a-pose.music-muted";
@@ -199,4 +199,24 @@ export function playChime(): void {
     tone.start(start);
     tone.stop(start + 1.5);
   });
+}
+
+/** A very soft "ding", like a museum audio guide, before the narrator speaks. */
+export function playGuideChime(): void {
+  if (!ctx || muted) return;
+  const start = ctx.currentTime;
+  // A bell-like sound: a note plus a quieter note one octave higher.
+  for (const [note, loudness] of [[84, 0.07], [96, 0.025]]) {
+    const tone = ctx.createOscillator();
+    tone.type = "sine";
+    tone.frequency.value = midiToHz(note);
+    const envelope = ctx.createGain();
+    envelope.gain.setValueAtTime(0, start);
+    envelope.gain.linearRampToValueAtTime(loudness, start + 0.015);
+    envelope.gain.exponentialRampToValueAtTime(0.0001, start + 1.6);
+    tone.connect(envelope);
+    envelope.connect(ctx.destination);
+    tone.start(start);
+    tone.stop(start + 1.7);
+  }
 }
